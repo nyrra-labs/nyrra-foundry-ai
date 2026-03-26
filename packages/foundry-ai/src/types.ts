@@ -48,14 +48,12 @@ export type KnownModelId = KnownOpenAIModelId | KnownAnthropicModelId;
 export type FoundryModelId = OpenAIModelId | AnthropicModelId;
 
 export type ModelProvider = 'openai' | 'anthropic';
-export type ModelClass = 'heavyweight' | 'lightweight' | 'reasoning' | 'codex';
 export type ModelLifecycle = 'ga' | 'experimental' | 'deprecated';
 
 export interface ModelMetadata {
   rid: string;
   provider: ModelProvider;
   displayName: string;
-  modelClass: ModelClass;
   isReasoning: boolean;
   supportsVision: boolean;
   supportsResponses: boolean;

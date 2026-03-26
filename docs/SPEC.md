@@ -137,7 +137,7 @@ const result = await generateText({
 
 ### Core Concepts
 
-1. **Model Catalog** -- Static map of friendly names to Foundry RIDs, with per-model metadata (provider, reasoning flag, model class, capabilities). Single source of truth.
+1. **Model Catalog** -- Static map of friendly names to Foundry RIDs, with per-model metadata (provider, reasoning flag, capabilities, lifecycle). Single source of truth.
 
 2. **Provider Adapters** -- Thin wrappers around `@ai-sdk/openai` and `@ai-sdk/anthropic` that handle Foundry-specific URL construction, auth, RID mapping, and apply middleware. Each lives behind its own subpath export.
 
@@ -188,13 +188,11 @@ export type AnthropicModelId =
 
 // --- Per-model metadata ---
 export type ModelProvider = 'openai' | 'anthropic';
-export type ModelClass = 'heavyweight' | 'lightweight' | 'reasoning' | 'codex';
 
 export interface ModelMetadata {
   rid: string;                     // Foundry resource identifier
   provider: ModelProvider;
   displayName: string;             // Human-readable name
-  modelClass: ModelClass;
   isReasoning: boolean;            // Needs forceReasoning?
   supportsVision: boolean;
   supportsResponses: boolean;      // OpenAI Responses API
@@ -213,7 +211,6 @@ export const OPENAI_MODELS = {
     rid: 'ri.language-model-service..language-model.gpt-4-1',
     provider: 'openai' as const,
     displayName: 'GPT-4.1',
-    modelClass: 'heavyweight' as const,
     isReasoning: false,
     supportsVision: true,
     supportsResponses: true,
@@ -721,39 +718,39 @@ Using `createFoundryRegistry` for multi-provider routing -- same config, multipl
 
 ### OpenAI Models
 
-| Friendly Name | Foundry RID | Class | Reasoning | Lifecycle |
-|--------------|-------------|-------|-----------|-----------|
-| gpt-4.1 | ri.language-model-service..language-model.gpt-4-1 | heavyweight | no | GA |
-| gpt-4.1-mini | ri.language-model-service..language-model.gpt-4-1-mini | lightweight | no | GA |
-| gpt-4.1-nano | ri.language-model-service..language-model.gpt-4-1-nano | lightweight | no | GA |
-| gpt-4o | ri.language-model-service..language-model.gpt-4-o | heavyweight | no | GA |
-| gpt-4o-mini | ri.language-model-service..language-model.gpt-4-o-mini | lightweight | no | GA |
-| gpt-5 | ri.language-model-service..language-model.gpt-5 | heavyweight | yes | GA |
-| gpt-5-codex | ri.language-model-service..language-model.gpt-5-codex | codex | no | GA |
-| gpt-5-mini | ri.language-model-service..language-model.gpt-5-mini | lightweight | yes | GA |
-| gpt-5-nano | ri.language-model-service..language-model.gpt-5-nano | lightweight | yes | GA |
-| gpt-5.1 | ri.language-model-service..language-model.gpt-5-1 | heavyweight | no | GA |
-| gpt-5.1-codex | ri.language-model-service..language-model.gpt-5-1-codex | codex | no | GA |
-| gpt-5.1-codex-mini | ri.language-model-service..language-model.gpt-5-1-codex-mini | codex | no | GA |
-| gpt-5.2 | ri.language-model-service..language-model.gpt-5-2 | heavyweight | yes | experimental |
-| gpt-5.4 | ri.language-model-service..language-model.gpt-5-4 | heavyweight | yes | experimental |
-| o3 | ri.language-model-service..language-model.o-3 | reasoning | yes | GA |
-| o4-mini | ri.language-model-service..language-model.o-4-mini | reasoning | yes | GA |
+| Friendly Name | Foundry RID | Reasoning | Lifecycle |
+|--------------|-------------|-----------|-----------|
+| gpt-4.1 | ri.language-model-service..language-model.gpt-4-1 | no | GA |
+| gpt-4.1-mini | ri.language-model-service..language-model.gpt-4-1-mini | no | GA |
+| gpt-4.1-nano | ri.language-model-service..language-model.gpt-4-1-nano | no | GA |
+| gpt-4o | ri.language-model-service..language-model.gpt-4-o | no | GA |
+| gpt-4o-mini | ri.language-model-service..language-model.gpt-4-o-mini | no | GA |
+| gpt-5 | ri.language-model-service..language-model.gpt-5 | yes | GA |
+| gpt-5-codex | ri.language-model-service..language-model.gpt-5-codex | no | GA |
+| gpt-5-mini | ri.language-model-service..language-model.gpt-5-mini | yes | GA |
+| gpt-5-nano | ri.language-model-service..language-model.gpt-5-nano | yes | GA |
+| gpt-5.1 | ri.language-model-service..language-model.gpt-5-1 | no | GA |
+| gpt-5.1-codex | ri.language-model-service..language-model.gpt-5-1-codex | no | GA |
+| gpt-5.1-codex-mini | ri.language-model-service..language-model.gpt-5-1-codex-mini | no | GA |
+| gpt-5.2 | ri.language-model-service..language-model.gpt-5-2 | yes | experimental |
+| gpt-5.4 | ri.language-model-service..language-model.gpt-5-4 | yes | experimental |
+| o3 | ri.language-model-service..language-model.o-3 | yes | GA |
+| o4-mini | ri.language-model-service..language-model.o-4-mini | yes | GA |
 
 ### Anthropic Models
 
-| Friendly Name | Foundry RID | Class | Lifecycle |
-|--------------|-------------|-------|-----------|
-| claude-3.5-haiku | ri.language-model-service..language-model.anthropic-claude-3-5-haiku | lightweight | GA |
-| claude-3.7-sonnet | ri.language-model-service..language-model.anthropic-claude-3-7-sonnet | heavyweight | GA |
-| claude-haiku-4.5 | ri.language-model-service..language-model.anthropic-claude-4-5-haiku | lightweight | GA |
-| claude-opus-4 | ri.language-model-service..language-model.anthropic-claude-4-opus | heavyweight | GA |
-| claude-opus-4.1 | ri.language-model-service..language-model.anthropic-claude-4-1-opus | heavyweight | GA |
-| claude-opus-4.5 | ri.language-model-service..language-model.anthropic-claude-4-5-opus | heavyweight | GA |
-| claude-opus-4.6 | ri.language-model-service..language-model.anthropic-claude-4-6-opus | heavyweight | GA |
-| claude-sonnet-4 | ri.language-model-service..language-model.anthropic-claude-4-sonnet | heavyweight | GA |
-| claude-sonnet-4.5 | ri.language-model-service..language-model.anthropic-claude-4-5-sonnet | heavyweight | GA |
-| claude-sonnet-4.6 | ri.language-model-service..language-model.anthropic-claude-4-6-sonnet | heavyweight | GA |
+| Friendly Name | Foundry RID | Lifecycle |
+|--------------|-------------|-----------|
+| claude-3.5-haiku | ri.language-model-service..language-model.anthropic-claude-3-5-haiku | GA |
+| claude-3.7-sonnet | ri.language-model-service..language-model.anthropic-claude-3-7-sonnet | GA |
+| claude-haiku-4.5 | ri.language-model-service..language-model.anthropic-claude-4-5-haiku | GA |
+| claude-opus-4 | ri.language-model-service..language-model.anthropic-claude-4-opus | GA |
+| claude-opus-4.1 | ri.language-model-service..language-model.anthropic-claude-4-1-opus | GA |
+| claude-opus-4.5 | ri.language-model-service..language-model.anthropic-claude-4-5-opus | GA |
+| claude-opus-4.6 | ri.language-model-service..language-model.anthropic-claude-4-6-opus | GA |
+| claude-sonnet-4 | ri.language-model-service..language-model.anthropic-claude-4-sonnet | GA |
+| claude-sonnet-4.5 | ri.language-model-service..language-model.anthropic-claude-4-5-sonnet | GA |
+| claude-sonnet-4.6 | ri.language-model-service..language-model.anthropic-claude-4-6-sonnet | GA |
 
 ### Embedding Models (Phase 2)
 

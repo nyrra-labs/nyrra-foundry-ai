@@ -36,7 +36,6 @@ describe('model catalog', () => {
         rid: rawRid,
         provider: 'openai',
         displayName: 'GPT-5.2',
-        modelClass: 'heavyweight',
         isReasoning: true,
         supportsVision: true,
         supportsResponses: true,

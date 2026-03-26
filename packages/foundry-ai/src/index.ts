@@ -16,7 +16,6 @@ export type {
   AnthropicModelId,
   FoundryConfig,
   FoundryModelId,
-  ModelClass,
   ModelLifecycle,
   ModelMetadata,
   ModelProvider,
