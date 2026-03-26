@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "declaration": true,
+    "declarationMap": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "importHelpers": true,
+    "isolatedModules": true,
+    "lib": ["ES2022"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ES2022",
+    "types": ["node"],
+    "verbatimModuleSyntax": true,
+    "paths": {
+      "@nyrra-labs/foundry-ai": ["packages/foundry-ai/src/index.ts"],
+      "@nyrra-labs/foundry-ai/anthropic": ["packages/foundry-ai/src/providers/anthropic.ts"],
+      "@nyrra-labs/foundry-ai/openai": ["packages/foundry-ai/src/providers/openai.ts"],
+      "@nyrra-labs/foundry-ai/registry": ["packages/foundry-ai/src/registry.ts"]
+    }
+  }
+}

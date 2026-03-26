@@ -1,0 +1,45 @@
+{
+  "name": "foundry-ai",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/foundry-ai/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "command": "pnpm exec tsup --config tsup.config.ts",
+        "cwd": "{workspaceRoot}/packages/foundry-ai"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm exec biome check package.json nx.json tsconfig.base.json tsconfig.json pnpm-workspace.yaml biome.json packages/foundry-ai examples README.md",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm exec vitest run --config packages/foundry-ai/vitest.config.ts",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm exec tsc --project packages/foundry-ai/tsconfig.typecheck.json --noEmit",
+        "cwd": "{workspaceRoot}"
+      }
+    }
+  },
+  "tags": [],
+  "release": {
+    "version": {
+      "manifestRootsToUpdate": ["{projectRoot}"],
+      "currentVersionResolver": "git-tag",
+      "fallbackCurrentVersionResolver": "disk"
+    }
+  }
+}
