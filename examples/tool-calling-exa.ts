@@ -5,9 +5,19 @@ import { createExampleLanguageModel, requireEnv } from './shared.js';
 
 requireEnv('EXA_API_KEY');
 
-const { model, modelId } = createExampleLanguageModel('openai', {
+const { model, modelId, provider } = createExampleLanguageModel(undefined, {
+  anthropicModel: 'claude-sonnet-4.6',
   openaiModel: 'gpt-5-mini',
 });
+const providerOptions =
+  provider === 'openai'
+    ? {
+        openai: {
+          reasoningEffort: 'low',
+          textVerbosity: 'low',
+        } satisfies OpenAILanguageModelResponsesOptions,
+      }
+    : undefined;
 
 const result = streamText({
   model,
@@ -16,12 +26,7 @@ const result = streamText({
   system:
     'Use the web search tool when you need current information. Cite what you found in plain text.',
   stopWhen: stepCountIs(4),
-  providerOptions: {
-    openai: {
-      reasoningEffort: 'low',
-      textVerbosity: 'low',
-    } satisfies OpenAILanguageModelResponsesOptions,
-  },
+  providerOptions,
   tools: {
     webSearch: webSearch({
       category: 'news',
@@ -40,7 +45,7 @@ const result = streamText({
   },
 });
 
-console.log(`provider: openai`);
+console.log(`provider: ${provider}`);
 console.log(`model: ${modelId}`);
 
 let stepNumber = 0;
