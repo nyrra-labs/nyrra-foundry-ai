@@ -35,10 +35,10 @@ The root package exports shared catalog, config, error, and middleware utilities
 |---|---|---|---|
 | unit | yes | Vitest | no |
 | integration | no | none | no |
-| e2e api | yes | manual `tsx` example scripts against live Foundry | no |
+| e2e api | yes | Vitest live tests + manual `tsx` example scripts against live Foundry | no |
 | e2e web | no | none | no |
 
-This repo does not have CI configured yet. The live API checks currently live in [`examples/`](./examples) and are run manually with Foundry credentials.
+This repo does not have CI configured yet. Live API verification is manual and requires Foundry credentials. Use `pnpm test:live` for the live Vitest suite or run the standalone scripts in [`examples/`](./examples).
 
 ## Quick Start
 
@@ -122,6 +122,7 @@ pnpm install
 pnpm format
 pnpm lint
 pnpm test
+pnpm test:live
 pnpm typecheck
 pnpm build
 ```
@@ -131,6 +132,7 @@ For direct Nx targets:
 ```bash
 NX_DAEMON=false pnpm exec nx run foundry-ai:lint
 NX_DAEMON=false pnpm exec nx run foundry-ai:test
+NX_DAEMON=false pnpm exec nx run foundry-ai:test-live
 NX_DAEMON=false pnpm exec nx run foundry-ai:typecheck
 NX_DAEMON=false pnpm exec nx run foundry-ai:build
 ```

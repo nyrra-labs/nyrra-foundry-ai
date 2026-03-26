@@ -5,8 +5,10 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
-    include: ['src/**/*.test.ts'],
-    exclude: ['src/**/*.live.test.ts'],
+    include: ['src/**/*.live.test.ts'],
+    fileParallelism: false,
+    testTimeout: 120_000,
+    hookTimeout: 120_000,
     watch: false,
   },
 });

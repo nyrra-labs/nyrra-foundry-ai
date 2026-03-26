@@ -15,7 +15,7 @@
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm exec biome check package.json nx.json tsconfig.base.json tsconfig.json pnpm-workspace.yaml biome.json AGENTS.md README.md docs/SPEC.md opencode.jsonc examples scripts packages/foundry-ai/package.json packages/foundry-ai/project.json packages/foundry-ai/src packages/foundry-ai/tsconfig.json packages/foundry-ai/tsconfig.lib.json packages/foundry-ai/tsconfig.spec.json packages/foundry-ai/tsconfig.typecheck.json packages/foundry-ai/tsup.config.ts packages/foundry-ai/vitest.config.ts",
+        "command": "pnpm exec biome check package.json nx.json tsconfig.base.json tsconfig.json pnpm-workspace.yaml biome.json AGENTS.md README.md docs/SPEC.md opencode.jsonc examples scripts packages/foundry-ai/package.json packages/foundry-ai/project.json packages/foundry-ai/src packages/foundry-ai/tsconfig.json packages/foundry-ai/tsconfig.lib.json packages/foundry-ai/tsconfig.spec.json packages/foundry-ai/tsconfig.typecheck.json packages/foundry-ai/tsup.config.ts packages/foundry-ai/vitest.config.ts packages/foundry-ai/vitest.live.config.ts",
         "cwd": "{workspaceRoot}"
       }
     },
@@ -25,6 +25,14 @@
         "command": "pnpm exec vitest run --config packages/foundry-ai/vitest.config.ts",
         "cwd": "{workspaceRoot}"
       }
+    },
+    "test-live": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm exec vitest run --config packages/foundry-ai/vitest.live.config.ts",
+        "cwd": "{workspaceRoot}"
+      },
+      "cache": false
     },
     "typecheck": {
       "executor": "nx:run-commands",

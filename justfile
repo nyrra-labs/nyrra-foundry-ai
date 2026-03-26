@@ -12,6 +12,9 @@ lint:
 test:
   pnpm exec nx run foundry-ai:test
 
+test-live:
+  pnpm exec nx run foundry-ai:test-live
+
 typecheck:
   pnpm exec nx run foundry-ai:typecheck
 

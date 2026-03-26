@@ -8,6 +8,7 @@
     "format": "pnpm exec biome check --write .",
     "lint": "pnpm exec nx run foundry-ai:lint",
     "test": "pnpm exec nx run foundry-ai:test",
+    "test:live": "pnpm exec nx run foundry-ai:test-live",
     "typecheck": "pnpm exec nx run foundry-ai:typecheck",
     "deprecations": "node scripts/check-deprecations.mjs --project packages/foundry-ai/tsconfig.typecheck.json",
     "release": "pnpm exec nx release"
