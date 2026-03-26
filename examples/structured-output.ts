@@ -1,6 +1,6 @@
 import { generateText, Output } from 'ai';
 import { z } from 'zod';
-import { createExampleLanguageModel } from './shared.js';
+import { createExampleLanguageModel, getExampleProviderOptions } from './shared.js';
 
 const signalSchema = z.object({
   indication: z.string(),
@@ -20,6 +20,7 @@ const { output } = await generateText({
   }),
   prompt:
     'Extract a concise clinical signal from the following statement: "The investigational therapy reduced relapse rates in a small phase 2 study, but liver enzyme elevations warrant close monitoring."',
+  providerOptions: getExampleProviderOptions(provider),
 });
 
 console.log(`provider: ${provider}`);

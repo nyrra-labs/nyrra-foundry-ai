@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 import process from 'node:process';
+import type { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai';
 import type { AnthropicModelId, OpenAIModelId } from '@nyrra-labs/foundry-ai';
 import { loadFoundryConfig } from '@nyrra-labs/foundry-ai';
 import { createFoundryAnthropic } from '@nyrra-labs/foundry-ai/anthropic';
@@ -75,6 +76,21 @@ export function requireEnv(name: string): string {
   }
 
   return value;
+}
+
+export function getExampleProviderOptions(provider: ExampleProvider) {
+  if (provider !== 'openai') {
+    return undefined;
+  }
+
+  return {
+    // Foundry uses opaque RIDs, so these OpenAI-only options keep gpt-5-mini
+    // examples predictable without affecting Anthropic.
+    openai: {
+      reasoningEffort: 'low',
+      textVerbosity: 'low',
+    } satisfies OpenAILanguageModelResponsesOptions,
+  };
 }
 
 function maybeLoadLocalEnvFile() {

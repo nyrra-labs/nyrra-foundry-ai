@@ -103,16 +103,26 @@ The repo includes runnable scripts for the first vertical slice and the registry
 - [`examples/tool-calling-exa.ts`](./examples/tool-calling-exa.ts)
 - [`examples/provider-registry.ts`](./examples/provider-registry.ts)
 
-Run them from the repo root. Bun is the cleanest path and picks up `.env.local` here:
+Run them from the repo root. For a safe run that rebuilds the package first, use:
+
+```bash
+pnpm run example basic-text openai
+pnpm run example streaming anthropic
+pnpm run example tool-calling-exa openai
+pnpm run example tool-calling-exa anthropic
+```
+
+If you want the shortest path, Bun works directly too:
 
 ```bash
 bun examples/basic-text.ts openai
 bun examples/basic-text.ts anthropic
 bun examples/provider-registry.ts
-bun examples/tool-calling-exa.ts
+bun examples/tool-calling-exa.ts openai
+bun examples/tool-calling-exa.ts anthropic
 ```
 
-`examples/tool-calling-exa.ts` also requires `EXA_API_KEY`.
+`examples/tool-calling-exa.ts` also requires `EXA_API_KEY` and now logs raw `fullStream` events so you can see tool calls, tool results, and text deltas directly.
 
 Plain Node still works if you prefer it:
 
@@ -120,7 +130,8 @@ Plain Node still works if you prefer it:
 node --import tsx examples/basic-text.ts openai
 node --import tsx examples/basic-text.ts anthropic
 node --import tsx examples/provider-registry.ts
-node --import tsx examples/tool-calling-exa.ts
+node --import tsx examples/tool-calling-exa.ts openai
+node --import tsx examples/tool-calling-exa.ts anthropic
 ```
 
 ## Development
@@ -141,11 +152,11 @@ pnpm build
 For direct Nx targets:
 
 ```bash
-NX_DAEMON=false pnpm exec nx run foundry-ai:lint
-NX_DAEMON=false pnpm exec nx run foundry-ai:test
-NX_DAEMON=false pnpm exec nx run foundry-ai:test-live
-NX_DAEMON=false pnpm exec nx run foundry-ai:typecheck
-NX_DAEMON=false pnpm exec nx run foundry-ai:build
+pnpm exec nx run foundry-ai:lint --outputStyle=static
+pnpm exec nx run foundry-ai:test --outputStyle=static
+pnpm exec nx run foundry-ai:test-live --outputStyle=static
+pnpm exec nx run foundry-ai:typecheck --outputStyle=static
+pnpm exec nx run foundry-ai:build --outputStyle=static
 ```
 
 ## External Services

@@ -1,7 +1,6 @@
-import type { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai';
 import { webSearch } from '@exalabs/ai-sdk';
 import { stepCountIs, streamText } from 'ai';
-import { createExampleLanguageModel, requireEnv } from './shared.js';
+import { createExampleLanguageModel, getExampleProviderOptions, requireEnv } from './shared.js';
 
 requireEnv('EXA_API_KEY');
 
@@ -9,15 +8,6 @@ const { model, modelId, provider } = createExampleLanguageModel(undefined, {
   anthropicModel: 'claude-sonnet-4.6',
   openaiModel: 'gpt-5-mini',
 });
-const providerOptions =
-  provider === 'openai'
-    ? {
-        openai: {
-          reasoningEffort: 'low',
-          textVerbosity: 'low',
-        } satisfies OpenAILanguageModelResponsesOptions,
-      }
-    : undefined;
 
 const result = streamText({
   model,
@@ -26,7 +16,7 @@ const result = streamText({
   system:
     'Use the web search tool when you need current information. Cite what you found in plain text.',
   stopWhen: stepCountIs(4),
-  providerOptions,
+  providerOptions: getExampleProviderOptions(provider),
   tools: {
     webSearch: webSearch({
       category: 'news',
@@ -48,55 +38,35 @@ const result = streamText({
 console.log(`provider: ${provider}`);
 console.log(`model: ${modelId}`);
 
-let stepNumber = 0;
+let text = '';
 
 for await (const part of result.fullStream) {
-  switch (part.type) {
-    case 'start-step': {
-      stepNumber += 1;
-      console.log(`\n[step ${stepNumber}]`);
-      break;
-    }
-    case 'tool-input-start': {
-      console.log(`\n[tool:${part.toolName}]`);
-      break;
-    }
-    case 'tool-call': {
-      console.log(`[tool-call:${part.toolName}] ${stringifyValue(part.input)}`);
-      break;
-    }
-    case 'tool-result': {
-      console.log(`\n[tool-result:${part.toolName}] ${summarizeValue(part.output)}`);
-      break;
-    }
-    case 'text-delta': {
-      process.stdout.write(part.text);
-      break;
-    }
-    case 'tool-error': {
-      throw part.error;
-    }
-    case 'error': {
-      throw part.error;
-    }
+  if (part.type === 'text-delta') {
+    text += part.text;
   }
-}
 
-process.stdout.write('\n');
+  if (part.type === 'tool-error' || part.type === 'error') {
+    console.log(stringifyValue(part));
+    throw part.error;
+  }
+
+  console.log(stringifyValue(part));
+}
 
 const steps = await result.steps;
-console.log(`\ncompleted ${steps.length} step(s)`);
-
-function summarizeValue(value: unknown): string {
-  const serialized = stringifyValue(value);
-
-  if (serialized.length <= 240) {
-    return serialized;
-  }
-
-  return `${serialized.slice(0, 237)}...`;
-}
+console.log(stringifyValue({ type: 'final-text', text }));
+console.log(stringifyValue({ type: 'summary', steps: steps.length }));
 
 function stringifyValue(value: unknown): string {
-  return JSON.stringify(value) ?? String(value);
+  return (
+    JSON.stringify(value, (_, currentValue) =>
+      currentValue instanceof Error
+        ? {
+            name: currentValue.name,
+            message: currentValue.message,
+            stack: currentValue.stack,
+          }
+        : currentValue,
+    ) ?? String(value)
+  );
 }
