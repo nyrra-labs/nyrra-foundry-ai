@@ -16,7 +16,7 @@
       "!{projectRoot}/src/**/*.spec.ts",
       "!{projectRoot}/src/**/__tests__/**",
       "!{projectRoot}/vitest.config.ts",
-      "!{projectRoot}/tsconfig.spec.json",
+      "!{projectRoot}/tsconfig.test.json",
       "!{projectRoot}/tsconfig.typecheck.json",
       "!{workspaceRoot}/examples/**"
     ]

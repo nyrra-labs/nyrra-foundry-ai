@@ -27,8 +27,26 @@ describe('model catalog', () => {
     expect(resolveModelProvider('claude-sonnet-4.6')).toBe('anthropic');
   });
 
-  it('preserves raw RID passthrough for provider adapters', () => {
+  it('preserves raw RID passthrough while enriching known RIDs with metadata', () => {
     const rawRid = 'ri.language-model-service..language-model.gpt-5-2';
+
+    expect(resolveModelTarget(rawRid)).toEqual({
+      rid: rawRid,
+      metadata: {
+        rid: rawRid,
+        provider: 'openai',
+        displayName: 'GPT-5.2',
+        modelClass: 'heavyweight',
+        isReasoning: true,
+        supportsVision: true,
+        supportsResponses: true,
+        lifecycle: 'experimental',
+      },
+    });
+  });
+
+  it('passes through unknown raw RIDs without catalog metadata', () => {
+    const rawRid = 'ri.language-model-service..language-model.unknown-new-model';
 
     expect(resolveModelTarget(rawRid)).toEqual({
       rid: rawRid,

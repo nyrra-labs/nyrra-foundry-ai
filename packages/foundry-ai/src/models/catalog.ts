@@ -15,6 +15,9 @@ export const MODEL_CATALOG = {
 } as const satisfies Record<KnownModelId, ModelMetadata>;
 
 export const MODEL_IDS = KNOWN_MODEL_IDS;
+const MODEL_CATALOG_BY_RID = Object.fromEntries(
+  Object.values(MODEL_CATALOG).map((metadata) => [metadata.rid, metadata]),
+) as Record<string, ModelMetadata>;
 
 export function getModelMetadata(modelId: string): ModelMetadata | undefined {
   return MODEL_CATALOG[modelId as KnownModelId];
@@ -25,7 +28,7 @@ export function hasKnownModel(modelId: string): modelId is KnownModelId {
 }
 
 export function resolveModelTarget(modelId: string): ResolvedModelTarget {
-  const metadata = getModelMetadata(modelId);
+  const metadata = getModelMetadata(modelId) ?? getModelMetadataByRid(modelId);
 
   return {
     rid: metadata?.rid ?? modelId,
@@ -49,4 +52,8 @@ export function resolveModelRid(modelId: string): string {
 
 export function resolveModelProvider(modelId: string): ModelProvider {
   return resolveKnownModelMetadata(modelId).provider;
+}
+
+function getModelMetadataByRid(modelRid: string): ModelMetadata | undefined {
+  return MODEL_CATALOG_BY_RID[modelRid];
 }
