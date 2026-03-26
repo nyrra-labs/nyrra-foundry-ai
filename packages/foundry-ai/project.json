@@ -4,6 +4,13 @@
   "sourceRoot": "packages/foundry-ai/src",
   "projectType": "library",
   "targets": {
+    "clean": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/clean.mjs",
+        "cwd": "{workspaceRoot}"
+      }
+    },
     "build": {
       "executor": "nx:run-commands",
       "outputs": ["{projectRoot}/dist"],

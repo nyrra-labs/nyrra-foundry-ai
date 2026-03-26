@@ -1,5 +1,8 @@
 set shell := ["zsh", "-lc"]
 
+clean:
+  pnpm exec nx run foundry-ai:clean
+
 format:
   pnpm run format
 

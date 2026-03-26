@@ -5,6 +5,7 @@
   "packageManager": "pnpm@10.24.0",
   "scripts": {
     "build": "pnpm exec nx run foundry-ai:build",
+    "clean": "pnpm exec nx run foundry-ai:clean",
     "format": "pnpm exec biome check --write .",
     "lint": "pnpm exec nx run foundry-ai:lint",
     "test": "pnpm exec nx run foundry-ai:test",
