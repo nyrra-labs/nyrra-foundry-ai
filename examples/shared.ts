@@ -1,3 +1,5 @@
+import { resolve } from 'node:path';
+import process from 'node:process';
 import type { AnthropicModelId, OpenAIModelId } from '@nyrra-labs/foundry-ai';
 import { loadFoundryConfig } from '@nyrra-labs/foundry-ai';
 import { createFoundryAnthropic } from '@nyrra-labs/foundry-ai/anthropic';
@@ -6,8 +8,12 @@ import type { LanguageModel } from 'ai';
 
 export type ExampleProvider = 'openai' | 'anthropic';
 
+const LOCAL_ENV_FILE = resolve(process.cwd(), '.env.local');
+
 const DEFAULT_OPENAI_MODEL: OpenAIModelId = 'gpt-5-mini';
 const DEFAULT_ANTHROPIC_MODEL: AnthropicModelId = 'claude-sonnet-4.6';
+
+maybeLoadLocalEnvFile();
 
 export function resolveCliProvider(defaultProvider: ExampleProvider = 'openai'): ExampleProvider {
   const provider = process.argv[2];
@@ -69,4 +75,20 @@ export function requireEnv(name: string): string {
   }
 
   return value;
+}
+
+function maybeLoadLocalEnvFile() {
+  if (process.env.FOUNDRY_URL && process.env.FOUNDRY_TOKEN) {
+    return;
+  }
+
+  if (typeof process.loadEnvFile !== 'function') {
+    return;
+  }
+
+  try {
+    process.loadEnvFile(LOCAL_ENV_FILE);
+  } catch {
+    // Let the example surface missing environment variables naturally.
+  }
 }

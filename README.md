@@ -35,7 +35,7 @@ The root package exports shared catalog, config, error, and middleware utilities
 |---|---|---|---|
 | unit | yes | Vitest | no |
 | integration | no | none | no |
-| e2e api | yes | Vitest live tests + manual `tsx` example scripts against live Foundry | no |
+| e2e api | yes | Vitest live tests + manual Bun/Node example scripts against live Foundry | no |
 | e2e web | no | none | no |
 
 This repo does not have CI configured yet. Live API verification is manual and requires Foundry credentials. Use `pnpm test:live` for the live Vitest suite or run the standalone scripts in [`examples/`](./examples).
@@ -103,15 +103,25 @@ The repo includes runnable scripts for the first vertical slice and the registry
 - [`examples/tool-calling-exa.ts`](./examples/tool-calling-exa.ts)
 - [`examples/provider-registry.ts`](./examples/provider-registry.ts)
 
-Run them from the repo root:
+Run them from the repo root. Bun is the cleanest path and picks up `.env.local` here:
 
 ```bash
-node --env-file=.env.local --import tsx examples/basic-text.ts openai
-node --env-file=.env.local --import tsx examples/basic-text.ts anthropic
-node --env-file=.env.local --import tsx examples/provider-registry.ts
+bun examples/basic-text.ts openai
+bun examples/basic-text.ts anthropic
+bun examples/provider-registry.ts
+bun examples/tool-calling-exa.ts
 ```
 
 `examples/tool-calling-exa.ts` also requires `EXA_API_KEY`.
+
+Plain Node still works if you prefer it:
+
+```bash
+node --import tsx examples/basic-text.ts openai
+node --import tsx examples/basic-text.ts anthropic
+node --import tsx examples/provider-registry.ts
+node --import tsx examples/tool-calling-exa.ts
+```
 
 ## Development
 
