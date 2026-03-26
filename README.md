@@ -91,7 +91,7 @@ import { createFoundryAnthropic } from '@nyrra-labs/foundry-ai/anthropic';
 import { createFoundryRegistry } from '@nyrra-labs/foundry-ai/registry';
 ```
 
-Friendly names resolve through the shared catalog. Unknown strings pass through unchanged as raw Foundry RIDs when you call a provider adapter directly. Catalog-only helpers such as `resolveModelRid()` throw `FoundryModelNotFoundError` with close-match suggestions.
+Friendly names resolve through the shared catalog. Unknown strings pass through unchanged as raw Foundry RIDs when you call a provider adapter directly. Catalog-only helpers such as `resolveModelRid()` throw `FoundryModelNotFoundError` with a plain validation message.
 
 ## Examples
 

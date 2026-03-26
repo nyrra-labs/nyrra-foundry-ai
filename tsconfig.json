@@ -2,13 +2,9 @@
   "extends": "./tsconfig.base.json",
   "compileOnSave": false,
   "compilerOptions": {
-    "noEmit": true
+    "noEmit": true,
+    "tsBuildInfoFile": "./out-tsc/tsconfig.tsbuildinfo"
   },
   "files": [],
-  "include": ["examples/**/*.ts"],
-  "references": [
-    {
-      "path": "./packages/foundry-ai/tsconfig.json"
-    }
-  ]
+  "include": ["examples/**/*.ts"]
 }

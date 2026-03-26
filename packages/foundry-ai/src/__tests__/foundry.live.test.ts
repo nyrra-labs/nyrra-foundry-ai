@@ -13,6 +13,7 @@ const registry = createFoundryRegistry(config);
 const LIVE_OPENAI_MODEL = 'gpt-4.1-mini';
 const LIVE_OPENAI_RID = 'ri.language-model-service..language-model.gpt-4-1-mini';
 const LIVE_ANTHROPIC_MODEL = 'claude-3.5-haiku';
+const LIVE_ANTHROPIC_RID = 'ri.language-model-service..language-model.anthropic-claude-3-5-haiku';
 
 const signalSchema = z.object({
   indication: z.string().min(1),
@@ -87,6 +88,51 @@ describe.sequential('live Foundry integration', () => {
 
     expect(result.text).toMatch(/ready/i);
     expect(result.text.trim().length).toBeGreaterThan(10);
+  });
+
+  it('supports raw RID passthrough with the direct Anthropic adapter', async () => {
+    const result = await generateText({
+      model: anthropic(LIVE_ANTHROPIC_RID),
+      prompt: 'Reply with ACK and one short clause.',
+      maxOutputTokens: 30,
+    });
+
+    expect(result.text).toMatch(/ack/i);
+  });
+
+  it('streams text with the direct Anthropic adapter', async () => {
+    const result = streamText({
+      model: anthropic(LIVE_ANTHROPIC_MODEL),
+      prompt: 'Write one short release note about typed Foundry model aliases.',
+      maxOutputTokens: 60,
+    });
+
+    let text = '';
+
+    for await (const chunk of result.textStream) {
+      text += chunk;
+    }
+
+    expect(text.trim().length).toBeGreaterThan(20);
+    expect(text.toLowerCase()).toContain('foundry');
+  });
+
+  it('generates structured output with the direct Anthropic adapter', async () => {
+    const { output } = await generateText({
+      model: anthropic(LIVE_ANTHROPIC_MODEL),
+      output: Output.object({
+        schema: signalSchema,
+        name: 'clinical_signal',
+        description: 'A concise clinical signal summary for regulated AI review workflows.',
+      }),
+      prompt:
+        'Extract a concise clinical signal from the following statement: "The investigational therapy reduced relapse rates in a small phase 2 study, but liver enzyme elevations warrant close monitoring."',
+      maxOutputTokens: 220,
+    });
+
+    expect(output.indication.length).toBeGreaterThan(4);
+    expect(output.mechanismOfAction.length).toBeGreaterThan(4);
+    expect(output.rationale.length).toBeGreaterThan(20);
   });
 
   it('routes both providers through the registry against live Foundry', async () => {

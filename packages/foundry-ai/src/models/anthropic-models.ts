@@ -80,5 +80,3 @@ export const ANTHROPIC_MODELS = {
     'ga',
   ),
 } as const satisfies Record<KnownAnthropicModelId, ModelMetadata>;
-
-export const ANTHROPIC_MODEL_IDS = Object.keys(ANTHROPIC_MODELS) as KnownAnthropicModelId[];

@@ -2,8 +2,10 @@
 
 # compiled output
 dist
+dist-types
 tmp
 out-tsc
+*.tsbuildinfo
 
 # dependencies
 node_modules

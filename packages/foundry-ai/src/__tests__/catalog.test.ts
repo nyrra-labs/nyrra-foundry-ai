@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { loadFoundryConfig } from '../config.js';
 import { describeError, FoundryModelNotFoundError } from '../errors.js';
 import {
-  findClosestModelNames,
   getModelMetadata,
   hasKnownModel,
   resolveKnownModelMetadata,
@@ -37,18 +36,18 @@ describe('model catalog', () => {
     });
   });
 
-  it('returns helpful typo suggestions for catalog helpers', () => {
-    const suggestions = findClosestModelNames('gpt-5-mni');
-
-    expect(suggestions[0]).toBe('gpt-5-mini');
-    expect(suggestions).toHaveLength(3);
+  it('throws a clear validation error for unknown aliases', () => {
     expect(() => resolveKnownModelMetadata('gpt-5-mni')).toThrowError(FoundryModelNotFoundError);
-    expect(() => resolveKnownModelMetadata('gpt-5-mni')).toThrowError(/gpt-5-mini/);
+    expect(() => resolveKnownModelMetadata('gpt-5-mni')).toThrowError(
+      /Check the catalog for supported aliases/,
+    );
   });
 
   it('treats raw RIDs as unknown to the validating helpers', () => {
     expect(hasKnownModel('ri.language-model-service..language-model.gpt-5-2')).toBe(false);
-    expect(findClosestModelNames('ri.language-model-service..language-model.gpt-5-2')).toEqual([]);
+    expect(() =>
+      resolveKnownModelMetadata('ri.language-model-service..language-model.gpt-5-2'),
+    ).toThrowError(FoundryModelNotFoundError);
   });
 });
 

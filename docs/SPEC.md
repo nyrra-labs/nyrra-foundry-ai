@@ -279,7 +279,7 @@ export function createFoundryOpenAI(config: FoundryConfig) {
 **Key decisions:**
 - Uses `provider.responses()` (OpenAI Responses API) not `.chat()` -- this is the modern API
 - Wraps with middleware for `forceReasoning`, enforced `store: false`, and default `strict: true` for OpenAI function tools
-- Falls through to raw RID if not found in catalog. Unknown strings are treated as raw model IDs; typo-suggestion errors are only for explicit catalog lookup helpers, not the provider adapter escape hatch.
+- Falls through to raw RID if not found in catalog. Unknown strings are treated as raw model IDs; explicit catalog helpers throw a plain validation error instead of trying to guess intended aliases.
 
 #### `anthropic.ts` -- `createFoundryAnthropic()`
 
@@ -413,11 +413,9 @@ export function loadFoundryConfig(): FoundryConfig {
 ```typescript
 export class FoundryModelNotFoundError extends Error {
   constructor(modelId: string) {
-    const suggestions = findClosestModelNames(modelId, 3);
-    const hint = suggestions.length
-      ? `\n\nDid you mean: ${suggestions.join(', ')}?`
-      : '\n\nCheck the model catalog for available models.';
-    super(`Unknown model: "${modelId}".${hint}`);
+    super(
+      `Unknown model: "${modelId}". Check the model catalog for available models or pass a raw Foundry RID directly to a provider adapter.`,
+    );
     this.name = 'FoundryModelNotFoundError';
   }
 }
@@ -642,7 +640,7 @@ Using `createFoundryRegistry` for multi-provider routing -- same config, multipl
    - RID resolution for all known models
    - Provider detection (friendly name -> correct provider)
    - String escape hatch (raw RIDs pass through)
-   - Closest-match suggestions for typos
+   - Plain validation errors for unknown aliases
 
 2. **Middleware tests**
    - `strict: true` defaulted onto function tools for OpenAI provider only when `strict` is unspecified
@@ -718,7 +716,7 @@ Using `createFoundryRegistry` for multi-provider routing -- same config, multipl
 - [ ] Middleware preserves explicit tool `strict` values
 - [ ] Middleware does NOT inject `strict` for Anthropic
 - [ ] `createFoundryRegistry` correctly routes `openai:model` and `anthropic:model`
-- [ ] Catalog/helper validation produces helpful typo suggestions without breaking raw RID passthrough in provider adapters
+- [ ] Catalog/helper validation rejects unknown aliases without breaking raw RID passthrough in provider adapters
 - [ ] `pnpm nx release` generates changelog and publishes to npm
 
 ---
@@ -806,7 +804,7 @@ Using `createFoundryRegistry` for multi-provider routing -- same config, multipl
 4. `src/models/openai-models.ts` -- OpenAI catalog
 5. `src/models/anthropic-models.ts` -- Anthropic catalog
 6. `src/models/catalog.ts` -- Unified catalog + resolution functions
-7. `src/errors.ts` -- Error types + fuzzy match suggestions
+7. `src/errors.ts` -- Error types + plain catalog validation messages
 8. `src/config.ts` -- Env var loading
 9. `src/middleware.ts` -- Foundry middleware (strict tools OpenAI-only, store, reasoning)
 10. `src/providers/openai.ts` -- createFoundryOpenAI

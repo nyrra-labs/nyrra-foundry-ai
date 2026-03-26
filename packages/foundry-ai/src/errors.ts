@@ -27,13 +27,10 @@ function getErrorCause(error: unknown): unknown {
 }
 
 export class FoundryModelNotFoundError extends Error {
-  constructor(modelId: string, suggestions: readonly string[] = []) {
-    const hint =
-      suggestions.length > 0
-        ? ` Did you mean: ${suggestions.join(', ')}?`
-        : ' Check the catalog for supported aliases or pass a raw Foundry RID directly to a provider adapter.';
-
-    super(`Unknown model: "${modelId}".${hint}`);
+  constructor(modelId: string) {
+    super(
+      `Unknown model: "${modelId}". Check the catalog for supported aliases or pass a raw Foundry RID directly to a provider adapter.`,
+    );
     this.name = 'FoundryModelNotFoundError';
   }
 }

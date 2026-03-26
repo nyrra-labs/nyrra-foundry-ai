@@ -138,8 +138,6 @@ export const OPENAI_MODELS = {
   ),
 } as const satisfies Record<KnownOpenAIModelId, ModelMetadata>;
 
-export const OPENAI_MODEL_IDS = Object.keys(OPENAI_MODELS) as KnownOpenAIModelId[];
-
 export const OPENAI_REASONING_MODELS = new Set<KnownOpenAIModelId>([
   'gpt-5',
   'gpt-5-mini',
