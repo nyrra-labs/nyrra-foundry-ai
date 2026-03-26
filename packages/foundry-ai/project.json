@@ -15,7 +15,7 @@
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm exec biome check package.json nx.json tsconfig.base.json tsconfig.json pnpm-workspace.yaml biome.json packages/foundry-ai examples README.md",
+        "command": "pnpm exec biome check package.json nx.json tsconfig.base.json tsconfig.json pnpm-workspace.yaml biome.json README.md docs/SPEC.md examples packages/foundry-ai/package.json packages/foundry-ai/project.json packages/foundry-ai/src packages/foundry-ai/tsconfig.json packages/foundry-ai/tsconfig.lib.json packages/foundry-ai/tsconfig.spec.json packages/foundry-ai/tsconfig.typecheck.json packages/foundry-ai/tsup.config.ts packages/foundry-ai/vitest.config.ts",
         "cwd": "{workspaceRoot}"
       }
     },
@@ -37,9 +37,7 @@
   "tags": [],
   "release": {
     "version": {
-      "manifestRootsToUpdate": ["{projectRoot}"],
-      "currentVersionResolver": "git-tag",
-      "fallbackCurrentVersionResolver": "disk"
+      "manifestRootsToUpdate": ["{projectRoot}"]
     }
   }
 }

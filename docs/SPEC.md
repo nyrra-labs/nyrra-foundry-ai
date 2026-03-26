@@ -573,17 +573,40 @@ Single-package release workflow using nx release:
 // nx.json (partial)
 {
   "release": {
-    "projects": ["foundry-ai"],
+    "groups": {
+      "npm-packages": {
+        "projects": ["foundry-ai"],
+        "projectsRelationship": "fixed",
+        "releaseTag": {
+          "pattern": "@nyrra-labs/foundry-ai@{version}"
+        }
+      }
+    },
     "version": {
-      "conventionalCommits": true
+      "adjustSemverBumpsForZeroMajorVersion": true,
+      "conventionalCommits": true,
+      "preserveLocalDependencyProtocols": true
     },
     "changelog": {
+      "automaticFromRef": true,
       "workspaceChangelog": false,
       "projectChangelogs": true
     }
   }
 }
 ```
+
+### Deferred: Prismantix-Style `next` Prereleases
+
+Do not implement the full Prismantix Maker prerelease workflow in Phase 1 unless release automation is needed immediately. This repo does not yet have GitHub Actions release automation or npm trusted publishing configured, so a partial copy would create local-only release behavior without the CI path that makes it valuable.
+
+When release automation is added, mirror the Prismantix pattern in a single-package form:
+
+- pushes to `main` publish `next` prereleases automatically without committing prerelease version bumps back to the protected branch
+- prerelease versions are resolved from the stable manifest version plus the current npm `next` dist-tag, so repeated prereleases advance as `0.0.2-next.0`, `0.0.2-next.1`, etc.
+- manual workflow dispatch remains the stable-release path that publishes `latest`, creates the git tag, and pushes the stable version bump
+- prerelease version resolution should be npm-backed rather than git-backed, because CI-generated prerelease commits are intentionally ephemeral
+- the helper script can stay single-package and only needs to inspect `packages/foundry-ai/package.json` plus the npm `latest` and `next` dist-tags for `@nyrra-labs/foundry-ai`
 
 ---
 
