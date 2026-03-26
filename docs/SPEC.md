@@ -221,10 +221,6 @@ export const OPENAI_MODELS = {
   },
   // ... all other OpenAI models
 } as const satisfies Record<string, ModelMetadata>;
-
-export const OPENAI_REASONING_MODELS = new Set([
-  'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-5.2', 'gpt-5.4', 'o3', 'o4-mini',
-]);
 ```
 
 #### `anthropic-models.ts`

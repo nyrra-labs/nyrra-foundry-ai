@@ -6,16 +6,12 @@ export {
   getModelMetadata,
   hasKnownModel,
   MODEL_CATALOG,
-  MODEL_IDS,
   resolveKnownModelMetadata,
   resolveModelProvider,
   resolveModelRid,
   resolveModelTarget,
 } from './models/catalog.js';
-export {
-  OPENAI_MODELS,
-  OPENAI_REASONING_MODELS,
-} from './models/openai-models.js';
+export { OPENAI_MODELS } from './models/openai-models.js';
 export type {
   AnthropicModelId,
   FoundryConfig,
@@ -27,4 +23,4 @@ export type {
   OpenAIModelId,
   ResolvedModelTarget,
 } from './types.js';
-export { ANTHROPIC_MODEL_IDS, KNOWN_MODEL_IDS, OPENAI_MODEL_IDS } from './types.js';
+export { ANTHROPIC_MODEL_IDS, OPENAI_MODEL_IDS } from './types.js';

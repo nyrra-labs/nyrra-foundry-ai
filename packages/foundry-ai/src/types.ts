@@ -44,9 +44,7 @@ export type KnownAnthropicModelId = (typeof ANTHROPIC_MODEL_IDS)[number];
 
 export type AnthropicModelId = KnownAnthropicModelId | (string & {});
 
-export const KNOWN_MODEL_IDS = [...OPENAI_MODEL_IDS, ...ANTHROPIC_MODEL_IDS] as const;
-
-export type KnownModelId = (typeof KNOWN_MODEL_IDS)[number];
+export type KnownModelId = KnownOpenAIModelId | KnownAnthropicModelId;
 export type FoundryModelId = OpenAIModelId | AnthropicModelId;
 
 export type ModelProvider = 'openai' | 'anthropic';

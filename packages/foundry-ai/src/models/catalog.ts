@@ -1,11 +1,5 @@
 import { FoundryModelNotFoundError } from '../errors.js';
-import {
-  KNOWN_MODEL_IDS,
-  type KnownModelId,
-  type ModelMetadata,
-  type ModelProvider,
-  type ResolvedModelTarget,
-} from '../types.js';
+import type { KnownModelId, ModelMetadata, ModelProvider, ResolvedModelTarget } from '../types.js';
 import { ANTHROPIC_MODELS } from './anthropic-models.js';
 import { OPENAI_MODELS } from './openai-models.js';
 
@@ -13,8 +7,6 @@ export const MODEL_CATALOG = {
   ...OPENAI_MODELS,
   ...ANTHROPIC_MODELS,
 } as const satisfies Record<KnownModelId, ModelMetadata>;
-
-export const MODEL_IDS = KNOWN_MODEL_IDS;
 const MODEL_CATALOG_BY_RID = Object.fromEntries(
   Object.values(MODEL_CATALOG).map((metadata) => [metadata.rid, metadata]),
 ) as Record<string, ModelMetadata>;

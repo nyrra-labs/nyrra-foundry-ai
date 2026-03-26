@@ -137,13 +137,3 @@ export const OPENAI_MODELS = {
     'ga',
   ),
 } as const satisfies Record<KnownOpenAIModelId, ModelMetadata>;
-
-export const OPENAI_REASONING_MODELS = new Set<KnownOpenAIModelId>([
-  'gpt-5',
-  'gpt-5-mini',
-  'gpt-5-nano',
-  'gpt-5.2',
-  'gpt-5.4',
-  'o3',
-  'o4-mini',
-]);
