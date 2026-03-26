@@ -119,6 +119,7 @@ Install dependencies and use the root scripts:
 
 ```bash
 pnpm install
+pnpm format
 pnpm lint
 pnpm test
 pnpm typecheck

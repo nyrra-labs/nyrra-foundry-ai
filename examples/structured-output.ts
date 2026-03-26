@@ -1,4 +1,4 @@
-import { generateObject } from 'ai';
+import { generateText, Output } from 'ai';
 import { z } from 'zod';
 import { createExampleLanguageModel } from './shared.js';
 
@@ -11,14 +11,17 @@ const signalSchema = z.object({
 
 const { model, modelId, provider } = createExampleLanguageModel();
 
-const result = await generateObject({
+const { output } = await generateText({
   model,
-  output: 'object',
-  schema: signalSchema,
+  output: Output.object({
+    schema: signalSchema,
+    name: 'clinical_signal',
+    description: 'A concise clinical signal summary for regulated AI review workflows.',
+  }),
   prompt:
     'Extract a concise clinical signal from the following statement: "The investigational therapy reduced relapse rates in a small phase 2 study, but liver enzyme elevations warrant close monitoring."',
 });
 
 console.log(`provider: ${provider}`);
 console.log(`model: ${modelId}`);
-console.log(JSON.stringify(result.object, null, 2));
+console.log(JSON.stringify(output, null, 2));

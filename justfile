@@ -1,5 +1,8 @@
 set shell := ["zsh", "-lc"]
 
+format:
+  pnpm run format
+
 build:
   pnpm exec nx run foundry-ai:build
 

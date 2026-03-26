@@ -5,9 +5,11 @@
   "packageManager": "pnpm@10.24.0",
   "scripts": {
     "build": "pnpm exec nx run foundry-ai:build",
+    "format": "pnpm exec biome check --write .",
     "lint": "pnpm exec nx run foundry-ai:lint",
     "test": "pnpm exec nx run foundry-ai:test",
     "typecheck": "pnpm exec nx run foundry-ai:typecheck",
+    "deprecations": "node scripts/check-deprecations.mjs --project packages/foundry-ai/tsconfig.typecheck.json",
     "release": "pnpm exec nx release"
   },
   "devDependencies": {
