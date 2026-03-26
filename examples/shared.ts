@@ -1,6 +1,5 @@
 import { resolve } from 'node:path';
 import process from 'node:process';
-import type { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai';
 import type { AnthropicModelId, OpenAIModelId } from '@nyrra-labs/foundry-ai';
 import { loadFoundryConfig } from '@nyrra-labs/foundry-ai';
 import { createFoundryAnthropic } from '@nyrra-labs/foundry-ai/anthropic';
@@ -12,6 +11,8 @@ export type ExampleProvider = 'openai' | 'anthropic';
 const LOCAL_ENV_FILE = resolve(process.cwd(), '.env.local');
 
 const DEFAULT_OPENAI_MODEL: OpenAIModelId = 'gpt-5-mini';
+// Sonnet is the default Anthropic example target because it accepts the
+// reasoning/tool options we verify in the live tool-calling path.
 const DEFAULT_ANTHROPIC_MODEL: AnthropicModelId = 'claude-sonnet-4.6';
 
 maybeLoadLocalEnvFile();
@@ -76,21 +77,6 @@ export function requireEnv(name: string): string {
   }
 
   return value;
-}
-
-export function getExampleProviderOptions(provider: ExampleProvider) {
-  if (provider !== 'openai') {
-    return undefined;
-  }
-
-  return {
-    // Foundry uses opaque RIDs, so these OpenAI-only options keep gpt-5-mini
-    // examples predictable without affecting Anthropic.
-    openai: {
-      reasoningEffort: 'low',
-      textVerbosity: 'low',
-    } satisfies OpenAILanguageModelResponsesOptions,
-  };
 }
 
 function maybeLoadLocalEnvFile() {

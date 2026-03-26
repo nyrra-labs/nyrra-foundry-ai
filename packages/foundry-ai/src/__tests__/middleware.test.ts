@@ -109,7 +109,11 @@ describe('wrapWithFoundryMiddleware', () => {
       prompt: [],
       providerOptions: {
         anthropic: {
+          disableParallelToolUse: true,
+          effort: 'low',
+          sendReasoning: true,
           thinking: { type: 'enabled', budgetTokens: 512 },
+          toolStreaming: true,
         },
       },
       tools: [
@@ -124,7 +128,11 @@ describe('wrapWithFoundryMiddleware', () => {
 
     expect(state.lastGenerateParams?.providerOptions).toEqual({
       anthropic: {
+        disableParallelToolUse: true,
+        effort: 'low',
+        sendReasoning: true,
         thinking: { type: 'enabled', budgetTokens: 512 },
+        toolStreaming: true,
       },
     });
     expect(state.lastGenerateParams?.tools?.[0]).toMatchObject({

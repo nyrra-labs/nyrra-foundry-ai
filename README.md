@@ -112,6 +112,13 @@ pnpm run example tool-calling-exa openai
 pnpm run example tool-calling-exa anthropic
 ```
 
+Examples also accept an optional model ID as the third argument:
+
+```bash
+pnpm run example streaming anthropic claude-sonnet-4.6
+pnpm run example tool-calling-exa anthropic claude-sonnet-4.6
+```
+
 If you want the shortest path, Bun works directly too:
 
 ```bash
@@ -122,7 +129,9 @@ bun examples/tool-calling-exa.ts openai
 bun examples/tool-calling-exa.ts anthropic
 ```
 
-`examples/tool-calling-exa.ts` also requires `EXA_API_KEY` and now logs raw `fullStream` events so you can see tool calls, tool results, and text deltas directly.
+`examples/streaming.ts` and `examples/tool-calling-exa.ts` both print the exact provider options they send before streaming raw `fullStream` events.
+
+`examples/tool-calling-exa.ts` also requires `EXA_API_KEY`.
 
 Plain Node still works if you prefer it:
 
@@ -133,6 +142,18 @@ node --import tsx examples/provider-registry.ts
 node --import tsx examples/tool-calling-exa.ts openai
 node --import tsx examples/tool-calling-exa.ts anthropic
 ```
+
+## Verified Provider Options
+
+Observed on March 26, 2026 against this Foundry stack:
+
+| Provider | Model | Verified live options |
+|---|---|---|
+| OpenAI | `gpt-5-mini` | `reasoningEffort`, `textVerbosity` |
+| Anthropic | `claude-sonnet-4.6` | `thinking`, `sendReasoning`, `effort`, `toolStreaming`, `disableParallelToolUse` |
+| Anthropic | `claude-haiku-4.5` | basic text, raw RID, streaming, structured output |
+
+The Anthropic AI SDK exposes more knobs than this Foundry stack accepts uniformly across models. During live verification on March 26, 2026, `claude-haiku-4.5` rejected Anthropic `effort` because Foundry rejected the proxied `output_config` payload. That is why the richer Anthropic reasoning/tool examples default to `claude-sonnet-4.6`.
 
 ## Development
 
