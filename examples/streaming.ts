@@ -16,15 +16,18 @@ const providerOptions: ExampleProviderOptions =
           textVerbosity: 'low',
         } satisfies OpenAILanguageModelResponsesOptions,
       }
-    : {
-        anthropic: {
-          thinking: {
-            type: 'enabled',
-            budgetTokens: 1024,
-          },
-          sendReasoning: true,
-        } satisfies AnthropicLanguageModelOptions,
-      };
+    : provider === 'anthropic'
+      ? {
+          anthropic: {
+            thinking: {
+              type: 'enabled',
+              budgetTokens: 1024,
+            },
+            sendReasoning: true,
+          } satisfies AnthropicLanguageModelOptions,
+        }
+      : {};
+
 const result = streamText({
   model,
   prompt,

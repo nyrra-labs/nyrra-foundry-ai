@@ -8,6 +8,7 @@ requireEnv('EXA_API_KEY');
 
 const { model, modelId, provider } = createExampleLanguageModel(undefined, {
   anthropicModel: 'claude-sonnet-4.6',
+  googleModel: 'gemini-3.1-flash-lite',
   openaiModel: 'gpt-5-mini',
 });
 const prompt =
@@ -40,18 +41,21 @@ const providerOptions: ExampleProviderOptions =
           textVerbosity: 'low',
         } satisfies OpenAILanguageModelResponsesOptions,
       }
-    : {
-        anthropic: {
-          effort: 'low',
-          thinking: {
-            type: 'enabled',
-            budgetTokens: 1024,
-          },
-          sendReasoning: true,
-          toolStreaming: true,
-          disableParallelToolUse: true,
-        } satisfies AnthropicLanguageModelOptions,
-      };
+    : provider === 'anthropic'
+      ? {
+          anthropic: {
+            effort: 'low',
+            thinking: {
+              type: 'enabled',
+              budgetTokens: 1024,
+            },
+            sendReasoning: true,
+            toolStreaming: true,
+            disableParallelToolUse: true,
+          } satisfies AnthropicLanguageModelOptions,
+        }
+      : {};
+
 const result = streamText({
   model,
   prompt,

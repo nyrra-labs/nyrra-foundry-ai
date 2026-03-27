@@ -4,6 +4,8 @@ Run every example from the repo root.
 
 Bun is the recommended path. The scripts auto-load `.env.local` when `FOUNDRY_URL` and `FOUNDRY_TOKEN` are not already set in the environment.
 
+Supported provider arguments are `openai`, `anthropic`, and `google`.
+
 ## Required Env
 
 - `FOUNDRY_URL`
@@ -16,38 +18,25 @@ Bun is the recommended path. The scripts auto-load `.env.local` when `FOUNDRY_UR
 Use the root runner when you want a fresh package build first:
 
 ```bash
+# OpenAI
 pnpm run example basic-text openai
-```
-
-```bash
-pnpm run example basic-text anthropic
-```
-
-```bash
 pnpm run example streaming openai
-```
-
-```bash
-pnpm run example streaming anthropic
-```
-
-```bash
 pnpm run example structured-output openai
-```
-
-```bash
-pnpm run example structured-output anthropic
-```
-
-```bash
 pnpm run example tool-calling-exa openai
-```
 
-```bash
+# Anthropic
+pnpm run example basic-text anthropic
+pnpm run example streaming anthropic
+pnpm run example structured-output anthropic
 pnpm run example tool-calling-exa anthropic
-```
 
-```bash
+# Google
+pnpm run example basic-text google
+pnpm run example streaming google
+pnpm run example structured-output google
+pnpm run example tool-calling-exa google
+
+# Registry composition
 pnpm run example provider-registry
 ```
 
@@ -58,38 +47,25 @@ pnpm run example provider-registry
 Use Bun directly when you do not need the rebuild step:
 
 ```bash
+# OpenAI
 bun examples/basic-text.ts openai
-```
-
-```bash
-bun examples/basic-text.ts anthropic
-```
-
-```bash
 bun examples/streaming.ts openai
-```
-
-```bash
-bun examples/streaming.ts anthropic
-```
-
-```bash
 bun examples/structured-output.ts openai
-```
-
-```bash
-bun examples/structured-output.ts anthropic
-```
-
-```bash
 bun examples/tool-calling-exa.ts openai
-```
 
-```bash
+# Anthropic
+bun examples/basic-text.ts anthropic
+bun examples/streaming.ts anthropic
+bun examples/structured-output.ts anthropic
 bun examples/tool-calling-exa.ts anthropic
-```
 
-```bash
+# Google
+bun examples/basic-text.ts google
+bun examples/streaming.ts google
+bun examples/structured-output.ts google
+bun examples/tool-calling-exa.ts google
+
+# Registry composition
 bun examples/provider-registry.ts
 ```
 
@@ -114,3 +90,4 @@ pnpm run example streaming anthropic claude-sonnet-4.6
 - `streaming.ts` prints the exact provider options it sends and then logs raw `fullStream` events.
 - `tool-calling-exa.ts` does the same for the full tool loop, including tool calls, tool results, and final text.
 - The richer Anthropic reasoning/tool example path defaults to `claude-sonnet-4.6` because that is the model we verified live with `thinking`, `sendReasoning`, `effort`, `toolStreaming`, and `disableParallelToolUse`.
+- The Google examples can use friendly aliases because the package now maps the verified Gemini aliases to Foundry RIDs.

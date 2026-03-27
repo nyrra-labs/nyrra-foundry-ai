@@ -4,14 +4,17 @@ import { createProviderRegistry, generateText, Output, stepCountIs, streamText, 
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createFoundryAnthropic } from '../providers/anthropic.js';
+import { createFoundryGoogle } from '../providers/google.js';
 import { createFoundryOpenAI } from '../providers/openai.js';
 import { loadLiveFoundryConfig } from './helpers/live-foundry.js';
 
 const config = loadLiveFoundryConfig();
 const openai = createFoundryOpenAI(config);
 const anthropic = createFoundryAnthropic(config);
+const google = createFoundryGoogle(config);
 const registry = createProviderRegistry({
   anthropic,
+  google,
   openai,
 });
 const LIVE_OPENAI_SMOKE_MODEL = 'gpt-4.1-mini';
@@ -21,6 +24,8 @@ const LIVE_ANTHROPIC_SMOKE_MODEL = 'claude-haiku-4.5';
 const LIVE_ANTHROPIC_SMOKE_RID =
   'ri.language-model-service..language-model.anthropic-claude-4-5-haiku';
 const LIVE_ANTHROPIC_OPTIONS_MODEL = 'claude-sonnet-4.6';
+const LIVE_GOOGLE_SMOKE_MODEL = 'gemini-3.1-flash-lite';
+const LIVE_GOOGLE_SMOKE_RID = 'ri.language-model-service..language-model.gemini-3-1-flash-lite';
 const LIVE_OPENAI_PROVIDER_OPTIONS = {
   openai: {
     forceReasoning: true,
@@ -184,6 +189,99 @@ describe.sequential('live Foundry integration', () => {
     expect(output.rationale.length).toBeGreaterThan(20);
   });
 
+  it('generates text with the direct Google adapter', async () => {
+    const result = await generateText({
+      model: google(LIVE_GOOGLE_SMOKE_MODEL),
+      prompt: 'Reply with ACK and one short clause about Foundry Gemini routing.',
+      maxOutputTokens: 80,
+    });
+
+    expect(result.text).toMatch(/ack/i);
+    expect(result.text.trim().length).toBeGreaterThan(10);
+  });
+
+  it('supports raw RID passthrough with the direct Google adapter', async () => {
+    const result = await generateText({
+      model: google(LIVE_GOOGLE_SMOKE_RID),
+      prompt: 'Reply with READY and one short clause.',
+      maxOutputTokens: 80,
+    });
+
+    expect(result.text).toMatch(/ready/i);
+  });
+
+  it('streams text with the direct Google adapter', async () => {
+    const result = streamText({
+      model: google(LIVE_GOOGLE_SMOKE_MODEL),
+      prompt: 'Reply with FOUNDRY and one short clause about Gemini proxy routing.',
+      maxOutputTokens: 120,
+    });
+
+    let text = '';
+
+    for await (const chunk of result.textStream) {
+      text += chunk;
+    }
+
+    expect(text.trim().length).toBeGreaterThan(10);
+    expect(text.toLowerCase()).toContain('foundry');
+  });
+
+  it('generates structured output with the direct Google adapter', async () => {
+    const { output } = await generateText({
+      model: google(LIVE_GOOGLE_SMOKE_MODEL),
+      output: Output.object({
+        schema: signalSchema,
+        name: 'clinical_signal',
+        description: 'A concise clinical signal summary for regulated AI review workflows.',
+      }),
+      prompt:
+        'Extract a concise clinical signal from the following statement: "The investigational therapy reduced relapse rates in a small phase 2 study, but liver enzyme elevations warrant close monitoring."',
+      maxOutputTokens: 260,
+    });
+
+    expect(output.indication.length).toBeGreaterThan(4);
+    expect(output.mechanismOfAction.length).toBeGreaterThan(4);
+    expect(output.riskLevel).toMatch(/low|medium|high/);
+    expect(output.rationale.length).toBeGreaterThan(20);
+  });
+
+  it('supports Google tool loops through the direct adapter', async () => {
+    const result = streamText({
+      model: google(LIVE_GOOGLE_SMOKE_MODEL),
+      prompt:
+        'Call the regulatorySignal tool exactly once, then answer with SIGNAL and the returned status in one short sentence.',
+      maxOutputTokens: 160,
+      stopWhen: stepCountIs(3),
+      tools: {
+        regulatorySignal: regulatorySignalTool,
+      },
+    });
+
+    let text = '';
+    let sawToolCall = false;
+    let sawToolResult = false;
+
+    for await (const part of result.fullStream) {
+      if (part.type === 'text-delta') {
+        text += part.text;
+      }
+
+      if (part.type === 'tool-call') {
+        sawToolCall = true;
+      }
+
+      if (part.type === 'tool-result') {
+        sawToolResult = true;
+      }
+    }
+
+    expect(sawToolCall).toBe(true);
+    expect(sawToolResult).toBe(true);
+    expect(text).toMatch(/signal/i);
+    expect(text).toMatch(/verified/i);
+  });
+
   it('supports OpenAI reasoning provider options during tool loops', async () => {
     const result = streamText({
       model: openai(LIVE_OPENAI_REASONING_MODEL),
@@ -289,7 +387,7 @@ describe.sequential('live Foundry integration', () => {
     expect(text).toMatch(/verified/i);
   });
 
-  it('routes both providers through AI SDK registry composition against live Foundry', async () => {
+  it('routes all configured providers through AI SDK registry composition against live Foundry', async () => {
     const openAiResult = await generateText({
       model: registry.languageModel(`openai:${LIVE_OPENAI_REASONING_MODEL}`),
       prompt: 'Reply with ACK and one short clause about registry routing.',
@@ -303,7 +401,14 @@ describe.sequential('live Foundry integration', () => {
       maxOutputTokens: 30,
     });
 
+    const googleResult = await generateText({
+      model: registry.languageModel(`google:${LIVE_GOOGLE_SMOKE_MODEL}`),
+      prompt: 'Reply with GOOGLE and one short clause.',
+      maxOutputTokens: 30,
+    });
+
     expect(openAiResult.text).toMatch(/ack/i);
     expect(anthropicResult.text).toMatch(/anthropic/i);
+    expect(googleResult.text).toMatch(/google/i);
   });
 });

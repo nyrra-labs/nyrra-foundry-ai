@@ -4,8 +4,9 @@
 
 `@nyrra/foundry-ai` is a small TypeScript package that adapts Palantir Foundry LLM proxy endpoints to the Vercel AI SDK. The package is intentionally thin:
 
-- provider factories only for OpenAI and Anthropic
+- stable provider factories for OpenAI and Anthropic
 - a shared alias-to-RID catalog with reverse RID lookup
+- a beta Google provider factory backed by an explicit RID catalog
 - no published registry helper
 - explicit handling for known Foundry OpenAI compatibility gaps
 
@@ -27,12 +28,13 @@ The package does not try to invent a separate request API. Callers should contin
 - `resolveModelProvider()`
 - `resolveModelRid()`
 - `resolveModelTarget()`
-- type exports for `FoundryConfig`, `OpenAIModelId`, `AnthropicModelId`, `KnownOpenAIModelId`, `KnownAnthropicModelId`, `KnownModelId`, `ModelMetadata`, `ModelProvider`, `ModelLifecycle`, and `ResolvedModelTarget`
+- type exports for `FoundryConfig`, `OpenAIModelId`, `AnthropicModelId`, `GoogleModelId`, `KnownOpenAIModelId`, `KnownAnthropicModelId`, `KnownGoogleModelId`, `KnownModelId`, `ModelMetadata`, `ModelProvider`, `ModelLifecycle`, and `ResolvedModelTarget`
 
 ### Provider entrypoints
 
 - `@nyrra/foundry-ai/openai` exports `createFoundryOpenAI`
 - `@nyrra/foundry-ai/anthropic` exports `createFoundryAnthropic`
+- `@nyrra/foundry-ai/google` exports `createFoundryGoogle`
 
 There is no `@nyrra/foundry-ai/registry` export. Multi-provider routing belongs in application code with AI SDK `createProviderRegistry`.
 The package is still pre-1.0, and the thin-adapter contract intentionally removes the older registry, middleware, and formatter helper exports instead of preserving them behind compatibility shims.
@@ -41,10 +43,9 @@ The package is still pre-1.0, and the thin-adapter contract intentionally remove
 
 ### Shared behavior
 
-- Both providers validate `foundryUrl` and `token` at runtime.
-- Both providers normalize trailing slashes in `foundryUrl`.
-- Friendly aliases are resolved through the catalog.
-- Unknown strings pass through as raw Foundry RIDs.
+- All providers validate `foundryUrl` and `token` at runtime.
+- All providers normalize trailing slashes in `foundryUrl`.
+- OpenAI, Anthropic, and Google friendly aliases are resolved through the shared RID catalog.
 - Wrapped models expose the caller-facing alias as `model.modelId` when an alias was used.
 
 ### OpenAI-specific behavior
@@ -64,6 +65,29 @@ For uncatalogued OpenAI reasoning RIDs, the package cannot infer reasoning capab
 - The adapter does not rewrite Anthropic provider options.
 - Capability differences that vary by Foundry stack or model stay documented in examples and README instead of being guessed at runtime.
 
+### Google-specific behavior
+
+- The adapter targets Foundry's beta Google-compatible proxy under `/api/v2/llm/proxy/google/v1`.
+- Known Gemini aliases resolve to explicit Foundry RIDs gathered from the enrollment catalog.
+- The underlying AI SDK provider expects `x-goog-api-key`, but Foundry requires bearer auth, so the adapter rewrites auth headers at fetch time to `Authorization: Bearer`.
+- The adapter intentionally exposes only language-model methods. Image, embedding, and video methods throw `NoSuchModelError` until Foundry exposes compatible proxy endpoints for them.
+
+Current Google alias-to-RID mappings:
+
+- `gemini-2.5-pro` -> `ri.language-model-service..language-model.gemini-2-5-pro`
+- `gemini-2.5-flash` -> `ri.language-model-service..language-model.gemini-2-5-flash`
+- `gemini-2.5-flash-lite` -> `ri.language-model-service..language-model.gemini-2-5-flash-lite`
+- `gemini-3-pro` -> `ri.language-model-service..language-model.gemini-3-pro`
+- `gemini-3-flash` -> `ri.language-model-service..language-model.gemini-3-flash`
+- `gemini-3.1-pro` -> `ri.language-model-service..language-model.gemini-3-1-pro`
+- `gemini-3.1-flash-lite` -> `ri.language-model-service..language-model.gemini-3-1-flash-lite`
+
+### xAI-specific behavior
+
+- The Foundry xAI-compatible endpoints currently remain out of package scope.
+- We probed both `/api/v2/llm/proxy/xai/v1/chat/completions` and `/api/v2/llm/proxy/xai/v1/responses` on the active enrollment and they rejected documented request shapes during request deserialization with `LanguageModelService:InvalidRequest`.
+- Keep xAI tracked as a spec item until the endpoint contract is usable and we have enrollment-backed model RIDs to catalog.
+
 ## Catalog Design
 
 The public catalog contains only stable cross-provider metadata:
@@ -76,6 +100,8 @@ The public catalog contains only stable cross-provider metadata:
 - `lifecycle`
 
 Behavior-driving compatibility flags are kept out of the public metadata contract unless they can be represented accurately and maintained reliably.
+
+Google is now included in the shared catalog using verified enrollment RIDs. xAI remains intentionally excluded until the beta proxy contract is stable enough to document and verify consistently.
 
 ## Example Registry Composition
 
@@ -101,4 +127,5 @@ const registry = createProviderRegistry({
 - unit tests for OpenAI compatibility defaults and explicit `store=true` failure
 - unit tests for reverse RID lookup export
 - unit tests for application-level `createProviderRegistry` composition using the public provider factories
-- live verification for direct OpenAI and Anthropic calls, plus registry composition via AI SDK
+- live verification for direct OpenAI, Anthropic, and Google calls, plus registry composition via AI SDK
+- targeted beta probing for xAI endpoint behavior and current failure modes on the active enrollment

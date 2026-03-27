@@ -16,10 +16,11 @@ Thin Foundry provider adapters and model catalog for the Vercel AI SDK.
 ## What It Does
 
 - Maps friendly model names such as `gpt-5-mini` and `claude-sonnet-4.6` to Foundry RIDs.
-- Exposes isolated provider subpaths so OpenAI and Anthropic installs stay separate by default.
+- Exposes isolated provider subpaths so OpenAI, Anthropic, and Google installs stay separate by default.
 - Applies only the OpenAI compatibility defaults required by Foundry RID routing: `store: false`, `forceReasoning: true` for catalogued OpenAI reasoning targets unless the caller already set `forceReasoning`, and `strict: true` for function tools when the caller left `strict` unspecified.
 - Preserves a raw RID escape hatch when a model is not yet in the catalog.
 - Exposes both alias and reverse-RID catalog lookups for app-level validation and routing.
+- Adds a beta Gemini adapter backed by an explicit Foundry RID catalog.
 
 ## Package Contract
 
@@ -28,6 +29,7 @@ The published surface is intentionally small:
 - `@nyrra/foundry-ai` exports config loading, catalog helpers, errors, and model ID types.
 - `@nyrra/foundry-ai/openai` exports `createFoundryOpenAI`.
 - `@nyrra/foundry-ai/anthropic` exports `createFoundryAnthropic`.
+- `@nyrra/foundry-ai/google` exports `createFoundryGoogle`.
 
 There is no published registry helper. Multi-provider routing stays as an application-level example built with AI SDK `createProviderRegistry`.
 This package is still pre-1.0. Legacy exports from the earlier wrapper-heavy shape such as the registry helper, middleware wrapper, and formatter helpers are intentionally removed instead of being carried forward behind compatibility shims.
@@ -38,6 +40,14 @@ Install the package plus the provider peer dependency you plan to use:
 
 ```bash
 pnpm add @nyrra/foundry-ai ai @ai-sdk/openai
+```
+
+```bash
+pnpm add @nyrra/foundry-ai ai @ai-sdk/anthropic
+```
+
+```bash
+pnpm add @nyrra/foundry-ai ai @ai-sdk/google
 ```
 
 Set the required environment variables:
@@ -82,6 +92,23 @@ const result = await generateText({
 console.log(result.text);
 ```
 
+Gemini uses the beta Google-compatible proxy and resolves friendly aliases through the shared Foundry RID catalog:
+
+```ts
+import { loadFoundryConfig } from '@nyrra/foundry-ai';
+import { createFoundryGoogle } from '@nyrra/foundry-ai/google';
+import { generateText } from 'ai';
+
+const google = createFoundryGoogle(loadFoundryConfig());
+
+const result = await generateText({
+  model: google('gemini-3.1-flash-lite'),
+  prompt: 'Summarize why Gemini through Foundry is useful.',
+});
+
+console.log(result.text);
+```
+
 ## Multi-Provider Routing Example
 
 Compose AI SDK's registry in application code when you need both providers:
@@ -104,6 +131,16 @@ const result = await generateText({
 });
 ```
 
+Google registry composition works the same way:
+
+```ts
+import { createFoundryGoogle } from '@nyrra/foundry-ai/google';
+
+const registry = createProviderRegistry({
+  google: createFoundryGoogle(config),
+});
+```
+
 ## Explicit OpenAI Compatibility Rules
 
 - `providerOptions.openai.store=true` throws before the request is sent. The adapter always uses `store: false` for Foundry OpenAI traffic.
@@ -119,16 +156,17 @@ Core exports from `@nyrra/foundry-ai`:
 - `FoundryModelNotFoundError`
 - `MODEL_CATALOG` and `MODEL_CATALOG_BY_RID`
 - catalog helpers such as `getModelMetadata()`, `resolveModelRid()`, and `resolveModelTarget()`
-- public types including `FoundryConfig`, `OpenAIModelId`, `AnthropicModelId`, `KnownOpenAIModelId`, `KnownAnthropicModelId`, and `KnownModelId`
+- public types including `FoundryConfig`, `OpenAIModelId`, `AnthropicModelId`, `GoogleModelId`, `KnownOpenAIModelId`, `KnownAnthropicModelId`, `KnownGoogleModelId`, and `KnownModelId`
 
 Provider-specific entrypoints:
 
 ```ts
 import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
 import { createFoundryAnthropic } from '@nyrra/foundry-ai/anthropic';
+import { createFoundryGoogle } from '@nyrra/foundry-ai/google';
 ```
 
-Friendly names resolve through the shared catalog. Unknown strings pass through unchanged as raw Foundry RIDs when you call a provider adapter directly. Catalog-only helpers such as `resolveModelRid()` throw `FoundryModelNotFoundError` with a plain validation message.
+OpenAI, Anthropic, and Google friendly names resolve through the shared RID catalog. Unknown strings still pass through unchanged as raw targets when you call a provider factory directly.
 
 ## Examples
 
@@ -144,38 +182,67 @@ The repo includes runnable scripts for direct provider usage and registry compos
 Run them from the repo root. For a safe run that rebuilds the package first, use:
 
 ```bash
+# OpenAI
 pnpm run example basic-text openai
-```
+pnpm run example streaming openai
+pnpm run example structured-output openai
+pnpm run example tool-calling-exa openai
 
-```bash
+# Anthropic
+pnpm run example basic-text anthropic
 pnpm run example streaming anthropic
-```
+pnpm run example structured-output anthropic
+pnpm run example tool-calling-exa anthropic
 
-```bash
+# Google
+pnpm run example basic-text google
+pnpm run example streaming google
+pnpm run example structured-output google
+pnpm run example tool-calling-exa google
+
+# Registry composition
 pnpm run example provider-registry
 ```
 
 If you want the shortest path, Bun works directly too:
 
 ```bash
+# OpenAI
 bun examples/basic-text.ts openai
-```
+bun examples/streaming.ts openai
+bun examples/structured-output.ts openai
+bun examples/tool-calling-exa.ts openai
 
-```bash
+# Anthropic
+bun examples/basic-text.ts anthropic
+bun examples/streaming.ts anthropic
+bun examples/structured-output.ts anthropic
+bun examples/tool-calling-exa.ts anthropic
+
+# Google
+bun examples/basic-text.ts google
+bun examples/streaming.ts google
+bun examples/structured-output.ts google
+bun examples/tool-calling-exa.ts google
+
+# Registry composition
 bun examples/provider-registry.ts
 ```
 
 ## Verified Provider Options
 
-Observed on March 26, 2026 against this Foundry stack:
+Observed on March 27, 2026 against this Foundry stack:
 
 | Provider | Model | Verified live options |
 |---|---|---|
 | OpenAI | `gpt-5-mini` | `reasoningEffort`, `textVerbosity` |
 | Anthropic | `claude-sonnet-4.6` | `thinking`, `sendReasoning`, `effort`, `toolStreaming`, `disableParallelToolUse` |
 | Anthropic | `claude-haiku-4.5` | basic text, raw RID, streaming, structured output |
+| Google | `gemini-3.1-flash-lite` | basic text, raw RID, streaming, structured output, tool calling |
 
 The Anthropic AI SDK exposes more knobs than this Foundry stack accepts uniformly across models. During live verification on March 26, 2026, `claude-haiku-4.5` rejected Anthropic `effort` because Foundry rejected the proxied `output_config` payload. That is why the richer Anthropic reasoning and tool examples default to `claude-sonnet-4.6`.
+
+Google is still a beta Palantir proxy endpoint. During live verification on March 27, 2026, `gemini-3.1-flash-lite` was more reliable on this stack than `gemini-2.5-flash` for streaming and richer structured-output prompts, so the live Gemini checks now target `gemini-3.1-flash-lite`.
 
 ## Testing and CI
 

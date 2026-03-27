@@ -1,12 +1,13 @@
 import { resolve } from 'node:path';
 import process from 'node:process';
-import type { AnthropicModelId, OpenAIModelId } from '@nyrra/foundry-ai';
+import type { AnthropicModelId, GoogleModelId, OpenAIModelId } from '@nyrra/foundry-ai';
 import { loadFoundryConfig } from '@nyrra/foundry-ai';
 import { createFoundryAnthropic } from '@nyrra/foundry-ai/anthropic';
+import { createFoundryGoogle } from '@nyrra/foundry-ai/google';
 import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
 import type { LanguageModel } from 'ai';
 
-export type ExampleProvider = 'openai' | 'anthropic';
+export type ExampleProvider = 'openai' | 'anthropic' | 'google';
 
 const LOCAL_ENV_FILE = resolve(process.cwd(), '.env.local');
 
@@ -14,6 +15,7 @@ const DEFAULT_OPENAI_MODEL: OpenAIModelId = 'gpt-5-mini';
 // Sonnet is the default Anthropic example target because it accepts the
 // reasoning/tool options we verify in the live tool-calling path.
 const DEFAULT_ANTHROPIC_MODEL: AnthropicModelId = 'claude-sonnet-4.6';
+const DEFAULT_GOOGLE_MODEL: GoogleModelId = 'gemini-3.1-flash-lite';
 
 maybeLoadLocalEnvFile();
 
@@ -24,11 +26,13 @@ export function resolveCliProvider(defaultProvider: ExampleProvider = 'openai'):
     return defaultProvider;
   }
 
-  if (provider === 'openai' || provider === 'anthropic') {
+  if (provider === 'openai' || provider === 'anthropic' || provider === 'google') {
     return provider;
   }
 
-  throw new Error(`Unsupported provider "${provider}". Expected "openai" or "anthropic".`);
+  throw new Error(
+    `Unsupported provider "${provider}". Expected "openai", "anthropic", or "google".`,
+  );
 }
 
 export function resolveCliModelId(): string | undefined {
@@ -39,6 +43,7 @@ export function createExampleLanguageModel(
   provider = resolveCliProvider(),
   overrides?: {
     anthropicModel?: AnthropicModelId;
+    googleModel?: GoogleModelId;
     openaiModel?: OpenAIModelId;
   },
 ): {
@@ -56,6 +61,17 @@ export function createExampleLanguageModel(
       provider,
       modelId,
       model: openai(modelId),
+    };
+  }
+
+  if (provider === 'google') {
+    const google = createFoundryGoogle(config);
+    const modelId = resolveCliModelId() ?? overrides?.googleModel ?? DEFAULT_GOOGLE_MODEL;
+
+    return {
+      provider,
+      modelId,
+      model: google(modelId),
     };
   }
 

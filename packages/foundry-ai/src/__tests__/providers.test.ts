@@ -24,6 +24,22 @@ const createAnthropicMock = vi.hoisted(() =>
   }),
 );
 
+const googleLanguageModelMock = vi.hoisted(() => vi.fn());
+const createGoogleMock = vi.hoisted(() =>
+  vi.fn(() => {
+    const provider = ((modelId: string) => googleLanguageModelMock(modelId)) as {
+      (modelId: string): ReturnType<typeof googleLanguageModelMock>;
+      chat(modelId: string): ReturnType<typeof googleLanguageModelMock>;
+      generativeAI(modelId: string): ReturnType<typeof googleLanguageModelMock>;
+    };
+
+    provider.chat = googleLanguageModelMock;
+    provider.generativeAI = googleLanguageModelMock;
+
+    return provider;
+  }),
+);
+
 vi.mock('@ai-sdk/openai', () => ({
   createOpenAI: createOpenAIMock,
 }));
@@ -32,7 +48,12 @@ vi.mock('@ai-sdk/anthropic', () => ({
   createAnthropic: createAnthropicMock,
 }));
 
+vi.mock('@ai-sdk/google', () => ({
+  createGoogleGenerativeAI: createGoogleMock,
+}));
+
 import { createFoundryAnthropic } from '../providers/anthropic.js';
+import { createFoundryGoogle } from '../providers/google.js';
 import { createFoundryOpenAI } from '../providers/openai.js';
 
 describe('provider adapters', () => {
@@ -48,6 +69,7 @@ describe('provider adapters', () => {
   beforeEach(() => {
     openaiResponsesMock.mockReset();
     anthropicLanguageModelMock.mockReset();
+    googleLanguageModelMock.mockReset();
 
     openaiResponsesMock.mockImplementation((modelId: string) => {
       const testModel = createTestLanguageModel({
@@ -66,6 +88,15 @@ describe('provider adapters', () => {
       });
 
       anthropicState = testModel.state;
+      return testModel.model;
+    });
+
+    googleLanguageModelMock.mockImplementation((modelId: string) => {
+      const testModel = createTestLanguageModel({
+        provider: 'foundry-google.chat',
+        modelId,
+      });
+
       return testModel.model;
     });
   });
@@ -324,5 +355,75 @@ describe('provider adapters', () => {
         token: '',
       }),
     ).toThrow(/config\.token/);
+  });
+
+  it('creates a Google provider with the normalized Foundry proxy URL and auth rewrite', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('ok'));
+
+    createFoundryGoogle({
+      foundryUrl: ' https://example.palantirfoundry.com/// ',
+      token: ' token-123 ',
+      attributionRid: ' ri.attribution.main ',
+    });
+
+    expect(createGoogleMock).toHaveBeenCalledWith({
+      apiKey: 'token-123',
+      baseURL: 'https://example.palantirfoundry.com/api/v2/llm/proxy/google/v1',
+      fetch: expect.any(Function),
+      headers: { attribution: 'ri.attribution.main' },
+      name: 'foundry-google',
+    });
+
+    const googleCalls = createGoogleMock.mock.calls as Array<unknown[]>;
+    const googleOptions = (googleCalls[0]?.[0] ?? {}) as {
+      fetch?: typeof fetch;
+    };
+    await googleOptions?.fetch?.(
+      'https://example.test/v1/models/gemini-2.5-flash:generateContent',
+      {
+        headers: {
+          'x-goog-api-key': 'token-123',
+          'x-test': '1',
+        },
+      },
+    );
+
+    const proxiedRequest = fetchSpy.mock.calls[0]?.[0];
+
+    expect(proxiedRequest).toBeInstanceOf(Request);
+    expect((proxiedRequest as Request).headers.get('Authorization')).toBe('Bearer token-123');
+    expect((proxiedRequest as Request).headers.get('x-goog-api-key')).toBeNull();
+    expect((proxiedRequest as Request).headers.get('x-test')).toBe('1');
+
+    fetchSpy.mockRestore();
+  });
+
+  it('maps Google aliases to RIDs and preserves raw RID passthrough', () => {
+    const google = createFoundryGoogle(config);
+    const rawRid = 'ri.language-model-service..language-model.gemini-3-1-flash-lite';
+
+    const aliasModel = google('gemini-2.5-flash');
+    const rawModel = google(rawRid);
+
+    expect(googleLanguageModelMock).toHaveBeenNthCalledWith(
+      1,
+      'ri.language-model-service..language-model.gemini-2-5-flash',
+    );
+    expect(googleLanguageModelMock).toHaveBeenNthCalledWith(2, rawRid);
+    expect(aliasModel.provider).toBe('foundry-google');
+    expect(aliasModel.modelId).toBe('gemini-2.5-flash');
+    expect(rawModel.modelId).toBe(rawRid);
+    expect(google.languageModel).toBeTypeOf('function');
+    expect(google.chat).toBeTypeOf('function');
+    expect(google.generativeAI).toBeTypeOf('function');
+  });
+
+  it('validates Google config inputs at runtime', () => {
+    expect(() =>
+      createFoundryGoogle({
+        foundryUrl: '   ',
+        token: 'token-123',
+      }),
+    ).toThrow(/config\.foundryUrl/);
   });
 });
