@@ -57,7 +57,7 @@
         "projects": ["foundry-ai"],
         "projectsRelationship": "fixed",
         "releaseTag": {
-          "pattern": "@nyrra-labs/foundry-ai@{version}"
+          "pattern": "@nyrra/foundry-ai@{version}"
         }
       }
     },

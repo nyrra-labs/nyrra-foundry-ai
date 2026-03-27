@@ -1,4 +1,4 @@
-# @nyrra-labs/foundry-ai
+# @nyrra/foundry-ai
 
 Thin Foundry provider adapters and model catalog for the Vercel AI SDK.
 
@@ -25,9 +25,9 @@ Thin Foundry provider adapters and model catalog for the Vercel AI SDK.
 
 The published surface is intentionally small:
 
-- `@nyrra-labs/foundry-ai` exports config loading, catalog helpers, errors, and model ID types.
-- `@nyrra-labs/foundry-ai/openai` exports `createFoundryOpenAI`.
-- `@nyrra-labs/foundry-ai/anthropic` exports `createFoundryAnthropic`.
+- `@nyrra/foundry-ai` exports config loading, catalog helpers, errors, and model ID types.
+- `@nyrra/foundry-ai/openai` exports `createFoundryOpenAI`.
+- `@nyrra/foundry-ai/anthropic` exports `createFoundryAnthropic`.
 
 There is no published registry helper. Multi-provider routing stays as an application-level example built with AI SDK `createProviderRegistry`.
 This package is still pre-1.0. Legacy exports from the earlier wrapper-heavy shape such as the registry helper, middleware wrapper, and formatter helpers are intentionally removed instead of being carried forward behind compatibility shims.
@@ -37,7 +37,7 @@ This package is still pre-1.0. Legacy exports from the earlier wrapper-heavy sha
 Install the package plus the provider peer dependency you plan to use:
 
 ```bash
-pnpm add @nyrra-labs/foundry-ai ai @ai-sdk/openai
+pnpm add @nyrra/foundry-ai ai @ai-sdk/openai
 ```
 
 Set the required environment variables:
@@ -51,8 +51,8 @@ FOUNDRY_ATTRIBUTION_RID=
 Use the OpenAI path end to end:
 
 ```ts
-import { loadFoundryConfig } from '@nyrra-labs/foundry-ai';
-import { createFoundryOpenAI } from '@nyrra-labs/foundry-ai/openai';
+import { loadFoundryConfig } from '@nyrra/foundry-ai';
+import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
 import { generateText } from 'ai';
 
 const openai = createFoundryOpenAI(loadFoundryConfig());
@@ -68,8 +68,8 @@ console.log(result.text);
 Use Anthropic the same way:
 
 ```ts
-import { loadFoundryConfig } from '@nyrra-labs/foundry-ai';
-import { createFoundryAnthropic } from '@nyrra-labs/foundry-ai/anthropic';
+import { loadFoundryConfig } from '@nyrra/foundry-ai';
+import { createFoundryAnthropic } from '@nyrra/foundry-ai/anthropic';
 import { generateText } from 'ai';
 
 const anthropic = createFoundryAnthropic(loadFoundryConfig());
@@ -87,9 +87,9 @@ console.log(result.text);
 Compose AI SDK's registry in application code when you need both providers:
 
 ```ts
-import { loadFoundryConfig } from '@nyrra-labs/foundry-ai';
-import { createFoundryAnthropic } from '@nyrra-labs/foundry-ai/anthropic';
-import { createFoundryOpenAI } from '@nyrra-labs/foundry-ai/openai';
+import { loadFoundryConfig } from '@nyrra/foundry-ai';
+import { createFoundryAnthropic } from '@nyrra/foundry-ai/anthropic';
+import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
 import { createProviderRegistry, generateText } from 'ai';
 
 const config = loadFoundryConfig();
@@ -113,7 +113,7 @@ const result = await generateText({
 
 ## API Surface
 
-Core exports from `@nyrra-labs/foundry-ai`:
+Core exports from `@nyrra/foundry-ai`:
 
 - `loadFoundryConfig()`
 - `FoundryModelNotFoundError`
@@ -124,8 +124,8 @@ Core exports from `@nyrra-labs/foundry-ai`:
 Provider-specific entrypoints:
 
 ```ts
-import { createFoundryOpenAI } from '@nyrra-labs/foundry-ai/openai';
-import { createFoundryAnthropic } from '@nyrra-labs/foundry-ai/anthropic';
+import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
+import { createFoundryAnthropic } from '@nyrra/foundry-ai/anthropic';
 ```
 
 Friendly names resolve through the shared catalog. Unknown strings pass through unchanged as raw Foundry RIDs when you call a provider adapter directly. Catalog-only helpers such as `resolveModelRid()` throw `FoundryModelNotFoundError` with a plain validation message.
@@ -215,18 +215,25 @@ pnpm exec nx run foundry-ai:build --outputStyle=static
 
 Release automation is wired through manual GitHub Actions workflows:
 
-- `Release` publishes a stable npm release from `main`
-- `Prerelease` publishes a prerelease build from `main` with the npm dist-tag `next`
+- `Release` publishes either a stable npm release or a prerelease build from `main`
 
-Both workflows run lint, unit tests, typecheck, and build before they cut a release commit or publish to npm.
+The workflow runs lint, unit tests, typecheck, and build before it cuts a release commit or publishes to npm.
 
 Before the first publish:
 
-- add a repository secret named `NPM_TOKEN` with npm publish access for the `@nyrra-labs` scope
 - make sure GitHub Actions can push release commits and tags back to `main`
+- do a one-time bootstrap publish from a maintainer machine so the package exists on npm
+- configure npm trusted publishing for this repo's `release.yml` workflow
 - run the workflow once with `first_release=true`
 
-There is no separate npm command to create the package. The first successful publish creates `@nyrra-labs/foundry-ai` automatically as long as the `@nyrra-labs` scope already exists on npm and the token can publish to it.
+This repo is set up for npm trusted publishing, not a long-lived `NPM_TOKEN`. After the bootstrap publish, future releases should come from GitHub Actions with npm OIDC and provenance instead of a stored publish token.
+
+Bootstrap publish command:
+
+```bash
+cd packages/foundry-ai
+npm publish --access public
+```
 
 For the full release checklist and workflow behavior, see [`docs/RELEASING.md`](./docs/RELEASING.md).
 

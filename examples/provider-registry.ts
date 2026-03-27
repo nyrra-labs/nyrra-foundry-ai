@@ -1,6 +1,6 @@
-import { loadFoundryConfig } from '@nyrra-labs/foundry-ai';
-import { createFoundryAnthropic } from '@nyrra-labs/foundry-ai/anthropic';
-import { createFoundryOpenAI } from '@nyrra-labs/foundry-ai/openai';
+import { loadFoundryConfig } from '@nyrra/foundry-ai';
+import { createFoundryAnthropic } from '@nyrra/foundry-ai/anthropic';
+import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
 import { createProviderRegistry, generateText } from 'ai';
 
 const config = loadFoundryConfig();
