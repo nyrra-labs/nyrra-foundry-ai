@@ -10,7 +10,6 @@
       "{workspaceRoot}/biome.json"
     ],
     "workspaceLintFiles": [
-      "{workspaceRoot}/.devin/**",
       "{workspaceRoot}/.github/**",
       "{workspaceRoot}/AGENTS.md",
       "{workspaceRoot}/README.md",

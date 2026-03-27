@@ -1,7 +1,0 @@
-{
-  "repo_notes": [
-    {
-      "content": "This repository is a small Nx workspace centered on the publishable package under packages/foundry-ai. Documentation should prioritize the public SDK API, the provider subpath exports (/openai, /anthropic, /registry), the shared model catalog and Foundry middleware defaults, and the runnable examples in examples/. Explain how configuration flows through loadFoundryConfig into createFoundryOpenAI, createFoundryAnthropic, and createFoundryRegistry. Include the live verification path in packages/foundry-ai/src/__tests__/foundry.live.test.ts and note that CI covers lint, unit tests, typecheck, build, dependency review, and CodeQL while live Foundry verification remains manual."
-    }
-  ]
-}
