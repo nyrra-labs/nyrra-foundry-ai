@@ -9,6 +9,7 @@ Thin Foundry provider adapters and model catalog for the Vercel AI SDK.
 [![Biome](https://img.shields.io/badge/Biome-2.4.9-60a5fa)](https://biomejs.dev/)
 [![Vitest](https://img.shields.io/badge/Vitest-4.1.2-6e9f18?logo=vitest&logoColor=white)](https://vitest.dev/)
 [![CI](https://github.com/nyrra-labs/nyrra-foundry-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/nyrra-labs/nyrra-foundry-ai/actions/workflows/ci.yml)
+[![Semgrep](https://github.com/nyrra-labs/nyrra-foundry-ai/actions/workflows/semgrep.yml/badge.svg)](https://github.com/nyrra-labs/nyrra-foundry-ai/actions/workflows/semgrep.yml)
 [![DeepWiki](https://img.shields.io/badge/DeepWiki-nyrra--labs%2Fnyrra--foundry--ai-blue.svg)](https://deepwiki.com/nyrra-labs/nyrra-foundry-ai)
 [![License](https://img.shields.io/badge/license-MIT-0f172a)](./LICENSE)
 
@@ -185,7 +186,7 @@ The Anthropic AI SDK exposes more knobs than this Foundry stack accepts uniforml
 | e2e api | yes | Vitest live tests + manual Bun/Node example scripts against live Foundry | no |
 | e2e web | no | none | no |
 
-GitHub Actions runs lint, unit tests, typecheck, build, and CodeQL on `main` and pull requests. Live API verification still requires Foundry credentials and remains manual through `pnpm test:live` or the standalone scripts in [`examples/`](./examples).
+GitHub Actions runs CI checks on `main` and pull requests, Semgrep on pull requests plus scheduled/manual runs, and manual release workflows for stable/prerelease publishing. Live API verification still requires Foundry credentials and remains manual through `pnpm test:live` or the standalone scripts in [`examples/`](./examples).
 
 ## Development
 
@@ -209,6 +210,25 @@ pnpm exec nx run foundry-ai:test --outputStyle=static
 pnpm exec nx run foundry-ai:typecheck --outputStyle=static
 pnpm exec nx run foundry-ai:build --outputStyle=static
 ```
+
+## Releasing
+
+Release automation is wired through manual GitHub Actions workflows:
+
+- `Release` publishes a stable npm release from `main`
+- `Prerelease` publishes a prerelease build from `main` with the npm dist-tag `next`
+
+Both workflows run lint, unit tests, typecheck, and build before they cut a release commit or publish to npm.
+
+Before the first publish:
+
+- add a repository secret named `NPM_TOKEN` with npm publish access for the `@nyrra-labs` scope
+- make sure GitHub Actions can push release commits and tags back to `main`
+- run the workflow once with `first_release=true`
+
+There is no separate npm command to create the package. The first successful publish creates `@nyrra-labs/foundry-ai` automatically as long as the `@nyrra-labs` scope already exists on npm and the token can publish to it.
+
+For the full release checklist and workflow behavior, see [`docs/RELEASING.md`](./docs/RELEASING.md).
 
 ## External Services
 
