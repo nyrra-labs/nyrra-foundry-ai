@@ -29,6 +29,7 @@ The published surface is intentionally small:
 - `@nyrra-labs/foundry-ai/anthropic` exports `createFoundryAnthropic`.
 
 There is no published registry helper. Multi-provider routing stays as an application-level example built with AI SDK `createProviderRegistry`.
+This package is still pre-1.0. Legacy exports from the earlier wrapper-heavy shape such as the registry helper, middleware wrapper, and formatter helpers are intentionally removed instead of being carried forward behind compatibility shims.
 
 ## Quick Start
 

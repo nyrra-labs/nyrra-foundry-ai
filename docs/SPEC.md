@@ -35,6 +35,7 @@ The package does not try to invent a separate request API. Callers should contin
 - `@nyrra-labs/foundry-ai/anthropic` exports `createFoundryAnthropic`
 
 There is no `@nyrra-labs/foundry-ai/registry` export. Multi-provider routing belongs in application code with AI SDK `createProviderRegistry`.
+The package is still pre-1.0, and the thin-adapter contract intentionally removes the older registry, middleware, and formatter helper exports instead of preserving them behind compatibility shims.
 
 ## Provider Behavior
 

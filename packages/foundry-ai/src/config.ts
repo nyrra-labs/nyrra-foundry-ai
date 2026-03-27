@@ -5,14 +5,11 @@ const FOUNDRY_TOKEN_ENV = 'FOUNDRY_TOKEN';
 const FOUNDRY_ATTRIBUTION_RID_ENV = 'FOUNDRY_ATTRIBUTION_RID';
 
 export function loadFoundryConfig(env: NodeJS.ProcessEnv = process.env): FoundryConfig {
-  return resolveFoundryConfig(
-    {
-      foundryUrl: requireEnv(env, FOUNDRY_URL_ENV),
-      token: requireEnv(env, FOUNDRY_TOKEN_ENV),
-      attributionRid: optionalEnv(env, FOUNDRY_ATTRIBUTION_RID_ENV),
-    },
-    'loadFoundryConfig',
-  );
+  return normalizeResolvedFoundryConfig({
+    foundryUrl: requireEnv(env, FOUNDRY_URL_ENV),
+    token: requireEnv(env, FOUNDRY_TOKEN_ENV),
+    attributionRid: optionalEnv(env, FOUNDRY_ATTRIBUTION_RID_ENV),
+  });
 }
 
 export function normalizeFoundryUrl(foundryUrl: string): string {
@@ -20,25 +17,21 @@ export function normalizeFoundryUrl(foundryUrl: string): string {
 }
 
 export function resolveFoundryConfig(config: FoundryConfig, callerName: string): FoundryConfig {
-  const foundryUrl =
-    typeof config.foundryUrl === 'string' ? normalizeFoundryUrl(config.foundryUrl) : '';
-  const token = typeof config.token === 'string' ? config.token.trim() : '';
-  const attributionRid =
-    typeof config.attributionRid === 'string' ? config.attributionRid.trim() : undefined;
+  const normalizedConfig = normalizeResolvedFoundryConfig({
+    foundryUrl: typeof config.foundryUrl === 'string' ? config.foundryUrl : '',
+    token: typeof config.token === 'string' ? config.token : '',
+    attributionRid: typeof config.attributionRid === 'string' ? config.attributionRid : undefined,
+  });
 
-  if (foundryUrl.length === 0) {
+  if (normalizedConfig.foundryUrl.length === 0) {
     throw new Error(`${callerName} requires config.foundryUrl to be a non-empty string.`);
   }
 
-  if (token.length === 0) {
+  if (normalizedConfig.token.length === 0) {
     throw new Error(`${callerName} requires config.token to be a non-empty string.`);
   }
 
-  return {
-    foundryUrl,
-    token,
-    attributionRid: attributionRid || undefined,
-  };
+  return normalizedConfig;
 }
 
 function requireEnv(env: NodeJS.ProcessEnv, name: string): string {
@@ -55,4 +48,18 @@ function optionalEnv(env: NodeJS.ProcessEnv, name: string): string | undefined {
   const value = env[name]?.trim();
 
   return value ? value : undefined;
+}
+
+function normalizeResolvedFoundryConfig(config: {
+  foundryUrl: string;
+  token: string;
+  attributionRid?: string;
+}): FoundryConfig {
+  const attributionRid = config.attributionRid?.trim();
+
+  return {
+    foundryUrl: normalizeFoundryUrl(config.foundryUrl),
+    token: config.token.trim(),
+    attributionRid: attributionRid || undefined,
+  };
 }
