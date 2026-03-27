@@ -217,7 +217,7 @@ Release automation is wired through manual GitHub Actions workflows:
 
 - `Release` publishes either a stable npm release or a prerelease build from `main`
 
-The workflow runs lint, unit tests, typecheck, and build before it cuts a release commit or publishes to npm. Prereleases also run automatically on pushes to `main` that touch the package or release workflow.
+The workflow runs lint, unit tests, typecheck, and build before it cuts a release commit or publishes to npm. Prereleases also run automatically on pushes to `main` that touch the package or release workflow, and their version sequence is derived from npm's `next` dist-tag instead of pushing version commits back to `main`.
 
 Before the first publish:
 

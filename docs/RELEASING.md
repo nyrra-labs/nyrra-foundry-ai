@@ -55,6 +55,7 @@ The workflow lets Nx determine the semver bump from conventional commits. Becaus
 ## Prereleases
 
 Prereleases are cut automatically on pushes to `main` that match the workflow path filters.
+They do not push release commits back to `main`. The prerelease version sequence is derived from the npm `next` dist-tag, which avoids conflicts with the repository rule that requires pull requests for changes to `main`.
 
 Manual prerelease runs are still available from the `Release` workflow on `main`.
 
