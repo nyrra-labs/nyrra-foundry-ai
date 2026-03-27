@@ -40,7 +40,7 @@ The root package exports shared catalog, config, error, and middleware utilities
 | e2e api | yes | Vitest live tests + manual Bun/Node example scripts against live Foundry | no |
 | e2e web | no | none | no |
 
-GitHub Actions now runs lint, unit tests, typecheck, build, and CodeQL on `main` and pull requests. Live API verification still requires Foundry credentials and remains manual through `pnpm test:live` or the standalone scripts in [`examples/`](./examples).
+GitHub Actions now runs lint, unit tests, typecheck, and build on `main` and pull requests. Live API verification still requires Foundry credentials and remains manual through `pnpm test:live` or the standalone scripts in [`examples/`](./examples).
 
 ## Quick Start
 
