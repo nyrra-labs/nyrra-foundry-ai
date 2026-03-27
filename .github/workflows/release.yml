@@ -3,6 +3,19 @@ name: Release
 on:
   workflow_dispatch:
     inputs:
+      release_type:
+        description: Publish a stable release or prerelease.
+        required: true
+        default: stable
+        type: choice
+        options:
+          - stable
+          - prerelease
+      preid:
+        description: Prerelease identifier when release_type=prerelease.
+        required: true
+        default: rc
+        type: string
       first_release:
         description: Use Nx first-release mode for the initial publish.
         required: true
@@ -59,9 +72,14 @@ jobs:
         env:
           DRY_RUN: ${{ inputs.dry_run }}
           FIRST_RELEASE: ${{ inputs.first_release }}
+          PREID: ${{ inputs.preid }}
+          RELEASE_TYPE: ${{ inputs.release_type }}
         run: |
           set -euo pipefail
           args=(release --group npm-packages --skip-publish)
+          if [ "$RELEASE_TYPE" = "prerelease" ]; then
+            args+=(--preid "$PREID")
+          fi
           if [ "$FIRST_RELEASE" = "true" ]; then
             args+=(--first-release)
           fi
@@ -71,27 +89,34 @@ jobs:
           pnpm exec nx "${args[@]}"
       - name: Publish package
         if: ${{ !inputs.dry_run }}
+        env:
+          RELEASE_TYPE: ${{ inputs.release_type }}
         run: |
           set -euo pipefail
           package_root="packages/foundry-ai"
           package_name=$(node -p "require('./${package_root}/package.json').name")
           package_version=$(node -p "require('./${package_root}/package.json').version")
+          dist_tag="latest"
+
+          if [ "$RELEASE_TYPE" = "prerelease" ]; then
+            dist_tag="next"
+          fi
 
           if npm view "${package_name}@${package_version}" version --registry=https://registry.npmjs.org >/dev/null 2>&1; then
-            current_tag_version=$(npm view "${package_name}" "dist-tags.latest" --json --registry=https://registry.npmjs.org 2>/dev/null | tr -d '"')
+            current_tag_version=$(npm view "${package_name}" "dist-tags.${dist_tag}" --json --registry=https://registry.npmjs.org 2>/dev/null | tr -d '"')
 
             if [ "${current_tag_version}" = "${package_version}" ]; then
-              echo "${package_name}@${package_version} is already published with dist-tag latest; skipping publish."
+              echo "${package_name}@${package_version} is already published with dist-tag ${dist_tag}; skipping publish."
               exit 0
             fi
 
-            echo "::error::${package_name}@${package_version} already exists, but dist-tag latest points to ${current_tag_version:-<unset>}. Retagging is intentionally not handled by this trusted-publishing workflow."
+            echo "::error::${package_name}@${package_version} already exists, but dist-tag ${dist_tag} points to ${current_tag_version:-<unset>}. Retagging is intentionally not handled by this trusted-publishing workflow."
             exit 1
           fi
 
           (
             cd "${package_root}"
-            NODE_AUTH_TOKEN="" npm publish --access public --tag latest
+            NODE_AUTH_TOKEN="" npm publish --access public --tag "${dist_tag}"
           )
       - name: Push release commit and tag
         if: ${{ !inputs.dry_run }}

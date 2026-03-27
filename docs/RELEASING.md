@@ -4,9 +4,8 @@
 
 This repo publishes `@nyrra-labs/foundry-ai` with Nx release.
 
-- Stable releases use the `Release` GitHub Actions workflow.
-- Prereleases use the `Prerelease` GitHub Actions workflow.
-- Both workflows are manual and should be run from `main`.
+- Stable releases and prereleases both use the `Release` GitHub Actions workflow.
+- The workflow is manual and should be run from `main`.
 
 The workflows run lint, unit tests, typecheck, and build before they cut a release commit or publish to npm.
 
@@ -18,7 +17,8 @@ Add these repository secrets before publishing:
 
 GitHub Actions also needs permission to push the generated release commit and tag back to `main`. If branch protection blocks Actions from pushing, the release workflow will fail after versioning or publishing.
 
-This repo is configured for npm trusted publishing from GitHub Actions, not a long-lived publish token. The publish workflows require GitHub-hosted runners and the `id-token: write` permission so npm can exchange the workflow OIDC identity for a short-lived publish credential.
+This repo is configured for npm trusted publishing from GitHub Actions, not a long-lived publish token. The publish workflow requires GitHub-hosted runners and the `id-token: write` permission so npm can exchange the workflow OIDC identity for a short-lived publish credential.
+npm trusted publishing is configured against a workflow filename, and npm currently allows only one trusted publisher connection per package. That is why both stable releases and prereleases go through the same `release.yml` workflow.
 
 ## First Release
 
@@ -28,7 +28,7 @@ Bootstrap steps:
 
 - make sure the `@nyrra-labs` npm org/scope exists
 - publish `@nyrra-labs/foundry-ai` once interactively from a maintainer machine
-- on npmjs.com, add a trusted publisher for this repository and workflow filename
+- on npmjs.com, add a trusted publisher for this repository and the workflow filename `release.yml`
 - after trusted publishing works, set the package to disallow token-based publishing
 
 Bootstrap publish command:
@@ -44,6 +44,7 @@ npm publish --access public
 
 Run the `Release` workflow from `main`.
 
+- set `release_type=stable`
 - leave `first_release=false` after the first publish
 - set `dry_run=true` if you want a preview without changing files or publishing
 - configure npm trusted publishing for `release.yml` before using the workflow for real publishes
@@ -52,12 +53,12 @@ The workflow lets Nx determine the semver bump from conventional commits. Becaus
 
 ## Prereleases
 
-Run the `Prerelease` workflow from `main`.
+Run the `Release` workflow from `main`.
 
+- set `release_type=prerelease`
 - `preid` defaults to `rc`
 - prereleases publish with the npm dist-tag `next`
 - set `dry_run=true` for a no-publish preview
-- configure npm trusted publishing for `prerelease.yml` before using the workflow for real publishes
 
 The prerelease workflow uses the same conventional-commit bump resolution as stable releases, then converts that bump into its prerelease form by passing `--preid` to Nx release.
 

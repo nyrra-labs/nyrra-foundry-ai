@@ -215,16 +215,15 @@ pnpm exec nx run foundry-ai:build --outputStyle=static
 
 Release automation is wired through manual GitHub Actions workflows:
 
-- `Release` publishes a stable npm release from `main`
-- `Prerelease` publishes a prerelease build from `main` with the npm dist-tag `next`
+- `Release` publishes either a stable npm release or a prerelease build from `main`
 
-Both workflows run lint, unit tests, typecheck, and build before they cut a release commit or publish to npm.
+The workflow runs lint, unit tests, typecheck, and build before it cuts a release commit or publishes to npm.
 
 Before the first publish:
 
 - make sure GitHub Actions can push release commits and tags back to `main`
 - do a one-time bootstrap publish from a maintainer machine so the package exists on npm
-- configure npm trusted publishing for this repo's release workflows
+- configure npm trusted publishing for this repo's `release.yml` workflow
 - run the workflow once with `first_release=true`
 
 This repo is set up for npm trusted publishing, not a long-lived `NPM_TOKEN`. After the bootstrap publish, future releases should come from GitHub Actions with npm OIDC and provenance instead of a stored publish token.
