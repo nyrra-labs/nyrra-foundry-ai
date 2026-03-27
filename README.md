@@ -2,12 +2,14 @@
 
 Typed TypeScript SDK for Palantir Foundry's LLM proxy endpoints, built on the Vercel AI SDK.
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![AI%20SDK](https://img.shields.io/badge/AI%20SDK-6.0.138-000000?logo=vercel&logoColor=white)](https://sdk.vercel.ai/)
-[![Nx](https://img.shields.io/badge/Nx-21.0.0-143055?logo=nx&logoColor=white)](https://nx.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.0.2-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![AI%20SDK](https://img.shields.io/badge/AI%20SDK-6.0.140-000000?logo=vercel&logoColor=white)](https://sdk.vercel.ai/)
+[![Nx](https://img.shields.io/badge/Nx-22.6.2-143055?logo=nx&logoColor=white)](https://nx.dev/)
 [![pnpm](https://img.shields.io/badge/pnpm-10.24.0-f69220?logo=pnpm&logoColor=white)](https://pnpm.io/)
-[![Biome](https://img.shields.io/badge/Biome-2.3.0-60a5fa)](https://biomejs.dev/)
-[![Vitest](https://img.shields.io/badge/Vitest-3.2.0-6e9f18?logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Biome](https://img.shields.io/badge/Biome-2.4.9-60a5fa)](https://biomejs.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-4.1.2-6e9f18?logo=vitest&logoColor=white)](https://vitest.dev/)
+[![CI](https://github.com/nyrra-labs/nyrra-foundry-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/nyrra-labs/nyrra-foundry-ai/actions/workflows/ci.yml)
+[![DeepWiki](https://img.shields.io/badge/DeepWiki-nyrra--labs%2Fnyrra--foundry--ai-blue.svg)](https://deepwiki.com/nyrra-labs/nyrra-foundry-ai)
 [![License](https://img.shields.io/badge/license-MIT-0f172a)](./LICENSE)
 
 ## What It Does
@@ -33,12 +35,12 @@ The root package exports shared catalog, config, error, and middleware utilities
 
 | Layer | Present | Tooling | Runs in CI |
 |---|---|---|---|
-| unit | yes | Vitest | no |
+| unit | yes | Vitest | yes |
 | integration | no | none | no |
 | e2e api | yes | Vitest live tests + manual Bun/Node example scripts against live Foundry | no |
 | e2e web | no | none | no |
 
-This repo does not have CI configured yet. Live API verification is manual and requires Foundry credentials. Use `pnpm test:live` for the live Vitest suite or run the standalone scripts in [`examples/`](./examples).
+GitHub Actions now runs lint, unit tests, typecheck, and build on `main` and pull requests. Live API verification still requires Foundry credentials and remains manual through `pnpm test:live` or the standalone scripts in [`examples/`](./examples).
 
 ## Quick Start
 

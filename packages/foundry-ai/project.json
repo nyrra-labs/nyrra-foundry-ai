@@ -22,7 +22,7 @@
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm exec biome check package.json nx.json tsconfig.base.json tsconfig.json pnpm-workspace.yaml biome.json AGENTS.md README.md docs/SPEC.md opencode.jsonc examples scripts packages/foundry-ai/package.json packages/foundry-ai/project.json packages/foundry-ai/src packages/foundry-ai/tsconfig.json packages/foundry-ai/tsconfig.lib.json packages/foundry-ai/tsconfig.test.json packages/foundry-ai/tsconfig.typecheck.json packages/foundry-ai/tsup.config.ts packages/foundry-ai/vitest.config.ts packages/foundry-ai/vitest.live.config.ts",
+        "command": "pnpm exec biome check .github AGENTS.md README.md SECURITY.md biome.json docs examples justfile nx.json opencode.jsonc package.json packages/foundry-ai pnpm-workspace.yaml scripts tsconfig.base.json tsconfig.json",
         "cwd": "{workspaceRoot}"
       }
     },
