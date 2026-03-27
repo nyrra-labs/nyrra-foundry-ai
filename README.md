@@ -98,35 +98,62 @@ Friendly names resolve through the shared catalog. Unknown strings pass through 
 The repo includes runnable scripts for the first vertical slice and the registry path:
 
 - [`examples/basic-text.ts`](./examples/basic-text.ts)
+- [`examples/README.md`](./examples/README.md)
 - [`examples/streaming.ts`](./examples/streaming.ts)
 - [`examples/structured-output.ts`](./examples/structured-output.ts)
 - [`examples/tool-calling-exa.ts`](./examples/tool-calling-exa.ts)
 - [`examples/provider-registry.ts`](./examples/provider-registry.ts)
 
-Run them from the repo root. For a safe run that rebuilds the package first, use:
+Run them from the repo root. [`examples/README.md`](./examples/README.md) is the Bun-first command reference.
+
+For a safe run that rebuilds the package first, use:
 
 ```bash
 pnpm run example basic-text openai
-pnpm run example streaming anthropic
-pnpm run example tool-calling-exa openai
-pnpm run example tool-calling-exa anthropic
 ```
 
-Examples also accept an optional model ID as the third argument:
+```bash
+pnpm run example streaming anthropic
+```
 
 ```bash
-pnpm run example streaming anthropic claude-sonnet-4.6
-pnpm run example tool-calling-exa anthropic claude-sonnet-4.6
+pnpm run example tool-calling-exa openai
+```
+
+```bash
+pnpm run example tool-calling-exa anthropic
 ```
 
 If you want the shortest path, Bun works directly too:
 
 ```bash
 bun examples/basic-text.ts openai
+```
+
+```bash
 bun examples/basic-text.ts anthropic
+```
+
+```bash
 bun examples/provider-registry.ts
+```
+
+```bash
 bun examples/tool-calling-exa.ts openai
+```
+
+```bash
 bun examples/tool-calling-exa.ts anthropic
+```
+
+Examples also accept an optional model ID as the third argument:
+
+```bash
+pnpm run example streaming anthropic claude-sonnet-4.6
+```
+
+```bash
+pnpm run example tool-calling-exa anthropic claude-sonnet-4.6
 ```
 
 `examples/streaming.ts` and `examples/tool-calling-exa.ts` both print the exact provider options they send before streaming raw `fullStream` events.
@@ -137,9 +164,21 @@ Plain Node still works if you prefer it:
 
 ```bash
 node --import tsx examples/basic-text.ts openai
+```
+
+```bash
 node --import tsx examples/basic-text.ts anthropic
+```
+
+```bash
 node --import tsx examples/provider-registry.ts
+```
+
+```bash
 node --import tsx examples/tool-calling-exa.ts openai
+```
+
+```bash
 node --import tsx examples/tool-calling-exa.ts anthropic
 ```
 
@@ -161,12 +200,33 @@ Install dependencies and use the root scripts:
 
 ```bash
 pnpm install
+```
+
+```bash
 pnpm clean
+```
+
+```bash
 pnpm format
+```
+
+```bash
 pnpm lint
+```
+
+```bash
 pnpm test
+```
+
+```bash
 pnpm test:live
+```
+
+```bash
 pnpm typecheck
+```
+
+```bash
 pnpm build
 ```
 
@@ -174,9 +234,21 @@ For direct Nx targets:
 
 ```bash
 pnpm exec nx run foundry-ai:lint --outputStyle=static
+```
+
+```bash
 pnpm exec nx run foundry-ai:test --outputStyle=static
+```
+
+```bash
 pnpm exec nx run foundry-ai:test-live --outputStyle=static
+```
+
+```bash
 pnpm exec nx run foundry-ai:typecheck --outputStyle=static
+```
+
+```bash
 pnpm exec nx run foundry-ai:build --outputStyle=static
 ```
 
