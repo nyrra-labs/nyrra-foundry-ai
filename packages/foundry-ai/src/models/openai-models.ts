@@ -4,11 +4,9 @@ function createOpenAIModel(
   rid: string,
   displayName: string,
   {
-    isReasoning,
     lifecycle,
     supportsVision = true,
   }: {
-    isReasoning: boolean;
     lifecycle: ModelLifecycle;
     supportsVision?: boolean;
   },
@@ -17,7 +15,6 @@ function createOpenAIModel(
     rid,
     provider: 'openai',
     displayName,
-    isReasoning,
     supportsVision,
     supportsResponses: true,
     lifecycle,
@@ -26,75 +23,86 @@ function createOpenAIModel(
 
 export const OPENAI_MODELS = {
   'gpt-4.1': createOpenAIModel('ri.language-model-service..language-model.gpt-4-1', 'GPT-4.1', {
-    isReasoning: false,
     lifecycle: 'ga',
   }),
   'gpt-4.1-mini': createOpenAIModel(
     'ri.language-model-service..language-model.gpt-4-1-mini',
     'GPT-4.1 Mini',
-    { isReasoning: false, lifecycle: 'ga' },
+    { lifecycle: 'ga' },
   ),
   'gpt-4.1-nano': createOpenAIModel(
     'ri.language-model-service..language-model.gpt-4-1-nano',
     'GPT-4.1 Nano',
-    { isReasoning: false, lifecycle: 'ga' },
+    { lifecycle: 'ga' },
   ),
   'gpt-4o': createOpenAIModel('ri.language-model-service..language-model.gpt-4-o', 'GPT-4o', {
-    isReasoning: false,
     lifecycle: 'ga',
   }),
   'gpt-4o-mini': createOpenAIModel(
     'ri.language-model-service..language-model.gpt-4-o-mini',
     'GPT-4o Mini',
-    { isReasoning: false, lifecycle: 'ga' },
+    { lifecycle: 'ga' },
   ),
   'gpt-5': createOpenAIModel('ri.language-model-service..language-model.gpt-5', 'GPT-5', {
-    isReasoning: true,
     lifecycle: 'ga',
   }),
   'gpt-5-codex': createOpenAIModel(
     'ri.language-model-service..language-model.gpt-5-codex',
     'GPT-5 Codex',
-    { isReasoning: false, lifecycle: 'ga', supportsVision: false },
+    { lifecycle: 'ga', supportsVision: false },
   ),
   'gpt-5-mini': createOpenAIModel(
     'ri.language-model-service..language-model.gpt-5-mini',
     'GPT-5 Mini',
-    { isReasoning: true, lifecycle: 'ga' },
+    { lifecycle: 'ga' },
   ),
   'gpt-5-nano': createOpenAIModel(
     'ri.language-model-service..language-model.gpt-5-nano',
     'GPT-5 Nano',
-    { isReasoning: true, lifecycle: 'ga' },
+    { lifecycle: 'ga' },
   ),
   'gpt-5.1': createOpenAIModel('ri.language-model-service..language-model.gpt-5-1', 'GPT-5.1', {
-    isReasoning: false,
     lifecycle: 'ga',
   }),
   'gpt-5.1-codex': createOpenAIModel(
     'ri.language-model-service..language-model.gpt-5-1-codex',
     'GPT-5.1 Codex',
-    { isReasoning: false, lifecycle: 'ga', supportsVision: false },
+    { lifecycle: 'ga', supportsVision: false },
   ),
   'gpt-5.1-codex-mini': createOpenAIModel(
     'ri.language-model-service..language-model.gpt-5-1-codex-mini',
     'GPT-5.1 Codex Mini',
-    { isReasoning: false, lifecycle: 'ga', supportsVision: false },
+    { lifecycle: 'ga', supportsVision: false },
   ),
   'gpt-5.2': createOpenAIModel('ri.language-model-service..language-model.gpt-5-2', 'GPT-5.2', {
-    isReasoning: true,
     lifecycle: 'experimental',
   }),
   'gpt-5.4': createOpenAIModel('ri.language-model-service..language-model.gpt-5-4', 'GPT-5.4', {
-    isReasoning: true,
     lifecycle: 'experimental',
   }),
-  o3: createOpenAIModel('ri.language-model-service..language-model.o-3', 'o3', {
-    isReasoning: true,
-    lifecycle: 'ga',
-  }),
+  o3: createOpenAIModel('ri.language-model-service..language-model.o-3', 'o3', { lifecycle: 'ga' }),
   'o4-mini': createOpenAIModel('ri.language-model-service..language-model.o-4-mini', 'o4 Mini', {
-    isReasoning: true,
     lifecycle: 'ga',
   }),
 } as const satisfies Record<KnownOpenAIModelId, ModelMetadata>;
+
+const OPENAI_REASONING_MODEL_IDS = new Set<KnownOpenAIModelId>([
+  'gpt-5',
+  'gpt-5-mini',
+  'gpt-5-nano',
+  'gpt-5.2',
+  'gpt-5.4',
+  'o3',
+  'o4-mini',
+]);
+
+const OPENAI_REASONING_MODEL_TARGETS = new Set<string>([
+  ...OPENAI_REASONING_MODEL_IDS,
+  ...Object.entries(OPENAI_MODELS)
+    .filter(([modelId]) => OPENAI_REASONING_MODEL_IDS.has(modelId as KnownOpenAIModelId))
+    .map(([, metadata]) => metadata.rid),
+]);
+
+export function isKnownOpenAIReasoningTarget(modelId: string): boolean {
+  return OPENAI_REASONING_MODEL_TARGETS.has(modelId);
+}

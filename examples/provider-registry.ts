@@ -1,10 +1,15 @@
 import { loadFoundryConfig } from '@nyrra-labs/foundry-ai';
-import { createFoundryRegistry } from '@nyrra-labs/foundry-ai/registry';
-import { generateText } from 'ai';
+import { createFoundryAnthropic } from '@nyrra-labs/foundry-ai/anthropic';
+import { createFoundryOpenAI } from '@nyrra-labs/foundry-ai/openai';
+import { createProviderRegistry, generateText } from 'ai';
 
-const registry = createFoundryRegistry(loadFoundryConfig());
+const config = loadFoundryConfig();
+const registry = createProviderRegistry({
+  anthropic: createFoundryAnthropic(config),
+  openai: createFoundryOpenAI(config),
+});
 const prompt =
-  'In one sentence, summarize why a typed Foundry AI adapter that maps friendly model aliases to provider-specific RIDs is useful.';
+  'In one sentence, summarize why composing a Foundry provider registry in application code is useful.';
 
 const openAiResult = await generateText({
   model: registry.languageModel('openai:gpt-5-mini'),

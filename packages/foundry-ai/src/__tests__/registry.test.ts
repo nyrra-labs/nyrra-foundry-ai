@@ -1,3 +1,4 @@
+import { createProviderRegistry } from 'ai';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTestLanguageModel } from './helpers/test-language-model.js';
 
@@ -46,9 +47,10 @@ vi.mock('../providers/anthropic.js', () => ({
   createFoundryAnthropic: createFoundryAnthropicMock,
 }));
 
-import { createFoundryRegistry } from '../registry.js';
+import { createFoundryAnthropic } from '../providers/anthropic.js';
+import { createFoundryOpenAI } from '../providers/openai.js';
 
-describe('createFoundryRegistry', () => {
+describe('AI SDK registry composition example', () => {
   beforeEach(() => {
     openaiLanguageModelMock.mockReset();
     anthropicLanguageModelMock.mockReset();
@@ -69,9 +71,15 @@ describe('createFoundryRegistry', () => {
   });
 
   it('routes openai:model identifiers to the OpenAI adapter', () => {
-    const registry = createFoundryRegistry({
-      foundryUrl: 'https://example.palantirfoundry.com',
-      token: 'token',
+    const registry = createProviderRegistry({
+      anthropic: createFoundryAnthropic({
+        foundryUrl: 'https://example.palantirfoundry.com',
+        token: 'token',
+      }),
+      openai: createFoundryOpenAI({
+        foundryUrl: 'https://example.palantirfoundry.com',
+        token: 'token',
+      }),
     });
 
     const model = registry.languageModel('openai:gpt-5-mini');
@@ -81,9 +89,15 @@ describe('createFoundryRegistry', () => {
   });
 
   it('routes anthropic:model identifiers to the Anthropic adapter', () => {
-    const registry = createFoundryRegistry({
-      foundryUrl: 'https://example.palantirfoundry.com',
-      token: 'token',
+    const registry = createProviderRegistry({
+      anthropic: createFoundryAnthropic({
+        foundryUrl: 'https://example.palantirfoundry.com',
+        token: 'token',
+      }),
+      openai: createFoundryOpenAI({
+        foundryUrl: 'https://example.palantirfoundry.com',
+        token: 'token',
+      }),
     });
 
     const model = registry.languageModel('anthropic:claude-sonnet-4.6');

@@ -7,7 +7,6 @@ export default defineConfig({
     index: 'src/index.ts',
     'providers/openai': 'src/providers/openai.ts',
     'providers/anthropic': 'src/providers/anthropic.ts',
-    registry: 'src/registry.ts',
   },
   external: ['ai', '@ai-sdk/openai', '@ai-sdk/anthropic'],
   format: ['esm', 'cjs'],

@@ -42,22 +42,31 @@ describe('provider adapters', () => {
     attributionRid: 'ri.attribution.main',
   };
 
+  let openAIState: ReturnType<typeof createTestLanguageModel>['state'] | undefined;
+  let anthropicState: ReturnType<typeof createTestLanguageModel>['state'] | undefined;
+
   beforeEach(() => {
     openaiResponsesMock.mockReset();
     anthropicLanguageModelMock.mockReset();
 
     openaiResponsesMock.mockImplementation((modelId: string) => {
-      return createTestLanguageModel({
+      const testModel = createTestLanguageModel({
         provider: 'foundry-openai.responses',
         modelId,
-      }).model;
+      });
+
+      openAIState = testModel.state;
+      return testModel.model;
     });
 
     anthropicLanguageModelMock.mockImplementation((modelId: string) => {
-      return createTestLanguageModel({
-        provider: 'foundry-anthropic',
+      const testModel = createTestLanguageModel({
+        provider: 'foundry-anthropic.messages',
         modelId,
-      }).model;
+      });
+
+      anthropicState = testModel.state;
+      return testModel.model;
     });
   });
 
@@ -65,8 +74,12 @@ describe('provider adapters', () => {
     vi.clearAllMocks();
   });
 
-  it('creates an OpenAI provider with the Foundry proxy base URL and attribution header', () => {
-    createFoundryOpenAI(config);
+  it('creates an OpenAI provider with the normalized Foundry proxy URL and attribution header', () => {
+    createFoundryOpenAI({
+      foundryUrl: ' https://example.palantirfoundry.com/// ',
+      token: ' token-123 ',
+      attributionRid: ' ri.attribution.main ',
+    });
 
     expect(createOpenAIMock).toHaveBeenCalledWith({
       apiKey: 'token-123',
@@ -96,6 +109,153 @@ describe('provider adapters', () => {
     expect(openai.responses).toBeTypeOf('function');
   });
 
+  it('adds only the OpenAI compatibility options required by the Foundry proxy', async () => {
+    const openai = createFoundryOpenAI(config);
+
+    await openai('gpt-5-mini').doGenerate({
+      prompt: [],
+      providerOptions: {
+        custom: { traceId: 'trace-123' },
+        openai: {
+          reasoningEffort: 'high',
+        },
+      },
+      tools: [
+        {
+          type: 'function',
+          name: 'searchRegulations',
+          description: 'Search the regulation corpus.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              query: { type: 'string' },
+            },
+            required: ['query'],
+          },
+        },
+      ],
+    });
+
+    expect(openAIState?.lastGenerateParams).toEqual({
+      prompt: [],
+      providerOptions: {
+        custom: { traceId: 'trace-123' },
+        openai: {
+          forceReasoning: true,
+          reasoningEffort: 'high',
+          store: false,
+        },
+      },
+      tools: [
+        {
+          type: 'function',
+          name: 'searchRegulations',
+          description: 'Search the regulation corpus.',
+          strict: true,
+          inputSchema: {
+            type: 'object',
+            properties: {
+              query: { type: 'string' },
+            },
+            required: ['query'],
+          },
+        },
+      ],
+    });
+  });
+
+  it('preserves explicit OpenAI tool strict values', async () => {
+    const openai = createFoundryOpenAI(config);
+
+    await openai('gpt-5-mini').doGenerate({
+      prompt: [],
+      tools: [
+        {
+          type: 'function',
+          name: 'keepStrictFalse',
+          description: 'Keep strict false when the caller sets it.',
+          inputSchema: { type: 'object', properties: {} },
+          strict: false,
+        },
+        {
+          type: 'function',
+          name: 'keepStrictTrue',
+          description: 'Keep strict true when the caller sets it.',
+          inputSchema: { type: 'object', properties: {} },
+          strict: true,
+        },
+      ],
+    });
+
+    expect(openAIState?.lastGenerateParams?.tools).toEqual([
+      {
+        type: 'function',
+        name: 'keepStrictFalse',
+        description: 'Keep strict false when the caller sets it.',
+        inputSchema: { type: 'object', properties: {} },
+        strict: false,
+      },
+      {
+        type: 'function',
+        name: 'keepStrictTrue',
+        description: 'Keep strict true when the caller sets it.',
+        inputSchema: { type: 'object', properties: {} },
+        strict: true,
+      },
+    ]);
+  });
+
+  it('preserves an explicit OpenAI forceReasoning override', async () => {
+    const openai = createFoundryOpenAI(config);
+
+    await openai('gpt-5-mini').doGenerate({
+      prompt: [],
+      providerOptions: {
+        openai: {
+          forceReasoning: false,
+        },
+      },
+    });
+
+    expect(openAIState?.lastGenerateParams?.providerOptions).toEqual({
+      openai: {
+        forceReasoning: false,
+        store: false,
+      },
+    });
+  });
+
+  it('fails early when a caller opts into OpenAI stored responses', async () => {
+    const openai = createFoundryOpenAI(config);
+
+    await expect(
+      openai('gpt-5-mini').doGenerate({
+        prompt: [],
+        providerOptions: {
+          openai: {
+            store: true,
+          },
+        },
+      }),
+    ).rejects.toThrow(/providerOptions\.openai\.store=true/);
+    expect(openAIState?.lastGenerateParams).toBeUndefined();
+  });
+
+  it('validates OpenAI config inputs at runtime', () => {
+    expect(() =>
+      createFoundryOpenAI({
+        foundryUrl: '   ',
+        token: 'token-123',
+      }),
+    ).toThrow(/config\.foundryUrl/);
+    expect(() =>
+      createFoundryOpenAI({
+        foundryUrl: 'https://example.palantirfoundry.com',
+        token: '   ',
+      }),
+    ).toThrow(/config\.token/);
+  });
+
   it('creates an Anthropic provider using authToken instead of apiKey', () => {
     createFoundryAnthropic(config);
 
@@ -120,9 +280,49 @@ describe('provider adapters', () => {
     );
     expect(anthropicLanguageModelMock).toHaveBeenNthCalledWith(2, rawRid);
     expect(aliasModel.provider).toBe('foundry-anthropic');
+    expect(aliasModel.modelId).toBe('claude-sonnet-4.6');
     expect(rawModel.modelId).toBe(rawRid);
     expect(anthropic.languageModel).toBeTypeOf('function');
     expect(anthropic.chat).toBeTypeOf('function');
     expect(anthropic.messages).toBeTypeOf('function');
+  });
+
+  it('preserves Anthropic provider options without adding wrapper-specific behavior', async () => {
+    const anthropic = createFoundryAnthropic(config);
+
+    await anthropic('claude-sonnet-4.6').doGenerate({
+      prompt: [],
+      providerOptions: {
+        anthropic: {
+          disableParallelToolUse: true,
+          effort: 'low',
+          sendReasoning: true,
+          thinking: { type: 'enabled', budgetTokens: 512 },
+          toolStreaming: true,
+        },
+      },
+    });
+
+    expect(anthropicState?.lastGenerateParams).toEqual({
+      prompt: [],
+      providerOptions: {
+        anthropic: {
+          disableParallelToolUse: true,
+          effort: 'low',
+          sendReasoning: true,
+          thinking: { type: 'enabled', budgetTokens: 512 },
+          toolStreaming: true,
+        },
+      },
+    });
+  });
+
+  it('validates Anthropic config inputs at runtime', () => {
+    expect(() =>
+      createFoundryAnthropic({
+        foundryUrl: 'https://example.palantirfoundry.com',
+        token: '',
+      }),
+    ).toThrow(/config\.token/);
   });
 });

@@ -1,7 +1,8 @@
 import { createAnthropic } from '@ai-sdk/anthropic';
 import type { wrapLanguageModel } from 'ai';
 import { NoSuchModelError } from 'ai';
-import { normalizeFoundryUrl } from '../config.js';
+import { resolveFoundryConfig } from '../config.js';
+import { wrapFoundryLanguageModel } from '../middleware.js';
 import { resolveModelTarget } from '../models/catalog.js';
 import type { AnthropicModelId, FoundryConfig } from '../types.js';
 
@@ -19,26 +20,26 @@ export interface FoundryAnthropicProvider {
 
 export function createFoundryAnthropic(config: FoundryConfig): FoundryAnthropicProvider {
   const providerId = 'foundry-anthropic';
+  const resolvedConfig = resolveFoundryConfig(config, 'createFoundryAnthropic');
   const baseProvider = createAnthropic({
-    authToken: config.token,
-    baseURL: `${normalizeFoundryUrl(config.foundryUrl)}/api/v2/llm/proxy/anthropic/v1`,
-    headers: config.attributionRid ? { attribution: config.attributionRid } : undefined,
+    authToken: resolvedConfig.token,
+    baseURL: `${resolvedConfig.foundryUrl}/api/v2/llm/proxy/anthropic/v1`,
+    headers: resolvedConfig.attributionRid
+      ? { attribution: resolvedConfig.attributionRid }
+      : undefined,
     name: providerId,
   });
 
   const createLanguageModel = (modelId: AnthropicModelId): FoundryLanguageModel => {
     const resolvedModel = resolveModelTarget(modelId);
 
-    return baseProvider(resolvedModel.rid);
+    return wrapFoundryLanguageModel(baseProvider(resolvedModel.rid), {
+      modelId,
+      providerId,
+    });
   };
 
   function provider(modelId: AnthropicModelId): FoundryLanguageModel {
-    if (new.target) {
-      throw new Error(
-        'The Foundry Anthropic model function cannot be called with the new keyword.',
-      );
-    }
-
     return createLanguageModel(modelId);
   }
 

@@ -1,6 +1,6 @@
 # @nyrra-labs/foundry-ai
 
-Typed TypeScript SDK for Palantir Foundry's LLM proxy endpoints, built on the Vercel AI SDK.
+Thin Foundry provider adapters and model catalog for the Vercel AI SDK.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.2-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![AI%20SDK](https://img.shields.io/badge/AI%20SDK-6.0.140-000000?logo=vercel&logoColor=white)](https://sdk.vercel.ai/)
@@ -16,31 +16,20 @@ Typed TypeScript SDK for Palantir Foundry's LLM proxy endpoints, built on the Ve
 
 - Maps friendly model names such as `gpt-5-mini` and `claude-sonnet-4.6` to Foundry RIDs.
 - Exposes isolated provider subpaths so OpenAI and Anthropic installs stay separate by default.
-- Applies Foundry-safe OpenAI middleware defaults: `store: false`, strict function tools when unspecified, and reasoning flags for reasoning models.
+- Applies only the OpenAI compatibility defaults required by Foundry RID routing: `store: false`, `forceReasoning: true` for catalogued OpenAI reasoning targets unless the caller already set `forceReasoning`, and `strict: true` for function tools when the caller left `strict` unspecified.
 - Preserves a raw RID escape hatch when a model is not yet in the catalog.
-- Ships a thin provider registry wrapper for explicit multi-provider routing.
+- Exposes both alias and reverse-RID catalog lookups for app-level validation and routing.
 
-## How It Works
+## Package Contract
 
-The root package exports shared catalog, config, error, and middleware utilities. Provider adapters live behind subpath exports:
+The published surface is intentionally small:
 
-- `@nyrra-labs/foundry-ai` for core types and helpers
-- `@nyrra-labs/foundry-ai/openai` for the OpenAI-compatible Foundry adapter
-- `@nyrra-labs/foundry-ai/anthropic` for the Anthropic-compatible Foundry adapter
-- `@nyrra-labs/foundry-ai/registry` for AI SDK provider registry routing across both providers
+- `@nyrra-labs/foundry-ai` exports config loading, catalog helpers, errors, and model ID types.
+- `@nyrra-labs/foundry-ai/openai` exports `createFoundryOpenAI`.
+- `@nyrra-labs/foundry-ai/anthropic` exports `createFoundryAnthropic`.
 
-`/openai` only pulls in `@ai-sdk/openai`, `/anthropic` only pulls in `@ai-sdk/anthropic`, and `/registry` intentionally pulls in both.
-
-## Testing and CI
-
-| Layer | Present | Tooling | Runs in CI |
-|---|---|---|---|
-| unit | yes | Vitest | yes |
-| integration | no | none | no |
-| e2e api | yes | Vitest live tests + manual Bun/Node example scripts against live Foundry | no |
-| e2e web | no | none | no |
-
-GitHub Actions now runs lint, unit tests, typecheck, and build on `main` and pull requests. Live API verification still requires Foundry credentials and remains manual through `pnpm test:live` or the standalone scripts in [`examples/`](./examples).
+There is no published registry helper. Multi-provider routing stays as an application-level example built with AI SDK `createProviderRegistry`.
+This package is still pre-1.0. Legacy exports from the earlier wrapper-heavy shape such as the registry helper, middleware wrapper, and formatter helpers are intentionally removed instead of being carried forward behind compatibility shims.
 
 ## Quick Start
 
@@ -75,40 +64,83 @@ const result = await generateText({
 console.log(result.text);
 ```
 
+Use Anthropic the same way:
+
+```ts
+import { loadFoundryConfig } from '@nyrra-labs/foundry-ai';
+import { createFoundryAnthropic } from '@nyrra-labs/foundry-ai/anthropic';
+import { generateText } from 'ai';
+
+const anthropic = createFoundryAnthropic(loadFoundryConfig());
+
+const result = await generateText({
+  model: anthropic('claude-sonnet-4.6'),
+  prompt: 'Summarize why typed Foundry model aliases are useful.',
+});
+
+console.log(result.text);
+```
+
+## Multi-Provider Routing Example
+
+Compose AI SDK's registry in application code when you need both providers:
+
+```ts
+import { loadFoundryConfig } from '@nyrra-labs/foundry-ai';
+import { createFoundryAnthropic } from '@nyrra-labs/foundry-ai/anthropic';
+import { createFoundryOpenAI } from '@nyrra-labs/foundry-ai/openai';
+import { createProviderRegistry, generateText } from 'ai';
+
+const config = loadFoundryConfig();
+const registry = createProviderRegistry({
+  anthropic: createFoundryAnthropic(config),
+  openai: createFoundryOpenAI(config),
+});
+
+const result = await generateText({
+  model: registry.languageModel('openai:gpt-5-mini'),
+  prompt: 'Reply with one sentence.',
+});
+```
+
+## Explicit OpenAI Compatibility Rules
+
+- `providerOptions.openai.store=true` throws before the request is sent. The adapter always uses `store: false` for Foundry OpenAI traffic.
+- Catalogued OpenAI reasoning aliases automatically get `providerOptions.openai.forceReasoning=true` unless the caller already set `forceReasoning`.
+- Unknown OpenAI reasoning RIDs are not guessable. If you pass a new opaque RID for a reasoning model, set `providerOptions.openai.forceReasoning=true` explicitly.
+- OpenAI function tools default to `strict: true` only when the caller did not set `strict`. Explicit `strict` values are preserved.
+
 ## API Surface
 
 Core exports from `@nyrra-labs/foundry-ai`:
 
-- `loadFoundryConfig()` and `normalizeFoundryUrl()`
-- `FoundryModelNotFoundError` and `describeError()`
-- `wrapWithFoundryMiddleware()`
-- model catalogs and resolution helpers such as `MODEL_CATALOG`, `resolveModelRid()`, and `resolveModelTarget()`
-- public types including `FoundryConfig`, `OpenAIModelId`, and `AnthropicModelId`
+- `loadFoundryConfig()`
+- `FoundryModelNotFoundError`
+- `MODEL_CATALOG` and `MODEL_CATALOG_BY_RID`
+- catalog helpers such as `getModelMetadata()`, `resolveModelRid()`, and `resolveModelTarget()`
+- public types including `FoundryConfig`, `OpenAIModelId`, `AnthropicModelId`, `KnownOpenAIModelId`, `KnownAnthropicModelId`, and `KnownModelId`
 
 Provider-specific entrypoints:
 
 ```ts
 import { createFoundryOpenAI } from '@nyrra-labs/foundry-ai/openai';
 import { createFoundryAnthropic } from '@nyrra-labs/foundry-ai/anthropic';
-import { createFoundryRegistry } from '@nyrra-labs/foundry-ai/registry';
 ```
 
 Friendly names resolve through the shared catalog. Unknown strings pass through unchanged as raw Foundry RIDs when you call a provider adapter directly. Catalog-only helpers such as `resolveModelRid()` throw `FoundryModelNotFoundError` with a plain validation message.
 
 ## Examples
 
-The repo includes runnable scripts for the first vertical slice and the registry path:
+The repo includes runnable scripts for direct provider usage and registry composition:
 
 - [`examples/basic-text.ts`](./examples/basic-text.ts)
-- [`examples/README.md`](./examples/README.md)
 - [`examples/streaming.ts`](./examples/streaming.ts)
 - [`examples/structured-output.ts`](./examples/structured-output.ts)
 - [`examples/tool-calling-exa.ts`](./examples/tool-calling-exa.ts)
 - [`examples/provider-registry.ts`](./examples/provider-registry.ts)
+- [`examples/README.md`](./examples/README.md)
 
-Run them from the repo root. [`examples/README.md`](./examples/README.md) is the Bun-first command reference.
-
-For a safe run that rebuilds the package first, use:
+Run them from the repo root. For a safe run that rebuilds the package first, use:
 
 ```bash
 pnpm run example basic-text openai
@@ -119,11 +151,7 @@ pnpm run example streaming anthropic
 ```
 
 ```bash
-pnpm run example tool-calling-exa openai
-```
-
-```bash
-pnpm run example tool-calling-exa anthropic
+pnpm run example provider-registry
 ```
 
 If you want the shortest path, Bun works directly too:
@@ -133,55 +161,7 @@ bun examples/basic-text.ts openai
 ```
 
 ```bash
-bun examples/basic-text.ts anthropic
-```
-
-```bash
 bun examples/provider-registry.ts
-```
-
-```bash
-bun examples/tool-calling-exa.ts openai
-```
-
-```bash
-bun examples/tool-calling-exa.ts anthropic
-```
-
-Examples also accept an optional model ID as the third argument:
-
-```bash
-pnpm run example streaming anthropic claude-sonnet-4.6
-```
-
-```bash
-pnpm run example tool-calling-exa anthropic claude-sonnet-4.6
-```
-
-`examples/streaming.ts` and `examples/tool-calling-exa.ts` both print the exact provider options they send before streaming raw `fullStream` events.
-
-`examples/tool-calling-exa.ts` also requires `EXA_API_KEY`.
-
-Plain Node still works if you prefer it:
-
-```bash
-node --import tsx examples/basic-text.ts openai
-```
-
-```bash
-node --import tsx examples/basic-text.ts anthropic
-```
-
-```bash
-node --import tsx examples/provider-registry.ts
-```
-
-```bash
-node --import tsx examples/tool-calling-exa.ts openai
-```
-
-```bash
-node --import tsx examples/tool-calling-exa.ts anthropic
 ```
 
 ## Verified Provider Options
@@ -194,7 +174,18 @@ Observed on March 26, 2026 against this Foundry stack:
 | Anthropic | `claude-sonnet-4.6` | `thinking`, `sendReasoning`, `effort`, `toolStreaming`, `disableParallelToolUse` |
 | Anthropic | `claude-haiku-4.5` | basic text, raw RID, streaming, structured output |
 
-The Anthropic AI SDK exposes more knobs than this Foundry stack accepts uniformly across models. During live verification on March 26, 2026, `claude-haiku-4.5` rejected Anthropic `effort` because Foundry rejected the proxied `output_config` payload. That is why the richer Anthropic reasoning/tool examples default to `claude-sonnet-4.6`.
+The Anthropic AI SDK exposes more knobs than this Foundry stack accepts uniformly across models. During live verification on March 26, 2026, `claude-haiku-4.5` rejected Anthropic `effort` because Foundry rejected the proxied `output_config` payload. That is why the richer Anthropic reasoning and tool examples default to `claude-sonnet-4.6`.
+
+## Testing and CI
+
+| Layer | Present | Tooling | Runs in CI |
+|---|---|---|---|
+| unit | yes | Vitest | yes |
+| integration | no | none | no |
+| e2e api | yes | Vitest live tests + manual Bun/Node example scripts against live Foundry | no |
+| e2e web | no | none | no |
+
+GitHub Actions runs lint, unit tests, typecheck, build, and CodeQL on `main` and pull requests. Live API verification still requires Foundry credentials and remains manual through `pnpm test:live` or the standalone scripts in [`examples/`](./examples).
 
 ## Development
 
@@ -202,33 +193,11 @@ Install dependencies and use the root scripts:
 
 ```bash
 pnpm install
-```
-
-```bash
 pnpm clean
-```
-
-```bash
-pnpm format
-```
-
-```bash
 pnpm lint
-```
-
-```bash
 pnpm test
-```
-
-```bash
 pnpm test:live
-```
-
-```bash
 pnpm typecheck
-```
-
-```bash
 pnpm build
 ```
 
@@ -236,21 +205,8 @@ For direct Nx targets:
 
 ```bash
 pnpm exec nx run foundry-ai:lint --outputStyle=static
-```
-
-```bash
 pnpm exec nx run foundry-ai:test --outputStyle=static
-```
-
-```bash
-pnpm exec nx run foundry-ai:test-live --outputStyle=static
-```
-
-```bash
 pnpm exec nx run foundry-ai:typecheck --outputStyle=static
-```
-
-```bash
 pnpm exec nx run foundry-ai:build --outputStyle=static
 ```
 
@@ -258,7 +214,3 @@ pnpm exec nx run foundry-ai:build --outputStyle=static
 
 - Required: a Palantir Foundry stack with access to the LLM proxy endpoints
 - Optional: Exa for the tool-calling example
-
-## License
-
-MIT. See [LICENSE](./LICENSE).
