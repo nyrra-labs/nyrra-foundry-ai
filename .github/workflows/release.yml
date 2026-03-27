@@ -98,14 +98,7 @@ jobs:
 
           if [ "${release_type}" = "prerelease" ]; then
             prerelease_version=$(node scripts/resolve-next-prerelease-version.mjs)
-            node --input-type=module <<EOF
-            import { readFileSync, writeFileSync } from "node:fs";
-
-            const manifestPath = "packages/foundry-ai/package.json";
-            const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-            manifest.version = "${prerelease_version}";
-            writeFileSync(manifestPath, \`\${JSON.stringify(manifest, null, 2)}\n\`);
-            EOF
+            node scripts/set-package-version.mjs packages/foundry-ai/package.json "${prerelease_version}"
             echo "Prepared prerelease version ${prerelease_version} for publish."
             exit 0
           fi
