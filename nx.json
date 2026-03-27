@@ -9,6 +9,19 @@
       "{workspaceRoot}/tsconfig.base.json",
       "{workspaceRoot}/biome.json"
     ],
+    "workspaceLintFiles": [
+      "{workspaceRoot}/.devin/**",
+      "{workspaceRoot}/.github/**",
+      "{workspaceRoot}/AGENTS.md",
+      "{workspaceRoot}/README.md",
+      "{workspaceRoot}/SECURITY.md",
+      "{workspaceRoot}/docs/**",
+      "{workspaceRoot}/examples/**",
+      "{workspaceRoot}/justfile",
+      "{workspaceRoot}/opencode.jsonc",
+      "{workspaceRoot}/scripts/**",
+      "{workspaceRoot}/tsconfig.json"
+    ],
     "default": ["{projectRoot}/**/*", "sharedGlobals"],
     "production": [
       "default",
@@ -28,7 +41,7 @@
     },
     "lint": {
       "cache": true,
-      "inputs": ["default", "^default"]
+      "inputs": ["default", "^default", "workspaceLintFiles"]
     },
     "test": {
       "cache": true,
