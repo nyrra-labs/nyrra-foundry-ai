@@ -12,8 +12,9 @@ const config = loadLiveFoundryConfig();
 const openai = createFoundryOpenAI(config);
 const anthropic = createFoundryAnthropic(config);
 const registry = createFoundryRegistry(config);
-const LIVE_OPENAI_MODEL = 'gpt-5-mini';
-const LIVE_OPENAI_RID = 'ri.language-model-service..language-model.gpt-5-mini';
+const LIVE_OPENAI_SMOKE_MODEL = 'gpt-4.1-mini';
+const LIVE_OPENAI_REASONING_MODEL = 'gpt-5-mini';
+const LIVE_OPENAI_REASONING_RID = 'ri.language-model-service..language-model.gpt-5-mini';
 const LIVE_ANTHROPIC_SMOKE_MODEL = 'claude-haiku-4.5';
 const LIVE_ANTHROPIC_SMOKE_RID =
   'ri.language-model-service..language-model.anthropic-claude-4-5-haiku';
@@ -67,10 +68,9 @@ const regulatorySignalTool = tool({
 describe.sequential('live Foundry integration', () => {
   it('generates text with the direct OpenAI adapter', async () => {
     const result = await generateText({
-      model: openai(LIVE_OPENAI_MODEL),
+      model: openai(LIVE_OPENAI_SMOKE_MODEL),
       prompt: 'Reply with ACK and one short clause about Foundry adapters.',
       maxOutputTokens: 160,
-      providerOptions: LIVE_OPENAI_PROVIDER_OPTIONS,
     });
 
     expect(result.text).toMatch(/ack/i);
@@ -79,7 +79,7 @@ describe.sequential('live Foundry integration', () => {
 
   it('supports raw RID passthrough with the direct OpenAI adapter', async () => {
     const result = await generateText({
-      model: openai(LIVE_OPENAI_RID),
+      model: openai(LIVE_OPENAI_REASONING_RID),
       prompt: 'Reply with READY and one short clause.',
       maxOutputTokens: 160,
       providerOptions: LIVE_OPENAI_PROVIDER_OPTIONS,
@@ -90,7 +90,7 @@ describe.sequential('live Foundry integration', () => {
 
   it('streams text with the direct OpenAI adapter', async () => {
     const result = streamText({
-      model: openai(LIVE_OPENAI_MODEL),
+      model: openai(LIVE_OPENAI_REASONING_MODEL),
       prompt: 'Write one short release note about stricter Foundry middleware defaults.',
       maxOutputTokens: 180,
       providerOptions: LIVE_OPENAI_PROVIDER_OPTIONS,
@@ -108,7 +108,7 @@ describe.sequential('live Foundry integration', () => {
 
   it('generates structured output with the direct OpenAI adapter', async () => {
     const { output } = await generateText({
-      model: openai(LIVE_OPENAI_MODEL),
+      model: openai(LIVE_OPENAI_REASONING_MODEL),
       output: Output.object({
         schema: signalSchema,
         name: 'clinical_signal',
@@ -183,7 +183,7 @@ describe.sequential('live Foundry integration', () => {
 
   it('supports OpenAI reasoning provider options during tool loops', async () => {
     const result = streamText({
-      model: openai(LIVE_OPENAI_MODEL),
+      model: openai(LIVE_OPENAI_REASONING_MODEL),
       prompt:
         'Call the regulatorySignal tool exactly once, then answer with SIGNAL and the returned status in one short sentence.',
       maxOutputTokens: 160,
@@ -288,7 +288,7 @@ describe.sequential('live Foundry integration', () => {
 
   it('routes both providers through the registry against live Foundry', async () => {
     const openAiResult = await generateText({
-      model: registry.languageModel(`openai:${LIVE_OPENAI_MODEL}`),
+      model: registry.languageModel(`openai:${LIVE_OPENAI_REASONING_MODEL}`),
       prompt: 'Reply with ACK and one short clause about registry routing.',
       maxOutputTokens: 160,
       providerOptions: LIVE_OPENAI_PROVIDER_OPTIONS,

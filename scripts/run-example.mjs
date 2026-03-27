@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+const workspaceRoot = process.cwd();
 const [exampleName, ...exampleArgs] = process.argv.slice(2);
 
 if (!exampleName) {
@@ -9,7 +10,7 @@ if (!exampleName) {
 }
 
 const examplePath = resolve(
-  process.cwd(),
+  workspaceRoot,
   'examples',
   exampleName.endsWith('.ts') ? exampleName : `${exampleName}.ts`,
 );
@@ -20,16 +21,15 @@ if (!existsSync(examplePath)) {
 
 run('pnpm', ['run', 'build']);
 
-const runner =
-  spawnSync('bun', ['--version'], { stdio: 'ignore' }).status === 0
-    ? ['bun', [examplePath, ...exampleArgs]]
-    : ['node', ['--import', 'tsx', examplePath, ...exampleArgs]];
-
-run(runner[0], runner[1]);
+if (spawnSync('bun', ['--version'], { stdio: 'ignore' }).status === 0) {
+  run('bun', [examplePath, ...exampleArgs]);
+} else {
+  run('node', ['--import', 'tsx', examplePath, ...exampleArgs]);
+}
 
 function run(command, args) {
   const result = spawnSync(command, args, {
-    cwd: process.cwd(),
+    cwd: workspaceRoot,
     stdio: 'inherit',
   });
 
