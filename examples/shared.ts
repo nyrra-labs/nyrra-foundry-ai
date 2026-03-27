@@ -1,9 +1,9 @@
 import { resolve } from 'node:path';
 import process from 'node:process';
-import type { AnthropicModelId, OpenAIModelId } from '@nyrra-labs/foundry-ai';
-import { loadFoundryConfig } from '@nyrra-labs/foundry-ai';
-import { createFoundryAnthropic } from '@nyrra-labs/foundry-ai/anthropic';
-import { createFoundryOpenAI } from '@nyrra-labs/foundry-ai/openai';
+import type { AnthropicModelId, OpenAIModelId } from '@nyrra/foundry-ai';
+import { loadFoundryConfig } from '@nyrra/foundry-ai';
+import { createFoundryAnthropic } from '@nyrra/foundry-ai/anthropic';
+import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
 import type { LanguageModel } from 'ai';
 
 export type ExampleProvider = 'openai' | 'anthropic';

@@ -1,5 +1,5 @@
 {
-  "name": "@nyrra-labs/foundry-ai",
+  "name": "@nyrra/foundry-ai",
   "version": "0.0.1",
   "description": "Thin Foundry provider adapters and model catalog for the Vercel AI SDK.",
   "repository": {

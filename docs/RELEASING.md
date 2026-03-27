@@ -2,7 +2,7 @@
 
 ## Summary
 
-This repo publishes `@nyrra-labs/foundry-ai` with Nx release.
+This repo publishes `@nyrra/foundry-ai` with Nx release.
 
 - Stable releases and prereleases both use the `Release` GitHub Actions workflow.
 - The workflow is manual and should be run from `main`.
@@ -26,8 +26,8 @@ Trusted publishing is configured on the npm package itself, and npm's `npm trust
 
 Bootstrap steps:
 
-- make sure the `@nyrra-labs` npm org/scope exists
-- publish `@nyrra-labs/foundry-ai` once interactively from a maintainer machine
+- make sure the `@nyrra` npm org/scope exists
+- publish `@nyrra/foundry-ai` once interactively from a maintainer machine
 - on npmjs.com, add a trusted publisher for this repository and the workflow filename `release.yml`
 - after trusted publishing works, set the package to disallow token-based publishing
 

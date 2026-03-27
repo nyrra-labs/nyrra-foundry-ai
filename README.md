@@ -1,4 +1,4 @@
-# @nyrra-labs/foundry-ai
+# @nyrra/foundry-ai
 
 Thin Foundry provider adapters and model catalog for the Vercel AI SDK.
 
@@ -25,9 +25,9 @@ Thin Foundry provider adapters and model catalog for the Vercel AI SDK.
 
 The published surface is intentionally small:
 
-- `@nyrra-labs/foundry-ai` exports config loading, catalog helpers, errors, and model ID types.
-- `@nyrra-labs/foundry-ai/openai` exports `createFoundryOpenAI`.
-- `@nyrra-labs/foundry-ai/anthropic` exports `createFoundryAnthropic`.
+- `@nyrra/foundry-ai` exports config loading, catalog helpers, errors, and model ID types.
+- `@nyrra/foundry-ai/openai` exports `createFoundryOpenAI`.
+- `@nyrra/foundry-ai/anthropic` exports `createFoundryAnthropic`.
 
 There is no published registry helper. Multi-provider routing stays as an application-level example built with AI SDK `createProviderRegistry`.
 This package is still pre-1.0. Legacy exports from the earlier wrapper-heavy shape such as the registry helper, middleware wrapper, and formatter helpers are intentionally removed instead of being carried forward behind compatibility shims.
@@ -37,7 +37,7 @@ This package is still pre-1.0. Legacy exports from the earlier wrapper-heavy sha
 Install the package plus the provider peer dependency you plan to use:
 
 ```bash
-pnpm add @nyrra-labs/foundry-ai ai @ai-sdk/openai
+pnpm add @nyrra/foundry-ai ai @ai-sdk/openai
 ```
 
 Set the required environment variables:
@@ -51,8 +51,8 @@ FOUNDRY_ATTRIBUTION_RID=
 Use the OpenAI path end to end:
 
 ```ts
-import { loadFoundryConfig } from '@nyrra-labs/foundry-ai';
-import { createFoundryOpenAI } from '@nyrra-labs/foundry-ai/openai';
+import { loadFoundryConfig } from '@nyrra/foundry-ai';
+import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
 import { generateText } from 'ai';
 
 const openai = createFoundryOpenAI(loadFoundryConfig());
@@ -68,8 +68,8 @@ console.log(result.text);
 Use Anthropic the same way:
 
 ```ts
-import { loadFoundryConfig } from '@nyrra-labs/foundry-ai';
-import { createFoundryAnthropic } from '@nyrra-labs/foundry-ai/anthropic';
+import { loadFoundryConfig } from '@nyrra/foundry-ai';
+import { createFoundryAnthropic } from '@nyrra/foundry-ai/anthropic';
 import { generateText } from 'ai';
 
 const anthropic = createFoundryAnthropic(loadFoundryConfig());
@@ -87,9 +87,9 @@ console.log(result.text);
 Compose AI SDK's registry in application code when you need both providers:
 
 ```ts
-import { loadFoundryConfig } from '@nyrra-labs/foundry-ai';
-import { createFoundryAnthropic } from '@nyrra-labs/foundry-ai/anthropic';
-import { createFoundryOpenAI } from '@nyrra-labs/foundry-ai/openai';
+import { loadFoundryConfig } from '@nyrra/foundry-ai';
+import { createFoundryAnthropic } from '@nyrra/foundry-ai/anthropic';
+import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
 import { createProviderRegistry, generateText } from 'ai';
 
 const config = loadFoundryConfig();
@@ -113,7 +113,7 @@ const result = await generateText({
 
 ## API Surface
 
-Core exports from `@nyrra-labs/foundry-ai`:
+Core exports from `@nyrra/foundry-ai`:
 
 - `loadFoundryConfig()`
 - `FoundryModelNotFoundError`
@@ -124,8 +124,8 @@ Core exports from `@nyrra-labs/foundry-ai`:
 Provider-specific entrypoints:
 
 ```ts
-import { createFoundryOpenAI } from '@nyrra-labs/foundry-ai/openai';
-import { createFoundryAnthropic } from '@nyrra-labs/foundry-ai/anthropic';
+import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
+import { createFoundryAnthropic } from '@nyrra/foundry-ai/anthropic';
 ```
 
 Friendly names resolve through the shared catalog. Unknown strings pass through unchanged as raw Foundry RIDs when you call a provider adapter directly. Catalog-only helpers such as `resolveModelRid()` throw `FoundryModelNotFoundError` with a plain validation message.
