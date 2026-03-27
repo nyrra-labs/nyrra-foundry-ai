@@ -5,7 +5,8 @@
 This repo publishes `@nyrra/foundry-ai` with Nx release.
 
 - Stable releases and prereleases both use the `Release` GitHub Actions workflow.
-- The workflow is manual and should be run from `main`.
+- Prereleases run automatically on pushes to `main` that touch the package or release workflow.
+- Stable releases stay manual and should be run from `main`.
 
 The workflows run lint, unit tests, typecheck, and build before they cut a release commit or publish to npm.
 
@@ -53,7 +54,9 @@ The workflow lets Nx determine the semver bump from conventional commits. Becaus
 
 ## Prereleases
 
-Run the `Release` workflow from `main`.
+Prereleases are cut automatically on pushes to `main` that match the workflow path filters.
+
+Manual prerelease runs are still available from the `Release` workflow on `main`.
 
 - set `release_type=prerelease`
 - `preid` defaults to `rc`
