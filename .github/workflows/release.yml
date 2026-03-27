@@ -96,6 +96,20 @@ jobs:
           dry_run="${DRY_RUN_INPUT}"
           first_release="false"
 
+          if [ "${release_type}" = "prerelease" ]; then
+            prerelease_version=$(node scripts/resolve-next-prerelease-version.mjs)
+            node --input-type=module <<EOF
+            import { readFileSync, writeFileSync } from "node:fs";
+
+            const manifestPath = "packages/foundry-ai/package.json";
+            const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+            manifest.version = "${prerelease_version}";
+            writeFileSync(manifestPath, \`\${JSON.stringify(manifest, null, 2)}\n\`);
+            EOF
+            echo "Prepared prerelease version ${prerelease_version} for publish."
+            exit 0
+          fi
+
           if ! git tag --list '@nyrra/foundry-ai@*' | grep -q .; then
             first_release="true"
           fi
@@ -152,6 +166,7 @@ jobs:
             NODE_AUTH_TOKEN="" npm publish --access public --tag "${dist_tag}"
           )
       - name: Push release commit and tag
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.release_type == 'stable' }}
         run: |
           set -euo pipefail
           if [ "${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}" = "true" ]; then
