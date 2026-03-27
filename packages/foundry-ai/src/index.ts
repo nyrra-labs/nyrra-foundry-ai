@@ -1,11 +1,11 @@
-export { loadFoundryConfig, normalizeFoundryUrl } from './config.js';
-export { describeError, FoundryModelNotFoundError } from './errors.js';
-export { wrapWithFoundryMiddleware } from './middleware.js';
+export { loadFoundryConfig } from './config.js';
+export { FoundryModelNotFoundError } from './errors.js';
 export { ANTHROPIC_MODELS } from './models/anthropic-models.js';
 export {
   getModelMetadata,
   hasKnownModel,
   MODEL_CATALOG,
+  MODEL_CATALOG_BY_RID,
   resolveKnownModelMetadata,
   resolveModelProvider,
   resolveModelRid,
@@ -15,7 +15,9 @@ export { OPENAI_MODELS } from './models/openai-models.js';
 export type {
   AnthropicModelId,
   FoundryConfig,
-  FoundryModelId,
+  KnownAnthropicModelId,
+  KnownModelId,
+  KnownOpenAIModelId,
   ModelLifecycle,
   ModelMetadata,
   ModelProvider,

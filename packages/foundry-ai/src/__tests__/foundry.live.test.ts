@@ -1,17 +1,19 @@
 import type { AnthropicLanguageModelOptions } from '@ai-sdk/anthropic';
 import type { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai';
-import { generateText, Output, stepCountIs, streamText, tool } from 'ai';
+import { createProviderRegistry, generateText, Output, stepCountIs, streamText, tool } from 'ai';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createFoundryAnthropic } from '../providers/anthropic.js';
 import { createFoundryOpenAI } from '../providers/openai.js';
-import { createFoundryRegistry } from '../registry.js';
 import { loadLiveFoundryConfig } from './helpers/live-foundry.js';
 
 const config = loadLiveFoundryConfig();
 const openai = createFoundryOpenAI(config);
 const anthropic = createFoundryAnthropic(config);
-const registry = createFoundryRegistry(config);
+const registry = createProviderRegistry({
+  anthropic,
+  openai,
+});
 const LIVE_OPENAI_SMOKE_MODEL = 'gpt-4.1-mini';
 const LIVE_OPENAI_REASONING_MODEL = 'gpt-5-mini';
 const LIVE_OPENAI_REASONING_RID = 'ri.language-model-service..language-model.gpt-5-mini';
@@ -21,6 +23,7 @@ const LIVE_ANTHROPIC_SMOKE_RID =
 const LIVE_ANTHROPIC_OPTIONS_MODEL = 'claude-sonnet-4.6';
 const LIVE_OPENAI_PROVIDER_OPTIONS = {
   openai: {
+    forceReasoning: true,
     reasoningEffort: 'low',
     textVerbosity: 'low',
   } satisfies OpenAILanguageModelResponsesOptions,
@@ -91,7 +94,7 @@ describe.sequential('live Foundry integration', () => {
   it('streams text with the direct OpenAI adapter', async () => {
     const result = streamText({
       model: openai(LIVE_OPENAI_REASONING_MODEL),
-      prompt: 'Write one short release note about stricter Foundry middleware defaults.',
+      prompt: 'Write one short release note about explicit Foundry OpenAI compatibility defaults.',
       maxOutputTokens: 180,
       providerOptions: LIVE_OPENAI_PROVIDER_OPTIONS,
     });
@@ -286,7 +289,7 @@ describe.sequential('live Foundry integration', () => {
     expect(text).toMatch(/verified/i);
   });
 
-  it('routes both providers through the registry against live Foundry', async () => {
+  it('routes both providers through AI SDK registry composition against live Foundry', async () => {
     const openAiResult = await generateText({
       model: registry.languageModel(`openai:${LIVE_OPENAI_REASONING_MODEL}`),
       prompt: 'Reply with ACK and one short clause about registry routing.',

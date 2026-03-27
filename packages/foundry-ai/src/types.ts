@@ -45,7 +45,6 @@ export type KnownAnthropicModelId = (typeof ANTHROPIC_MODEL_IDS)[number];
 export type AnthropicModelId = KnownAnthropicModelId | (string & {});
 
 export type KnownModelId = KnownOpenAIModelId | KnownAnthropicModelId;
-export type FoundryModelId = OpenAIModelId | AnthropicModelId;
 
 export type ModelProvider = 'openai' | 'anthropic';
 export type ModelLifecycle = 'ga' | 'experimental' | 'deprecated';
@@ -54,7 +53,6 @@ export interface ModelMetadata {
   rid: string;
   provider: ModelProvider;
   displayName: string;
-  isReasoning: boolean;
   supportsVision: boolean;
   supportsResponses: boolean;
   lifecycle: ModelLifecycle;

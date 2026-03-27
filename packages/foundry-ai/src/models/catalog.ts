@@ -7,7 +7,7 @@ export const MODEL_CATALOG = {
   ...OPENAI_MODELS,
   ...ANTHROPIC_MODELS,
 } as const satisfies Record<KnownModelId, ModelMetadata>;
-const MODEL_CATALOG_BY_RID = Object.fromEntries(
+export const MODEL_CATALOG_BY_RID = Object.fromEntries(
   Object.values(MODEL_CATALOG).map((metadata) => [metadata.rid, metadata]),
 ) as Record<string, ModelMetadata>;
 

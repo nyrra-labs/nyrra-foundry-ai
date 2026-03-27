@@ -9,7 +9,6 @@ function createAnthropicModel(
     rid,
     provider: 'anthropic',
     displayName,
-    isReasoning: false,
     supportsVision: true,
     supportsResponses: false,
     lifecycle,

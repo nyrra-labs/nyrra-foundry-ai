@@ -51,6 +51,8 @@ pnpm run example tool-calling-exa anthropic
 pnpm run example provider-registry
 ```
 
+`provider-registry.ts` is an application-level composition example built with AI SDK `createProviderRegistry`. It is not a package export.
+
 ## Bun
 
 Use Bun directly when you do not need the rebuild step:
