@@ -23,7 +23,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: release-${{ github.workflow }}
+  group: release
   cancel-in-progress: false
 
 jobs:
