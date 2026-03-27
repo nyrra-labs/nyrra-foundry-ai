@@ -1,0 +1,68 @@
+{
+  "name": "foundry-ai",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/foundry-ai/src",
+  "projectType": "library",
+  "targets": {
+    "clean": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/clean.mjs",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "command": "pnpm exec tsup --config tsup.config.ts",
+        "cwd": "{workspaceRoot}/packages/foundry-ai"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm exec biome check package.json nx.json tsconfig.base.json tsconfig.json pnpm-workspace.yaml biome.json AGENTS.md README.md docs/SPEC.md opencode.jsonc examples scripts packages/foundry-ai/package.json packages/foundry-ai/project.json packages/foundry-ai/src packages/foundry-ai/tsconfig.json packages/foundry-ai/tsconfig.lib.json packages/foundry-ai/tsconfig.test.json packages/foundry-ai/tsconfig.typecheck.json packages/foundry-ai/tsup.config.ts packages/foundry-ai/vitest.config.ts packages/foundry-ai/vitest.live.config.ts",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm exec vitest run --config packages/foundry-ai/vitest.config.ts",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "test-live": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm exec vitest run --config packages/foundry-ai/vitest.live.config.ts",
+        "cwd": "{workspaceRoot}"
+      },
+      "cache": false
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          {
+            "command": "pnpm exec tsc --project packages/foundry-ai/tsconfig.typecheck.json --noEmit",
+            "description": "TypeScript typecheck"
+          },
+          {
+            "command": "node scripts/check-deprecations.mjs --project packages/foundry-ai/tsconfig.typecheck.json",
+            "description": "Deprecated API usage check"
+          }
+        ],
+        "parallel": false,
+        "cwd": "{workspaceRoot}"
+      }
+    }
+  },
+  "tags": [],
+  "release": {
+    "version": {
+      "manifestRootsToUpdate": ["{projectRoot}"]
+    }
+  }
+}

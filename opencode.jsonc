@@ -1,8 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": [
-    "@openontology/opencode-palantir@^0.1.6"
-  ],
+  "plugin": ["@openontology/opencode-palantir@^0.1.6"],
   "tools": {
     "palantir-mcp_*": true
   },
@@ -10,13 +8,7 @@
     "palantir-mcp": {
       "type": "local",
       "enabled": true,
-      "command": [
-        "npx",
-        "-y",
-        "palantir-mcp",
-        "--foundry-api-url",
-        "{env:FOUNDRY_URL}"
-      ],
+      "command": ["npx", "-y", "palantir-mcp", "--foundry-api-url", "{env:FOUNDRY_URL}"],
       "environment": {
         "FOUNDRY_TOKEN": "{env:FOUNDRY_TOKEN}"
       }

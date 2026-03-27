@@ -1,0 +1,51 @@
+import { FoundryModelNotFoundError } from '../errors.js';
+import type { KnownModelId, ModelMetadata, ModelProvider, ResolvedModelTarget } from '../types.js';
+import { ANTHROPIC_MODELS } from './anthropic-models.js';
+import { OPENAI_MODELS } from './openai-models.js';
+
+export const MODEL_CATALOG = {
+  ...OPENAI_MODELS,
+  ...ANTHROPIC_MODELS,
+} as const satisfies Record<KnownModelId, ModelMetadata>;
+const MODEL_CATALOG_BY_RID = Object.fromEntries(
+  Object.values(MODEL_CATALOG).map((metadata) => [metadata.rid, metadata]),
+) as Record<string, ModelMetadata>;
+
+export function getModelMetadata(modelId: string): ModelMetadata | undefined {
+  return MODEL_CATALOG[modelId as KnownModelId];
+}
+
+export function hasKnownModel(modelId: string): modelId is KnownModelId {
+  return getModelMetadata(modelId) != null;
+}
+
+export function resolveModelTarget(modelId: string): ResolvedModelTarget {
+  const metadata = getModelMetadata(modelId) ?? getModelMetadataByRid(modelId);
+
+  return {
+    rid: metadata?.rid ?? modelId,
+    metadata,
+  };
+}
+
+export function resolveKnownModelMetadata(modelId: string): ModelMetadata {
+  const metadata = getModelMetadata(modelId);
+
+  if (metadata == null) {
+    throw new FoundryModelNotFoundError(modelId);
+  }
+
+  return metadata;
+}
+
+export function resolveModelRid(modelId: string): string {
+  return resolveKnownModelMetadata(modelId).rid;
+}
+
+export function resolveModelProvider(modelId: string): ModelProvider {
+  return resolveKnownModelMetadata(modelId).provider;
+}
+
+function getModelMetadataByRid(modelRid: string): ModelMetadata | undefined {
+  return MODEL_CATALOG_BY_RID[modelRid];
+}

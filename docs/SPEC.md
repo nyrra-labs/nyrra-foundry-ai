@@ -137,7 +137,7 @@ const result = await generateText({
 
 ### Core Concepts
 
-1. **Model Catalog** -- Static map of friendly names to Foundry RIDs, with per-model metadata (provider, reasoning flag, model class, capabilities). Single source of truth.
+1. **Model Catalog** -- Static map of friendly names to Foundry RIDs, with per-model metadata (provider, reasoning flag, capabilities, lifecycle). Single source of truth.
 
 2. **Provider Adapters** -- Thin wrappers around `@ai-sdk/openai` and `@ai-sdk/anthropic` that handle Foundry-specific URL construction, auth, RID mapping, and apply middleware. Each lives behind its own subpath export.
 
@@ -188,13 +188,11 @@ export type AnthropicModelId =
 
 // --- Per-model metadata ---
 export type ModelProvider = 'openai' | 'anthropic';
-export type ModelClass = 'heavyweight' | 'lightweight' | 'reasoning' | 'codex';
 
 export interface ModelMetadata {
   rid: string;                     // Foundry resource identifier
   provider: ModelProvider;
   displayName: string;             // Human-readable name
-  modelClass: ModelClass;
   isReasoning: boolean;            // Needs forceReasoning?
   supportsVision: boolean;
   supportsResponses: boolean;      // OpenAI Responses API
@@ -213,7 +211,6 @@ export const OPENAI_MODELS = {
     rid: 'ri.language-model-service..language-model.gpt-4-1',
     provider: 'openai' as const,
     displayName: 'GPT-4.1',
-    modelClass: 'heavyweight' as const,
     isReasoning: false,
     supportsVision: true,
     supportsResponses: true,
@@ -221,10 +218,6 @@ export const OPENAI_MODELS = {
   },
   // ... all other OpenAI models
 } as const satisfies Record<string, ModelMetadata>;
-
-export const OPENAI_REASONING_MODELS = new Set([
-  'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-5.2', 'gpt-5.4', 'o3', 'o4-mini',
-]);
 ```
 
 #### `anthropic-models.ts`
@@ -279,7 +272,7 @@ export function createFoundryOpenAI(config: FoundryConfig) {
 **Key decisions:**
 - Uses `provider.responses()` (OpenAI Responses API) not `.chat()` -- this is the modern API
 - Wraps with middleware for `forceReasoning`, enforced `store: false`, and default `strict: true` for OpenAI function tools
-- Falls through to raw RID if not found in catalog. Unknown strings are treated as raw model IDs; typo-suggestion errors are only for explicit catalog lookup helpers, not the provider adapter escape hatch.
+- Falls through to raw RID if not found in catalog. Unknown strings are treated as raw model IDs; explicit catalog helpers throw a plain validation error instead of trying to guess intended aliases.
 
 #### `anthropic.ts` -- `createFoundryAnthropic()`
 
@@ -413,11 +406,9 @@ export function loadFoundryConfig(): FoundryConfig {
 ```typescript
 export class FoundryModelNotFoundError extends Error {
   constructor(modelId: string) {
-    const suggestions = findClosestModelNames(modelId, 3);
-    const hint = suggestions.length
-      ? `\n\nDid you mean: ${suggestions.join(', ')}?`
-      : '\n\nCheck the model catalog for available models.';
-    super(`Unknown model: "${modelId}".${hint}`);
+    super(
+      `Unknown model: "${modelId}". Check the model catalog for available models or pass a raw Foundry RID directly to a provider adapter.`,
+    );
     this.name = 'FoundryModelNotFoundError';
   }
 }
@@ -573,17 +564,40 @@ Single-package release workflow using nx release:
 // nx.json (partial)
 {
   "release": {
-    "projects": ["foundry-ai"],
+    "groups": {
+      "npm-packages": {
+        "projects": ["foundry-ai"],
+        "projectsRelationship": "fixed",
+        "releaseTag": {
+          "pattern": "@nyrra-labs/foundry-ai@{version}"
+        }
+      }
+    },
     "version": {
-      "conventionalCommits": true
+      "adjustSemverBumpsForZeroMajorVersion": true,
+      "conventionalCommits": true,
+      "preserveLocalDependencyProtocols": true
     },
     "changelog": {
+      "automaticFromRef": true,
       "workspaceChangelog": false,
       "projectChangelogs": true
     }
   }
 }
 ```
+
+### Deferred: Prismantix-Style `next` Prereleases
+
+Do not implement the full Prismantix Maker prerelease workflow in Phase 1 unless release automation is needed immediately. This repo does not yet have GitHub Actions release automation or npm trusted publishing configured, so a partial copy would create local-only release behavior without the CI path that makes it valuable.
+
+When release automation is added, mirror the Prismantix pattern in a single-package form:
+
+- pushes to `main` publish `next` prereleases automatically without committing prerelease version bumps back to the protected branch
+- prerelease versions are resolved from the stable manifest version plus the current npm `next` dist-tag, so repeated prereleases advance as `0.0.2-next.0`, `0.0.2-next.1`, etc.
+- manual workflow dispatch remains the stable-release path that publishes `latest`, creates the git tag, and pushes the stable version bump
+- prerelease version resolution should be npm-backed rather than git-backed, because CI-generated prerelease commits are intentionally ephemeral
+- the helper script can stay single-package and only needs to inspect `packages/foundry-ai/package.json` plus the npm `latest` and `next` dist-tags for `@nyrra-labs/foundry-ai`
 
 ---
 
@@ -619,7 +633,7 @@ Using `createFoundryRegistry` for multi-provider routing -- same config, multipl
    - RID resolution for all known models
    - Provider detection (friendly name -> correct provider)
    - String escape hatch (raw RIDs pass through)
-   - Closest-match suggestions for typos
+   - Plain validation errors for unknown aliases
 
 2. **Middleware tests**
    - `strict: true` defaulted onto function tools for OpenAI provider only when `strict` is unspecified
@@ -695,7 +709,7 @@ Using `createFoundryRegistry` for multi-provider routing -- same config, multipl
 - [ ] Middleware preserves explicit tool `strict` values
 - [ ] Middleware does NOT inject `strict` for Anthropic
 - [ ] `createFoundryRegistry` correctly routes `openai:model` and `anthropic:model`
-- [ ] Catalog/helper validation produces helpful typo suggestions without breaking raw RID passthrough in provider adapters
+- [ ] Catalog/helper validation rejects unknown aliases without breaking raw RID passthrough in provider adapters
 - [ ] `pnpm nx release` generates changelog and publishes to npm
 
 ---
@@ -704,39 +718,39 @@ Using `createFoundryRegistry` for multi-provider routing -- same config, multipl
 
 ### OpenAI Models
 
-| Friendly Name | Foundry RID | Class | Reasoning | Lifecycle |
-|--------------|-------------|-------|-----------|-----------|
-| gpt-4.1 | ri.language-model-service..language-model.gpt-4-1 | heavyweight | no | GA |
-| gpt-4.1-mini | ri.language-model-service..language-model.gpt-4-1-mini | lightweight | no | GA |
-| gpt-4.1-nano | ri.language-model-service..language-model.gpt-4-1-nano | lightweight | no | GA |
-| gpt-4o | ri.language-model-service..language-model.gpt-4-o | heavyweight | no | GA |
-| gpt-4o-mini | ri.language-model-service..language-model.gpt-4-o-mini | lightweight | no | GA |
-| gpt-5 | ri.language-model-service..language-model.gpt-5 | heavyweight | yes | GA |
-| gpt-5-codex | ri.language-model-service..language-model.gpt-5-codex | codex | no | GA |
-| gpt-5-mini | ri.language-model-service..language-model.gpt-5-mini | lightweight | yes | GA |
-| gpt-5-nano | ri.language-model-service..language-model.gpt-5-nano | lightweight | yes | GA |
-| gpt-5.1 | ri.language-model-service..language-model.gpt-5-1 | heavyweight | no | GA |
-| gpt-5.1-codex | ri.language-model-service..language-model.gpt-5-1-codex | codex | no | GA |
-| gpt-5.1-codex-mini | ri.language-model-service..language-model.gpt-5-1-codex-mini | codex | no | GA |
-| gpt-5.2 | ri.language-model-service..language-model.gpt-5-2 | heavyweight | yes | experimental |
-| gpt-5.4 | ri.language-model-service..language-model.gpt-5-4 | heavyweight | yes | experimental |
-| o3 | ri.language-model-service..language-model.o-3 | reasoning | yes | GA |
-| o4-mini | ri.language-model-service..language-model.o-4-mini | reasoning | yes | GA |
+| Friendly Name | Foundry RID | Reasoning | Lifecycle |
+|--------------|-------------|-----------|-----------|
+| gpt-4.1 | ri.language-model-service..language-model.gpt-4-1 | no | GA |
+| gpt-4.1-mini | ri.language-model-service..language-model.gpt-4-1-mini | no | GA |
+| gpt-4.1-nano | ri.language-model-service..language-model.gpt-4-1-nano | no | GA |
+| gpt-4o | ri.language-model-service..language-model.gpt-4-o | no | GA |
+| gpt-4o-mini | ri.language-model-service..language-model.gpt-4-o-mini | no | GA |
+| gpt-5 | ri.language-model-service..language-model.gpt-5 | yes | GA |
+| gpt-5-codex | ri.language-model-service..language-model.gpt-5-codex | no | GA |
+| gpt-5-mini | ri.language-model-service..language-model.gpt-5-mini | yes | GA |
+| gpt-5-nano | ri.language-model-service..language-model.gpt-5-nano | yes | GA |
+| gpt-5.1 | ri.language-model-service..language-model.gpt-5-1 | no | GA |
+| gpt-5.1-codex | ri.language-model-service..language-model.gpt-5-1-codex | no | GA |
+| gpt-5.1-codex-mini | ri.language-model-service..language-model.gpt-5-1-codex-mini | no | GA |
+| gpt-5.2 | ri.language-model-service..language-model.gpt-5-2 | yes | experimental |
+| gpt-5.4 | ri.language-model-service..language-model.gpt-5-4 | yes | experimental |
+| o3 | ri.language-model-service..language-model.o-3 | yes | GA |
+| o4-mini | ri.language-model-service..language-model.o-4-mini | yes | GA |
 
 ### Anthropic Models
 
-| Friendly Name | Foundry RID | Class | Lifecycle |
-|--------------|-------------|-------|-----------|
-| claude-3.5-haiku | ri.language-model-service..language-model.anthropic-claude-3-5-haiku | lightweight | GA |
-| claude-3.7-sonnet | ri.language-model-service..language-model.anthropic-claude-3-7-sonnet | heavyweight | GA |
-| claude-haiku-4.5 | ri.language-model-service..language-model.anthropic-claude-4-5-haiku | lightweight | GA |
-| claude-opus-4 | ri.language-model-service..language-model.anthropic-claude-4-opus | heavyweight | GA |
-| claude-opus-4.1 | ri.language-model-service..language-model.anthropic-claude-4-1-opus | heavyweight | GA |
-| claude-opus-4.5 | ri.language-model-service..language-model.anthropic-claude-4-5-opus | heavyweight | GA |
-| claude-opus-4.6 | ri.language-model-service..language-model.anthropic-claude-4-6-opus | heavyweight | GA |
-| claude-sonnet-4 | ri.language-model-service..language-model.anthropic-claude-4-sonnet | heavyweight | GA |
-| claude-sonnet-4.5 | ri.language-model-service..language-model.anthropic-claude-4-5-sonnet | heavyweight | GA |
-| claude-sonnet-4.6 | ri.language-model-service..language-model.anthropic-claude-4-6-sonnet | heavyweight | GA |
+| Friendly Name | Foundry RID | Lifecycle |
+|--------------|-------------|-----------|
+| claude-3.5-haiku | ri.language-model-service..language-model.anthropic-claude-3-5-haiku | GA |
+| claude-3.7-sonnet | ri.language-model-service..language-model.anthropic-claude-3-7-sonnet | GA |
+| claude-haiku-4.5 | ri.language-model-service..language-model.anthropic-claude-4-5-haiku | GA |
+| claude-opus-4 | ri.language-model-service..language-model.anthropic-claude-4-opus | GA |
+| claude-opus-4.1 | ri.language-model-service..language-model.anthropic-claude-4-1-opus | GA |
+| claude-opus-4.5 | ri.language-model-service..language-model.anthropic-claude-4-5-opus | GA |
+| claude-opus-4.6 | ri.language-model-service..language-model.anthropic-claude-4-6-opus | GA |
+| claude-sonnet-4 | ri.language-model-service..language-model.anthropic-claude-4-sonnet | GA |
+| claude-sonnet-4.5 | ri.language-model-service..language-model.anthropic-claude-4-5-sonnet | GA |
+| claude-sonnet-4.6 | ri.language-model-service..language-model.anthropic-claude-4-6-sonnet | GA |
 
 ### Embedding Models (Phase 2)
 
@@ -783,7 +797,7 @@ Using `createFoundryRegistry` for multi-provider routing -- same config, multipl
 4. `src/models/openai-models.ts` -- OpenAI catalog
 5. `src/models/anthropic-models.ts` -- Anthropic catalog
 6. `src/models/catalog.ts` -- Unified catalog + resolution functions
-7. `src/errors.ts` -- Error types + fuzzy match suggestions
+7. `src/errors.ts` -- Error types + plain catalog validation messages
 8. `src/config.ts` -- Env var loading
 9. `src/middleware.ts` -- Foundry middleware (strict tools OpenAI-only, store, reasoning)
 10. `src/providers/openai.ts` -- createFoundryOpenAI
