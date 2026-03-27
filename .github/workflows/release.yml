@@ -1,6 +1,20 @@
 name: Release
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/release.yml"
+      - "nx.json"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "packages/foundry-ai/package.json"
+      - "packages/foundry-ai/README.md"
+      - "packages/foundry-ai/src/**"
+      - "packages/foundry-ai/tsconfig*.json"
+      - "packages/foundry-ai/tsup.config.ts"
+      - "packages/foundry-ai/vitest*.ts"
   workflow_dispatch:
     inputs:
       release_type:
@@ -38,6 +52,7 @@ concurrency:
 
 jobs:
   publish:
+    if: github.ref == 'refs/heads/main' && (github.event_name != 'push' || github.actor != 'github-actions[bot]')
     runs-on: ubuntu-latest
     steps:
       - name: Require main
@@ -70,35 +85,53 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
       - name: Create release commit and tag
         env:
-          DRY_RUN: ${{ inputs.dry_run }}
-          FIRST_RELEASE: ${{ inputs.first_release }}
-          PREID: ${{ inputs.preid }}
-          RELEASE_TYPE: ${{ inputs.release_type }}
+          DRY_RUN_INPUT: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+          FIRST_RELEASE_INPUT: ${{ github.event_name == 'workflow_dispatch' && inputs.first_release || 'false' }}
+          PREID_INPUT: ${{ github.event_name == 'workflow_dispatch' && inputs.preid || 'rc' }}
+          RELEASE_TYPE_INPUT: ${{ github.event_name == 'workflow_dispatch' && inputs.release_type || 'prerelease' }}
         run: |
           set -euo pipefail
-          args=(release --group npm-packages --skip-publish)
-          if [ "$RELEASE_TYPE" = "prerelease" ]; then
-            args+=(--preid "$PREID")
+          release_type="${RELEASE_TYPE_INPUT}"
+          preid="${PREID_INPUT}"
+          dry_run="${DRY_RUN_INPUT}"
+          first_release="false"
+
+          if ! git tag --list '@nyrra/foundry-ai@*' | grep -q .; then
+            first_release="true"
           fi
-          if [ "$FIRST_RELEASE" = "true" ]; then
+
+          if [ "${FIRST_RELEASE_INPUT}" = "true" ]; then
+            first_release="true"
+          fi
+
+          args=(release --group npm-packages --skip-publish)
+          if [ "$release_type" = "prerelease" ]; then
+            args+=(--preid "$preid")
+          fi
+          if [ "$first_release" = "true" ]; then
             args+=(--first-release)
           fi
-          if [ "$DRY_RUN" = "true" ]; then
+          if [ "$dry_run" = "true" ]; then
             args+=(--dry-run)
           fi
           pnpm exec nx "${args[@]}"
       - name: Publish package
-        if: ${{ !inputs.dry_run }}
         env:
-          RELEASE_TYPE: ${{ inputs.release_type }}
+          DRY_RUN_INPUT: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+          RELEASE_TYPE_INPUT: ${{ github.event_name == 'workflow_dispatch' && inputs.release_type || 'prerelease' }}
         run: |
           set -euo pipefail
+          if [ "${DRY_RUN_INPUT}" = "true" ]; then
+            echo "Skipping publish because dry_run=true."
+            exit 0
+          fi
+
           package_root="packages/foundry-ai"
           package_name=$(node -p "require('./${package_root}/package.json').name")
           package_version=$(node -p "require('./${package_root}/package.json').version")
           dist_tag="latest"
 
-          if [ "$RELEASE_TYPE" = "prerelease" ]; then
+          if [ "$RELEASE_TYPE_INPUT" = "prerelease" ]; then
             dist_tag="next"
           fi
 
@@ -119,8 +152,11 @@ jobs:
             NODE_AUTH_TOKEN="" npm publish --access public --tag "${dist_tag}"
           )
       - name: Push release commit and tag
-        if: ${{ !inputs.dry_run }}
         run: |
           set -euo pipefail
+          if [ "${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}" = "true" ]; then
+            echo "Skipping git push because dry_run=true."
+            exit 0
+          fi
           git push origin HEAD:${GITHUB_REF_NAME}
           git push origin --tags
