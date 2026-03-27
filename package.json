@@ -13,7 +13,7 @@
     "test:live": "pnpm exec nx run foundry-ai:test-live --outputStyle=static",
     "typecheck": "pnpm exec nx run foundry-ai:typecheck --outputStyle=static",
     "deprecations": "node scripts/check-deprecations.mjs --project packages/foundry-ai/tsconfig.typecheck.json",
-    "release": "pnpm exec nx release --outputStyle=static"
+    "release": "pnpm exec nx release"
   },
   "devDependencies": {
     "@ai-sdk/anthropic": "3.0.64",
