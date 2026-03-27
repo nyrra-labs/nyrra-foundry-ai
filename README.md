@@ -222,11 +222,19 @@ Both workflows run lint, unit tests, typecheck, and build before they cut a rele
 
 Before the first publish:
 
-- add a repository secret named `NPM_TOKEN` with npm publish access for the `@nyrra-labs` scope
 - make sure GitHub Actions can push release commits and tags back to `main`
+- do a one-time bootstrap publish from a maintainer machine so the package exists on npm
+- configure npm trusted publishing for this repo's release workflows
 - run the workflow once with `first_release=true`
 
-There is no separate npm command to create the package. The first successful publish creates `@nyrra-labs/foundry-ai` automatically as long as the `@nyrra-labs` scope already exists on npm and the token can publish to it.
+This repo is set up for npm trusted publishing, not a long-lived `NPM_TOKEN`. After the bootstrap publish, future releases should come from GitHub Actions with npm OIDC and provenance instead of a stored publish token.
+
+Bootstrap publish command:
+
+```bash
+cd packages/foundry-ai
+npm publish --access public
+```
 
 For the full release checklist and workflow behavior, see [`docs/RELEASING.md`](./docs/RELEASING.md).
 

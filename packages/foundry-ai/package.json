@@ -2,6 +2,10 @@
   "name": "@nyrra-labs/foundry-ai",
   "version": "0.0.1",
   "description": "Thin Foundry provider adapters and model catalog for the Vercel AI SDK.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nyrra-labs/nyrra-foundry-ai.git"
+  },
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.cjs",

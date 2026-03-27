@@ -20,7 +20,9 @@ on:
         type: boolean
 
 permissions:
+  actions: read
   contents: write
+  id-token: write
 
 concurrency:
   group: release
@@ -48,6 +50,10 @@ jobs:
           node-version: 24
           cache: pnpm
           registry-url: https://registry.npmjs.org
+      - name: Show Node and npm versions
+        run: |
+          node --version
+          npm --version
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec nx run-many -t lint test typecheck build --projects=foundry-ai --outputStyle=static
       - name: Configure git author
@@ -69,23 +75,30 @@ jobs:
             args+=(--dry-run)
           fi
           pnpm exec nx "${args[@]}"
-      - name: Verify npm auth
-        if: ${{ !inputs.dry_run }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm whoami
       - name: Publish prerelease package
         if: ${{ !inputs.dry_run }}
-        env:
-          FIRST_RELEASE: ${{ inputs.first_release }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           set -euo pipefail
-          args=(release publish --group npm-packages --tag next)
-          if [ "$FIRST_RELEASE" = "true" ]; then
-            args+=(--first-release)
+          package_root="packages/foundry-ai"
+          package_name=$(node -p "require('./${package_root}/package.json').name")
+          package_version=$(node -p "require('./${package_root}/package.json').version")
+
+          if npm view "${package_name}@${package_version}" version --registry=https://registry.npmjs.org >/dev/null 2>&1; then
+            current_tag_version=$(npm view "${package_name}" "dist-tags.next" --json --registry=https://registry.npmjs.org 2>/dev/null | tr -d '"')
+
+            if [ "${current_tag_version}" = "${package_version}" ]; then
+              echo "${package_name}@${package_version} is already published with dist-tag next; skipping publish."
+              exit 0
+            fi
+
+            echo "::error::${package_name}@${package_version} already exists, but dist-tag next points to ${current_tag_version:-<unset>}. Retagging is intentionally not handled by this trusted-publishing workflow."
+            exit 1
           fi
-          pnpm exec nx "${args[@]}"
+
+          (
+            cd "${package_root}"
+            NODE_AUTH_TOKEN="" npm publish --access public --tag next
+          )
       - name: Push prerelease commit and tag
         if: ${{ !inputs.dry_run }}
         run: |
