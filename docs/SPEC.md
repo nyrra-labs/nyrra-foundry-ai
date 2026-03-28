@@ -177,16 +177,22 @@ Explicitly unsupported or out-of-scope capabilities should stay visible in the m
 
 ## Current Investigation Backlog
 
-The matrix should separate real provider/proxy issues from harness mistakes. Current findings from the latest full catalog run:
+The matrix should separate real provider/proxy issues from harness mistakes. Latest full catalog run: `.memory/capability-runs/2026-03-28T07-45-09.047Z-dec73f`.
 
-- OpenAI:
-  - `o3` no longer fails due to request-shape issues, but it currently refuses the message-history memory prompt instead of replaying the prior assistant context verbatim.
-  - `gpt-5.1-codex-mini` still fails the structured output rows by returning no parsed output. Treat that as real model behavior until a model-specific prompt or option change proves otherwise.
-  - `o3` / `o4-mini` medium-verbosity handling and the `gpt-5.2` reasoning probe assertion were harness fixes, not ongoing provider issues.
+Harness items that are now considered fixed:
+
+- OpenAI `o3` message-history handling was a probe wording issue, not a provider failure.
+- OpenAI `gpt-5.1-codex-mini` baseline, message-history, and structured tool-composition rows needed larger output budgets; they now pass in the matrix.
+- Google `gemini-2.5-pro` structured rows and `gemini-2.5-flash-lite` structured-plus-tools were probe-quality issues, not confirmed provider incompatibilities.
+- Reasoning visibility and structured-plus-tools probes now run serially so the survey reflects capability semantics instead of concurrent-load noise.
+
+Current real investigation items from the latest run:
+
 - Anthropic:
-  - Several older models currently fail the reasoning visibility probe before any step output is produced. That remains a real investigation item.
-  - `claude-opus-4` and `claude-opus-4.1` also hit repeated `429` rate limits in multi-step/tool-heavy rows on the active stack.
+  - `claude-sonnet-4.5`, `claude-haiku-4.5`, `claude-sonnet-4`, `claude-opus-4`, and `claude-opus-4.1` still intermittently produce no visible output on `reasoning.visibility` even after the probe was serialized.
+  - `claude-opus-4` and `claude-opus-4.1` hit repeated `429` rate limits on multi-step/tool-heavy rows (`agent.tool_loop`, `structured.plus.tools`, `vision.image_input`) on the active stack.
+  - `claude-opus-4` and `claude-opus-4.1` also still fail `tool.loop.deterministic` with `No output generated`, which now looks like a provider or stack-level limitation rather than a harness mistake.
 - Google:
-  - `gemini-3-pro` is not available on the active stack; current 404s are enrollment or access failures, not harness bugs.
-  - `gemini-2.5-pro` truncates the structured-output row at `MAX_TOKENS` after spending most output budget on reasoning, and its structured-plus-tools row currently ends with `MALFORMED_FUNCTION_CALL`.
-  - `gemini-2.5-flash-lite` returns structured JSON for the structured-plus-tools prompt, but the `status` field is wrong (`"ONCOLOGY"` instead of the tool result), so the tool-composition semantics are not reliable yet.
+  - `gemini-3-pro` remains unavailable on the active stack. The matrix records both direct `fail` and `proxy-rejected` rows there, which should be treated as enrollment or access issues until the model is actually enabled.
+  - `gemini-3-flash` still fails `structured.output.object` in the latest run.
+  - `gemini-2.5-flash` still fails `agent.tool_loop` in the latest run.
