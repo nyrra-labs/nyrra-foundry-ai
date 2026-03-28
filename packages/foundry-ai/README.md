@@ -62,23 +62,76 @@ There is no published registry helper. Compose multi-provider routing in applica
 
 The examples are demos. The canonical verification surface is the live capability matrix in [`src/__tests__/foundry.live.test.ts`](./src/__tests__/foundry.live.test.ts).
 
-Each live run writes structured artifacts under `.memory/capability-runs/<run-id>/` and `pnpm test:live` refreshes the checked-in matrix docs from the latest artifact even when a capability fails.
+Each live run writes structured artifacts under `.memory/capability-runs/<run-id>/`. Full unfiltered `pnpm test:live` runs refresh the checked-in matrix docs from the latest artifact even when investigation rows surface failures.
 
 <!-- live-matrix:start -->
 ## Live Capability Matrix
 
 Generated from the latest local live verification artifact checked into this branch.
 
-Latest snapshot: `2026-03-28T02-23-38.080Z-f7c393`
+Latest snapshot: `2026-03-28T05-50-29.087Z-6a499c`
 
-- Models: openai=`gpt-5-mini`, anthropic=`claude-sonnet-4.6`, google=`gemini-3.1-flash-lite`
-- Status Counts: `pass`: 29, `skipped`: 18, `proxy-rejected`: 2
+- Default Models: openai=`gpt-5-mini`, anthropic=`claude-sonnet-4.6`, google=`gemini-3.1-flash-lite`
+- Model Scope: `catalog`
+- Status Counts: `pass`: 283, `skipped`: 186, `proxy-rejected`: 7, `fail`: 23
+
+The default per-provider models are the hard gate. Additional catalog rows are investigation coverage and may surface non-pass results without failing the suite.
 
 | Provider | Pass | Skipped | Proxy Rejected | Unsupported | Fail |
 |---|---:|---:|---:|---:|---:|
-| anthropic | 9 | 6 | 1 | 0 | 0 |
-| google | 9 | 7 | 0 | 0 | 0 |
-| openai | 11 | 5 | 1 | 0 | 0 |
+| openai | 147 | 92 | 0 | 0 | 3 |
+| anthropic | 85 | 51 | 0 | 0 | 15 |
+| google | 51 | 43 | 7 | 0 | 5 |
+
+### Provider Tables
+
+#### openai
+
+| Model | Text | Messages | RID | Stream | Structured | Tools | Agent | Structured+Tools | Vision | Reasoning |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `gpt-5.4` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
+| `gpt-5.2` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
+| `gpt-5.1-codex-mini` | pass | pass | pass | pass | fail | pass | pass | fail | skipped | skipped |
+| `gpt-5.1-codex` | pass | pass | pass | pass | pass | pass | pass | pass | skipped | skipped |
+| `gpt-5.1` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
+| `gpt-5-nano` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
+| `gpt-5-mini` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
+| `gpt-5-codex` | pass | pass | pass | pass | pass | pass | pass | pass | skipped | skipped |
+| `gpt-5` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
+| `gpt-4.1-nano` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
+| `gpt-4.1-mini` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
+| `gpt-4.1` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
+| `o4-mini` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
+| `gpt-4o-mini` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
+| `gpt-4o` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
+| `o3` | pass | fail | pass | pass | pass | pass | pass | pass | pass | pass |
+
+#### anthropic
+
+| Model | Text | Messages | RID | Stream | Structured | Tools | Agent | Structured+Tools | Vision | Reasoning |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `claude-sonnet-4.6` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
+| `claude-opus-4.6` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
+| `claude-sonnet-4.5` | pass | pass | pass | pass | pass | pass | pass | pass | pass | fail |
+| `claude-opus-4.5` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
+| `claude-haiku-4.5` | pass | pass | pass | pass | pass | pass | pass | pass | pass | fail |
+| `claude-opus-4.1` | pass | pass | pass | pass | pass | fail | fail | fail | fail | fail |
+| `claude-sonnet-4` | pass | pass | pass | pass | pass | pass | pass | pass | pass | fail |
+| `claude-opus-4` | pass | pass | pass | pass | pass | fail | fail | fail | fail | fail |
+| `claude-3.7-sonnet` | pass | pass | pass | pass | pass | pass | pass | pass | pass | fail |
+| `claude-3.5-haiku` | pass | pass | pass | pass | pass | pass | pass | pass | pass | fail |
+
+#### google
+
+| Model | Text | Messages | RID | Stream | Structured | Tools | Agent | Structured+Tools | Vision | Reasoning |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `gemini-3.1-pro` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
+| `gemini-3.1-flash-lite` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
+| `gemini-3-pro` | proxy | proxy | proxy | fail | proxy | fail | proxy | proxy | proxy | skipped |
+| `gemini-3-flash` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
+| `gemini-2.5-pro` | pass | pass | pass | pass | fail | pass | pass | fail | pass | skipped |
+| `gemini-2.5-flash-lite` | pass | pass | pass | pass | pass | pass | pass | fail | pass | skipped |
+| `gemini-2.5-flash` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
 
 See [docs/live-capability-matrix.md](./docs/live-capability-matrix.md) for the full row-by-row matrix and non-pass details.
 <!-- live-matrix:end -->

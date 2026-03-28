@@ -4,7 +4,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import process from 'node:process';
 import type { TelemetrySettings } from 'ai';
-import { resolveKnownModelMetadata, resolveModelRid } from '../../models/catalog.js';
+import { MODEL_CATALOG, resolveKnownModelMetadata, resolveModelRid } from '../../models/catalog.js';
 import { loadLiveFoundryConfig } from './live-foundry.js';
 
 export type LiveProvider = 'openai' | 'anthropic' | 'google';
@@ -43,7 +43,9 @@ interface CapabilityRunRecord {
   finishedAt?: string;
   artifactDir: string;
   models: Record<LiveProvider, string>;
+  matrixModels: Record<LiveProvider, string[]>;
   modelOverrides: Partial<Record<LiveProvider, string>>;
+  modelScope: 'canonical' | 'catalog';
   telemetry: {
     mode: 'local-file-tracer';
     recordInputs: true;
@@ -92,6 +94,8 @@ const DEFAULT_MODELS = {
 } as const satisfies Record<LiveProvider, string>;
 
 const LIVE_ARTIFACT_ROOT_ENV = 'LIVE_CAPABILITY_ARTIFACT_DIR';
+const LIVE_RUN_ID_ENV = 'LIVE_CAPABILITY_RUN_ID';
+const LIVE_MODEL_SCOPE_ENV = 'LIVE_MODEL_SCOPE';
 const LIVE_MODELS_ENV = {
   anthropic: 'LIVE_ANTHROPIC_MODEL',
   google: 'LIVE_GOOGLE_MODEL',
@@ -132,6 +136,34 @@ export function getLiveCapabilityModels(): Record<LiveProvider, string> {
     anthropic: process.env[LIVE_MODELS_ENV.anthropic]?.trim() || DEFAULT_MODELS.anthropic,
     google: process.env[LIVE_MODELS_ENV.google]?.trim() || DEFAULT_MODELS.google,
     openai: process.env[LIVE_MODELS_ENV.openai]?.trim() || DEFAULT_MODELS.openai,
+  };
+}
+
+export function getLiveCapabilityModelScope(): 'canonical' | 'catalog' {
+  const value = process.env[LIVE_MODEL_SCOPE_ENV]?.trim().toLowerCase();
+
+  if (value === 'canonical') {
+    return 'canonical';
+  }
+
+  return 'catalog';
+}
+
+export function getLiveCapabilityModelMatrix(): Record<LiveProvider, string[]> {
+  const models = getLiveCapabilityModels();
+
+  if (getLiveCapabilityModelScope() === 'canonical') {
+    return {
+      anthropic: [models.anthropic],
+      google: [models.google],
+      openai: [models.openai],
+    };
+  }
+
+  return {
+    anthropic: mergePreferredModelId(models.anthropic, getKnownProviderModelIds('anthropic')),
+    google: mergePreferredModelId(models.google, getKnownProviderModelIds('google')),
+    openai: mergePreferredModelId(models.openai, getKnownProviderModelIds('openai')),
   };
 }
 
@@ -194,12 +226,19 @@ export function assertModelClaimsVision(provider: LiveProvider, modelId: string)
   }
 
   if (!metadata.supportsVision) {
-    throw new CapabilityUnsupportedError(`Model "${modelId}" does not claim vision support.`, {
+    throw new CapabilitySkippedError(`Model "${modelId}" does not claim vision support.`, {
       modelId,
       provider,
       supportsVision: metadata.supportsVision,
     });
   }
+}
+
+let visionProbeImageBytesPromise: Promise<Uint8Array> | undefined;
+
+export function getVisionProbeImageBytes() {
+  visionProbeImageBytesPromise ??= fetchVisionProbeImageBytes();
+  return visionProbeImageBytesPromise;
 }
 
 export class LiveCapabilityRecorder {
@@ -210,10 +249,12 @@ export class LiveCapabilityRecorder {
   private readonly caseSpanIds = new Map<string, Set<string>>();
   private readonly record: CapabilityRunRecord;
   private readonly spans: SerializableSpanRecord[] = [];
+  private snapshotWrite = Promise.resolve();
 
   constructor() {
     const models = getLiveCapabilityModels();
-    const runId = createRunId();
+    const matrixModels = getLiveCapabilityModelMatrix();
+    const runId = process.env[LIVE_RUN_ID_ENV]?.trim() || createRunId();
     const artifactRoot = process.env[LIVE_ARTIFACT_ROOT_ENV]?.trim()
       ? resolve(process.env[LIVE_ARTIFACT_ROOT_ENV] as string)
       : resolve(process.cwd(), '.memory', 'capability-runs');
@@ -227,7 +268,9 @@ export class LiveCapabilityRecorder {
       startedAt: new Date().toISOString(),
       artifactDir: this.artifactDir,
       models,
+      matrixModels,
       modelOverrides: getModelOverrides(),
+      modelScope: getLiveCapabilityModelScope(),
       telemetry: {
         mode: 'local-file-tracer',
         recordInputs: true,
@@ -278,9 +321,11 @@ export class LiveCapabilityRecorder {
     fn: (telemetry: TelemetrySettings, caseKey: string) => Promise<T>,
   ): Promise<T | undefined> {
     const startedAt = Date.now();
-    const caseKey = `${spec.provider}:${spec.capability}`;
+    const caseKey = createCaseKey(spec.provider, spec.modelId, spec.capability);
     const telemetry = this.createTelemetry(caseKey, spec.capability, spec.provider, spec.modelId);
     let output: T;
+
+    this.logCaseStart(spec);
 
     try {
       output = await fn(telemetry, caseKey);
@@ -290,13 +335,9 @@ export class LiveCapabilityRecorder {
         error: sanitizeForArtifact(error),
       });
 
-      this.record.cases.push(result);
+      this.recordCaseResult(result);
 
       if (spec.expectation === 'investigate') {
-        if (status === 'fail') {
-          throw error;
-        }
-
         return undefined;
       }
 
@@ -318,33 +359,17 @@ export class LiveCapabilityRecorder {
       result.notes = [
         `Expected unsupported behavior for ${spec.provider}.${spec.capability}, but the capability succeeded.`,
       ];
-      this.record.cases.push(result);
+      this.recordCaseResult(result);
       throw new Error(result.notes[0]);
     }
 
-    this.record.cases.push(result);
+    this.recordCaseResult(result);
     return output;
   }
 
   async flush() {
     this.record.finishedAt = new Date().toISOString();
-
-    await mkdir(this.artifactDir, { recursive: true });
-    await writeFile(
-      join(this.artifactDir, 'results.json'),
-      JSON.stringify(sanitizeForArtifact(this.record), null, 2),
-      'utf8',
-    );
-    await writeFile(
-      join(this.artifactDir, 'summary.md'),
-      createMarkdownSummary(this.record),
-      'utf8',
-    );
-    await writeFile(
-      join(this.artifactDir, 'otel-spans.json'),
-      JSON.stringify(sanitizeForArtifact(this.spans), null, 2),
-      'utf8',
-    );
+    await this.queueSnapshotWrite();
   }
 
   recordSpan(record: SerializableSpanRecord) {
@@ -368,7 +393,7 @@ export class LiveCapabilityRecorder {
     },
   ): CapabilityResult {
     const finishedAtMs = Date.now();
-    const caseKey = `${spec.provider}:${spec.capability}`;
+    const caseKey = createCaseKey(spec.provider, spec.modelId, spec.capability);
 
     return {
       capability: spec.capability,
@@ -387,6 +412,64 @@ export class LiveCapabilityRecorder {
         spanIds: [...this.getSpanIds(caseKey)],
       },
     };
+  }
+
+  private logCaseStart(spec: {
+    capability: string;
+    expectation: CapabilityExpectation;
+    modelId: string;
+    provider: LiveProvider;
+  }) {
+    console.log(
+      `[live:start] ${spec.provider}:${spec.modelId}:${spec.capability} (${spec.expectation})`,
+    );
+  }
+
+  private logCaseResult(result: CapabilityResult) {
+    const counts = summarizeCaseStatuses(this.record.cases);
+    const countsLabel = ['pass', 'skipped', 'proxy-rejected', 'unsupported', 'fail']
+      .filter((status) => (counts[status] ?? 0) > 0)
+      .map((status) => `${status}=${counts[status]}`)
+      .join(' ');
+
+    console.log(
+      `[live:${result.status}] ${result.provider}:${result.modelId}:${result.capability} ${result.durationMs}ms (${countsLabel})`,
+    );
+  }
+
+  private queueSnapshotWrite() {
+    this.snapshotWrite = this.snapshotWrite
+      .catch((error) => {
+        console.error('[live:snapshot] Previous incremental snapshot write failed:', error);
+      })
+      .then(async () => {
+        await mkdir(this.artifactDir, { recursive: true });
+        await writeFile(
+          join(this.artifactDir, 'results.json'),
+          JSON.stringify(sanitizeForArtifact(this.record), null, 2),
+          'utf8',
+        );
+        await writeFile(
+          join(this.artifactDir, 'summary.md'),
+          createMarkdownSummary(this.record),
+          'utf8',
+        );
+        await writeFile(
+          join(this.artifactDir, 'otel-spans.json'),
+          JSON.stringify(sanitizeForArtifact(this.spans), null, 2),
+          'utf8',
+        );
+      });
+
+    return this.snapshotWrite;
+  }
+
+  private recordCaseResult(result: CapabilityResult) {
+    this.record.cases.push(result);
+    this.logCaseResult(result);
+    void this.queueSnapshotWrite().catch((error) => {
+      console.error('[live:snapshot] Failed to write incremental snapshot:', error);
+    });
   }
 
   private recordEvent(caseKey: string, eventType: string, event: unknown) {
@@ -644,12 +727,7 @@ function classifyCapabilityError(error: unknown): CapabilityStatus {
 }
 
 function createMarkdownSummary(record: CapabilityRunRecord) {
-  const statusCounts = Object.entries(
-    record.cases.reduce<Record<string, number>>((counts, result) => {
-      counts[result.status] = (counts[result.status] ?? 0) + 1;
-      return counts;
-    }, {}),
-  )
+  const statusCounts = Object.entries(summarizeCaseStatuses(record.cases))
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([status, count]) => `\`${status}\`: ${count}`);
   const lines = [
@@ -693,9 +771,32 @@ function createMarkdownSummary(record: CapabilityRunRecord) {
   return `${lines.join('\n')}\n`;
 }
 
+function summarizeCaseStatuses(cases: CapabilityResult[]) {
+  return cases.reduce<Record<string, number>>((counts, result) => {
+    counts[result.status] = (counts[result.status] ?? 0) + 1;
+    return counts;
+  }, {});
+}
+
 function createRunId() {
   const timestamp = new Date().toISOString().replaceAll(':', '-');
   return `${timestamp}-${Math.random().toString(16).slice(2, 8)}`;
+}
+
+function createCaseKey(provider: LiveProvider, modelId: string, capability: string) {
+  return `${provider}:${modelId}:${capability}`;
+}
+
+async function fetchVisionProbeImageBytes() {
+  const response = await fetch('https://www.nyrra.ai/opengraph.jpg');
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch vision probe image: ${response.status} ${response.statusText}`,
+    );
+  }
+
+  return new Uint8Array(await response.arrayBuffer());
 }
 
 function resolveGitSha() {
@@ -738,6 +839,41 @@ function formatOverrides(overrides: Partial<Record<LiveProvider, string>>) {
   }
 
   return entries.map(([provider, modelId]) => `${provider}=\`${modelId}\``).join(', ');
+}
+
+function dedupeModelIds(modelIds: string[]) {
+  return [...new Set(modelIds)];
+}
+
+function mergePreferredModelId(preferredModelId: string, modelIds: string[]) {
+  if (modelIds.includes(preferredModelId)) {
+    return modelIds;
+  }
+
+  return dedupeModelIds([preferredModelId, ...modelIds]);
+}
+
+function getKnownProviderModelIds(provider: LiveProvider) {
+  return Object.entries(MODEL_CATALOG)
+    .filter(([, metadata]) => metadata.provider === provider)
+    .sort((left, right) => compareModelIds(right[0], left[0]))
+    .map(([modelId]) => modelId);
+}
+
+function compareModelIds(left: string, right: string) {
+  const leftParts = left.match(/\d+/g)?.map(Number) ?? [];
+  const rightParts = right.match(/\d+/g)?.map(Number) ?? [];
+  const partCount = Math.max(leftParts.length, rightParts.length);
+
+  for (let index = 0; index < partCount; index += 1) {
+    const delta = (leftParts[index] ?? -1) - (rightParts[index] ?? -1);
+
+    if (delta !== 0) {
+      return delta;
+    }
+  }
+
+  return left.localeCompare(right);
 }
 
 function normalizeSpanArgs(args: unknown[]) {

@@ -6,7 +6,7 @@ export default defineConfig({
     environment: 'node',
     globals: true,
     include: ['src/**/*.live.test.ts'],
-    fileParallelism: false,
+    maxConcurrency: Number(process.env.LIVE_CAPABILITY_MAX_CONCURRENCY ?? 3),
     testTimeout: 120_000,
     hookTimeout: 120_000,
     watch: false,

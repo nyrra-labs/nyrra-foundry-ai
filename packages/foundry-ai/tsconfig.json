@@ -1,6 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "incremental": true,
     "noEmit": true,
     "rootDir": ".",
     "tsBuildInfoFile": "../../out-tsc/packages/foundry-ai/tsconfig.tsbuildinfo"
