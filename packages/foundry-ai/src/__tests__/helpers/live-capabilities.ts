@@ -280,22 +280,10 @@ export class LiveCapabilityRecorder {
     const startedAt = Date.now();
     const caseKey = `${spec.provider}:${spec.capability}`;
     const telemetry = this.createTelemetry(caseKey, spec.capability, spec.provider, spec.modelId);
+    let output: T;
 
     try {
-      const output = await fn(telemetry, caseKey);
-      const result = this.createResult(spec, startedAt, 'pass', { output });
-
-      if (spec.expectation === 'expect-unsupported') {
-        result.status = 'fail';
-        result.notes = [
-          `Expected unsupported behavior for ${spec.provider}.${spec.capability}, but the capability succeeded.`,
-        ];
-        this.record.cases.push(result);
-        throw new Error(result.notes[0]);
-      }
-
-      this.record.cases.push(result);
-      return output;
+      output = await fn(telemetry, caseKey);
     } catch (error) {
       const status = classifyCapabilityError(error);
       const result = this.createResult(spec, startedAt, status, {
@@ -322,6 +310,20 @@ export class LiveCapabilityRecorder {
 
       throw error;
     }
+
+    const result = this.createResult(spec, startedAt, 'pass', { output });
+
+    if (spec.expectation === 'expect-unsupported') {
+      result.status = 'fail';
+      result.notes = [
+        `Expected unsupported behavior for ${spec.provider}.${spec.capability}, but the capability succeeded.`,
+      ];
+      this.record.cases.push(result);
+      throw new Error(result.notes[0]);
+    }
+
+    this.record.cases.push(result);
+    return output;
   }
 
   async flush() {
