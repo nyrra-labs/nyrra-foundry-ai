@@ -510,7 +510,7 @@ class LocalSpanRecord implements LiveSpan {
     recorder: LiveCapabilityRecorder;
     traceId?: string;
   }) {
-    this.attributes = sanitizeForArtifact(options.attributes) as Record<string, unknown>;
+    this.attributes = (sanitizeForArtifact(options.attributes) ?? {}) as Record<string, unknown>;
     this.caseKey = options.caseKey;
     this.name = options.name;
     this.parentSpanId = options.parentSpanId;
