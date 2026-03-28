@@ -438,24 +438,28 @@ export class LiveCapabilityRecorder {
   }
 
   private queueSnapshotWrite() {
-    this.snapshotWrite = this.snapshotWrite.then(async () => {
-      await mkdir(this.artifactDir, { recursive: true });
-      await writeFile(
-        join(this.artifactDir, 'results.json'),
-        JSON.stringify(sanitizeForArtifact(this.record), null, 2),
-        'utf8',
-      );
-      await writeFile(
-        join(this.artifactDir, 'summary.md'),
-        createMarkdownSummary(this.record),
-        'utf8',
-      );
-      await writeFile(
-        join(this.artifactDir, 'otel-spans.json'),
-        JSON.stringify(sanitizeForArtifact(this.spans), null, 2),
-        'utf8',
-      );
-    });
+    this.snapshotWrite = this.snapshotWrite
+      .catch((error) => {
+        console.error('[live:snapshot] Previous incremental snapshot write failed:', error);
+      })
+      .then(async () => {
+        await mkdir(this.artifactDir, { recursive: true });
+        await writeFile(
+          join(this.artifactDir, 'results.json'),
+          JSON.stringify(sanitizeForArtifact(this.record), null, 2),
+          'utf8',
+        );
+        await writeFile(
+          join(this.artifactDir, 'summary.md'),
+          createMarkdownSummary(this.record),
+          'utf8',
+        );
+        await writeFile(
+          join(this.artifactDir, 'otel-spans.json'),
+          JSON.stringify(sanitizeForArtifact(this.spans), null, 2),
+          'utf8',
+        );
+      });
 
     return this.snapshotWrite;
   }
@@ -463,7 +467,9 @@ export class LiveCapabilityRecorder {
   private recordCaseResult(result: CapabilityResult) {
     this.record.cases.push(result);
     this.logCaseResult(result);
-    void this.queueSnapshotWrite();
+    void this.queueSnapshotWrite().catch((error) => {
+      console.error('[live:snapshot] Failed to write incremental snapshot:', error);
+    });
   }
 
   private recordEvent(caseKey: string, eventType: string, event: unknown) {

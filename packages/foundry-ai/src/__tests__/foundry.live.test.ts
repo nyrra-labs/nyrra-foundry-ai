@@ -20,7 +20,6 @@ import {
   getEmbeddingProbeModelIds,
   getLiveCapabilityModelMatrix,
   getLiveCapabilityModels,
-  getLiveCapabilityRid,
   getVisionProbeImageBytes,
   getVisionProbeModelIds,
   LiveCapabilityRecorder,
@@ -166,12 +165,7 @@ describe('live Foundry capability matrix', () => {
             provider,
           },
           async (telemetry) => {
-            const ridTarget = resolveModelIdForRidCheck(
-              provider,
-              modelId,
-              models[provider],
-              getLiveCapabilityRid(provider),
-            );
+            const ridTarget = resolveModelIdForRidCheck(provider, modelId);
             const result = await generateText({
               model: getFoundryModel(provider, ridTarget),
               prompt: 'Reply with exactly "READY: Foundry RID routing is active."',

@@ -1,6 +1,7 @@
 import type { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai';
 import { tool } from 'ai';
 import { z } from 'zod';
+import { resolveModelRid } from '../../models/catalog.js';
 import { isKnownOpenAIReasoningTarget } from '../../models/openai-models.js';
 import type { LiveProvider } from './live-capabilities.js';
 
@@ -100,13 +101,8 @@ export function getReasoningExpectation(
   return 'investigate' as const;
 }
 
-export function resolveModelIdForRidCheck(
-  _provider: LiveProvider,
-  modelId: string,
-  defaultModelId: string,
-  defaultRid: string,
-) {
-  return modelId === defaultModelId ? defaultRid : modelId;
+export function resolveModelIdForRidCheck(_provider: LiveProvider, modelId: string) {
+  return resolveModelRid(modelId as never);
 }
 
 export function resolveVisionModelId(
