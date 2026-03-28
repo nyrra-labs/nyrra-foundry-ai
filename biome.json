@@ -24,7 +24,20 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "style": {
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "paths": {
+              "ai": {
+                "importNames": ["generateObject", "streamObject"],
+                "message": "Use generateText/streamText with Output.* instead."
+              }
+            }
+          }
+        }
+      }
     }
   },
   "javascript": {

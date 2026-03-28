@@ -255,6 +255,24 @@ Google is still a beta Palantir proxy endpoint. During live verification on Marc
 
 GitHub Actions runs CI checks on `main` and pull requests, Semgrep on pull requests plus scheduled/manual runs, and manual release workflows for stable/prerelease publishing. Live API verification still requires Foundry credentials and remains manual through `pnpm test:live` or the standalone scripts in [`examples/`](./examples).
 
+The scripts in [`examples/`](./examples) are demos. The canonical verification surface is the live capability matrix in [`packages/foundry-ai/src/__tests__/foundry.live.test.ts`](./packages/foundry-ai/src/__tests__/foundry.live.test.ts).
+
+Each `pnpm test:live` run writes structured artifacts to `.memory/capability-runs/<run-id>/`:
+
+- `results.json` with provider-by-capability results, model IDs, errors, inputs/outputs, and telemetry event payloads
+- `summary.md` with a compact human review table plus failed rows
+- `otel-spans.json` with locally captured trace/span data from AI SDK experimental telemetry
+- `packages/foundry-ai/docs/live-capability-matrix.md` plus a generated summary block in [`packages/foundry-ai/README.md`](./packages/foundry-ai/README.md)
+
+Canonical live models can be overridden per provider without code edits:
+
+- `LIVE_OPENAI_MODEL` defaults to `gpt-5-mini`
+- `LIVE_ANTHROPIC_MODEL` defaults to `claude-sonnet-4.6`
+- `LIVE_GOOGLE_MODEL` defaults to `gemini-3.1-flash-lite`
+- `LIVE_OPENAI_EMBEDDING_MODEL` defaults to `text-embedding-3-small`
+- `LIVE_GOOGLE_EMBEDDING_MODEL` is opt-in and only used when your stack exposes a valid Google embedding target
+- `LIVE_OPENAI_VISION_MODEL`, `LIVE_ANTHROPIC_VISION_MODEL`, and `LIVE_GOOGLE_VISION_MODEL` let you override the default model used for vision probes
+
 ## Development
 
 Install dependencies and use the root scripts:

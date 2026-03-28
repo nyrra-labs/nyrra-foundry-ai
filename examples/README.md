@@ -87,7 +87,7 @@ pnpm run example streaming anthropic claude-sonnet-4.6
 
 ## Notes
 
-- `streaming.ts` prints the exact provider options it sends and then logs raw `fullStream` events.
+- `streaming.ts` prints the exact provider options it sends and then logs `fullStream` events with Bun/Node inspect-style object output.
 - `tool-calling-exa.ts` does the same for the full tool loop, including tool calls, tool results, and final text.
 - The richer Anthropic reasoning/tool example path defaults to `claude-sonnet-4.6` because that is the model we verified live with `thinking`, `sendReasoning`, `effort`, `toolStreaming`, and `disableParallelToolUse`.
 - The Google examples can use friendly aliases because the package now maps the verified Gemini aliases to Foundry RIDs.

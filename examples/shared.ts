@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 import process from 'node:process';
+import { inspect } from 'node:util';
 import type { AnthropicModelId, GoogleModelId, OpenAIModelId } from '@nyrra/foundry-ai';
 import { loadFoundryConfig } from '@nyrra/foundry-ai';
 import { createFoundryAnthropic } from '@nyrra/foundry-ai/anthropic';
@@ -16,6 +17,12 @@ const DEFAULT_OPENAI_MODEL: OpenAIModelId = 'gpt-5-mini';
 // reasoning/tool options we verify in the live tool-calling path.
 const DEFAULT_ANTHROPIC_MODEL: AnthropicModelId = 'claude-sonnet-4.6';
 const DEFAULT_GOOGLE_MODEL: GoogleModelId = 'gemini-3.1-flash-lite';
+const EXAMPLE_INSPECT_OPTIONS = {
+  breakLength: 120,
+  colors: process.stdout.isTTY,
+  compact: false,
+  depth: null,
+} as const;
 
 maybeLoadLocalEnvFile();
 
@@ -93,6 +100,14 @@ export function requireEnv(name: string): string {
   }
 
   return value;
+}
+
+export function logExampleValue(value: unknown): void {
+  console.log(inspect(value, EXAMPLE_INSPECT_OPTIONS));
+}
+
+export function logExampleError(value: unknown): void {
+  console.error(inspect(value, EXAMPLE_INSPECT_OPTIONS));
 }
 
 function maybeLoadLocalEnvFile() {
