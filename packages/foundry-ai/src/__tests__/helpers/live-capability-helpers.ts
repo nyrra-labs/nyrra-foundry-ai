@@ -35,6 +35,75 @@ export const regulatorySignalTool = tool({
   }),
 });
 
+export function createMessageHistoryFixture() {
+  return [
+    {
+      role: 'user' as const,
+      content: [{ type: 'text' as const, text: 'The tracking label is blue signal.' }],
+    },
+    {
+      role: 'assistant' as const,
+      content: [{ type: 'text' as const, text: 'Understood. I will use that tracking label.' }],
+    },
+    {
+      role: 'user' as const,
+      content: [
+        {
+          type: 'text' as const,
+          text: 'Using only the conversation above, reply with exactly "TRACKING: blue signal" and nothing else.',
+        },
+      ],
+    },
+  ];
+}
+
+export function getMessagesMaxTokens(provider: LiveProvider, modelId: string) {
+  if (provider === 'openai' && modelId === 'gpt-5.1-codex-mini') {
+    return 1400;
+  }
+
+  return 420;
+}
+
+export function getBaselineMaxTokens(provider: LiveProvider, modelId: string) {
+  if (provider === 'openai' && modelId === 'gpt-5.1-codex-mini') {
+    return 1400;
+  }
+
+  return 420;
+}
+
+export function getStructuredOutputPrompt() {
+  return 'Extract a concise clinical signal from this statement: "The therapy reduced relapse rates, but liver enzyme elevations require monitoring."';
+}
+
+export function getStructuredOutputMaxTokens(provider: LiveProvider, modelId: string) {
+  if (
+    (provider === 'openai' && modelId === 'gpt-5.1-codex-mini') ||
+    (provider === 'google' && modelId === 'gemini-2.5-pro')
+  ) {
+    return 1400;
+  }
+
+  return 900;
+}
+
+export function getStructuredToolsPrompt() {
+  return 'Call the regulatorySignal tool exactly once with topic "oncology". Do not infer the status from the topic. Use the returned tool status value verbatim. Return only a JSON object with "status" equal to that exact tool status and "summary" equal to one short sentence mentioning oncology and that exact status.';
+}
+
+export function getStructuredToolsMaxTokens(provider: LiveProvider, modelId: string) {
+  if (provider === 'openai' && modelId === 'gpt-5.1-codex-mini') {
+    return 2400;
+  }
+
+  if (provider === 'google' && modelId === 'gemini-2.5-pro') {
+    return 900;
+  }
+
+  return 520;
+}
+
 export function createGoogleProxyFetch(token: string): typeof fetch {
   return async (input, init) => {
     const request = new Request(input, init);

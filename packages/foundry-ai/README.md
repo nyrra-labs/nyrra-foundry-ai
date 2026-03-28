@@ -69,19 +69,19 @@ Each live run writes structured artifacts under `.memory/capability-runs/<run-id
 
 Generated from the latest local live verification artifact checked into this branch.
 
-Latest snapshot: `2026-03-28T05-50-29.087Z-6a499c`
+Latest snapshot: `2026-03-28T07-45-09.047Z-dec73f`
 
 - Default Models: openai=`gpt-5-mini`, anthropic=`claude-sonnet-4.6`, google=`gemini-3.1-flash-lite`
 - Model Scope: `catalog`
-- Status Counts: `pass`: 283, `skipped`: 186, `proxy-rejected`: 7, `fail`: 23
+- Status Counts: `pass`: 287, `skipped`: 186, `proxy-rejected`: 7, `fail`: 19
 
 The default per-provider models are the hard gate. Additional catalog rows are investigation coverage and may surface non-pass results without failing the suite.
 
 | Provider | Pass | Skipped | Proxy Rejected | Unsupported | Fail |
 |---|---:|---:|---:|---:|---:|
-| openai | 147 | 92 | 0 | 0 | 3 |
+| openai | 150 | 92 | 0 | 0 | 0 |
 | anthropic | 85 | 51 | 0 | 0 | 15 |
-| google | 51 | 43 | 7 | 0 | 5 |
+| google | 52 | 43 | 7 | 0 | 4 |
 
 ### Provider Tables
 
@@ -91,7 +91,7 @@ The default per-provider models are the hard gate. Additional catalog rows are i
 |---|---|---|---|---|---|---|---|---|---|---|
 | `gpt-5.4` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
 | `gpt-5.2` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
-| `gpt-5.1-codex-mini` | pass | pass | pass | pass | fail | pass | pass | fail | skipped | skipped |
+| `gpt-5.1-codex-mini` | pass | pass | pass | pass | pass | pass | pass | pass | skipped | skipped |
 | `gpt-5.1-codex` | pass | pass | pass | pass | pass | pass | pass | pass | skipped | skipped |
 | `gpt-5.1` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
 | `gpt-5-nano` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
@@ -104,7 +104,7 @@ The default per-provider models are the hard gate. Additional catalog rows are i
 | `o4-mini` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
 | `gpt-4o-mini` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
 | `gpt-4o` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
-| `o3` | pass | fail | pass | pass | pass | pass | pass | pass | pass | pass |
+| `o3` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
 
 #### anthropic
 
@@ -128,10 +128,10 @@ The default per-provider models are the hard gate. Additional catalog rows are i
 | `gemini-3.1-pro` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
 | `gemini-3.1-flash-lite` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
 | `gemini-3-pro` | proxy | proxy | proxy | fail | proxy | fail | proxy | proxy | proxy | skipped |
-| `gemini-3-flash` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
-| `gemini-2.5-pro` | pass | pass | pass | pass | fail | pass | pass | fail | pass | skipped |
-| `gemini-2.5-flash-lite` | pass | pass | pass | pass | pass | pass | pass | fail | pass | skipped |
-| `gemini-2.5-flash` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
+| `gemini-3-flash` | pass | pass | pass | pass | fail | pass | pass | pass | pass | skipped |
+| `gemini-2.5-pro` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
+| `gemini-2.5-flash-lite` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
+| `gemini-2.5-flash` | pass | pass | pass | pass | pass | pass | fail | pass | pass | skipped |
 
 See [docs/live-capability-matrix.md](./docs/live-capability-matrix.md) for the full row-by-row matrix and non-pass details.
 <!-- live-matrix:end -->

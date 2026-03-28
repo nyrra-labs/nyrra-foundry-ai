@@ -28,8 +28,15 @@ import {
 import {
   collectStreamSummary,
   createGoogleProxyFetch,
+  createMessageHistoryFixture,
+  getBaselineMaxTokens,
+  getMessagesMaxTokens,
   getProviderOptions,
   getReasoningExpectation,
+  getStructuredOutputMaxTokens,
+  getStructuredOutputPrompt,
+  getStructuredToolsMaxTokens,
+  getStructuredToolsPrompt,
   regulatorySignalTool,
   resolveModelIdForRidCheck,
   resolveVisionModelId,
@@ -91,7 +98,7 @@ describe('live Foundry capability matrix', () => {
             const result = await generateText({
               model: getFoundryModel(provider, modelId),
               prompt: `Reply with exactly "${provider.toUpperCase()}: Foundry capability checks are running."`,
-              maxOutputTokens: 420,
+              maxOutputTokens: getBaselineMaxTokens(provider, modelId),
               providerOptions: getProviderOptions(provider, 'baseline', modelId),
               experimental_telemetry: telemetry,
             });
@@ -119,31 +126,13 @@ describe('live Foundry capability matrix', () => {
           async (telemetry) => {
             const result = await generateText({
               model: getFoundryModel(provider, modelId),
-              messages: [
-                {
-                  role: 'user',
-                  content: [{ type: 'text', text: 'The passphrase is blue signal.' }],
-                },
-                {
-                  role: 'assistant',
-                  content: [{ type: 'text', text: 'I will remember the passphrase.' }],
-                },
-                {
-                  role: 'user',
-                  content: [
-                    {
-                      type: 'text',
-                      text: 'Reply with exactly "MEMORY: blue signal" and nothing else.',
-                    },
-                  ],
-                },
-              ],
-              maxOutputTokens: 420,
+              messages: createMessageHistoryFixture(),
+              maxOutputTokens: getMessagesMaxTokens(provider, modelId),
               providerOptions: getProviderOptions(provider, 'baseline', modelId),
               experimental_telemetry: telemetry,
             });
 
-            expect(result.text.toLowerCase()).toContain('memory');
+            expect(result.text.toLowerCase()).toContain('tracking');
             expect(result.text.toLowerCase()).toContain('blue signal');
 
             return {
@@ -198,7 +187,7 @@ describe('live Foundry capability matrix', () => {
             const result = streamText({
               model: getFoundryModel(provider, modelId),
               prompt: `Write exactly one short sentence that mentions ${provider} and Foundry proxy routing.`,
-              maxOutputTokens: 420,
+              maxOutputTokens: getBaselineMaxTokens(provider, modelId),
               providerOptions: getProviderOptions(provider, 'baseline', modelId),
               experimental_telemetry: telemetry,
             });
@@ -227,9 +216,8 @@ describe('live Foundry capability matrix', () => {
                 name: 'clinical_signal',
                 description: 'A concise clinical signal summary for regulated AI review workflows.',
               }),
-              prompt:
-                'Extract a concise clinical signal from the following statement: "The investigational therapy reduced relapse rates in a small phase 2 study, but liver enzyme elevations warrant close monitoring."',
-              maxOutputTokens: 900,
+              prompt: getStructuredOutputPrompt(),
+              maxOutputTokens: getStructuredOutputMaxTokens(provider, modelId),
               providerOptions: getProviderOptions(provider, 'structured', modelId),
               experimental_telemetry: telemetry,
             });
@@ -318,7 +306,8 @@ describe('live Foundry capability matrix', () => {
         );
       });
 
-      modelCase(`${provider}:${modelId}: structured output plus tools`, async () => {
+      // Keep structured-plus-tools probes serial so the survey reflects tool/output semantics instead of load-sensitive truncation.
+      it(`${provider}:${modelId}: structured output plus tools`, async () => {
         await recorder.runCase(
           {
             capability: 'structured.plus.tools',
@@ -334,9 +323,8 @@ describe('live Foundry capability matrix', () => {
                 name: 'signal_summary',
                 description: 'A structured regulatory signal summary after tool execution.',
               }),
-              prompt:
-                'Call the regulatorySignal tool exactly once with topic "oncology". Return a JSON object with status equal to the tool status and summary equal to one short sentence mentioning the topic.',
-              maxOutputTokens: 520,
+              prompt: getStructuredToolsPrompt(),
+              maxOutputTokens: getStructuredToolsMaxTokens(provider, modelId),
               providerOptions: getProviderOptions(provider, 'structured-tools', modelId),
               stopWhen: stepCountIs(3),
               tools: {
@@ -407,7 +395,8 @@ describe('live Foundry capability matrix', () => {
         );
       });
 
-      modelCase(`${provider}:${modelId}: reasoning visibility or options`, async () => {
+      // Keep reasoning probes serial so the survey reflects provider behavior instead of load-sensitive stream failures.
+      it(`${provider}:${modelId}: reasoning visibility or options`, async () => {
         await recorder.runCase(
           {
             capability: 'reasoning.visibility',
