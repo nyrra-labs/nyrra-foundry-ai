@@ -12,6 +12,19 @@ const packageDocsDir = resolve(workspaceRoot, 'packages/foundry-ai/docs');
 const packageMatrixDocPath = resolve(packageDocsDir, 'live-capability-matrix.md');
 const readmeMarkerStart = '<!-- live-matrix:start -->';
 const readmeMarkerEnd = '<!-- live-matrix:end -->';
+const providerOrder = ['openai', 'anthropic', 'google'];
+const modelCapabilityColumns = [
+  ['text.generate', 'Text'],
+  ['messages.generate', 'Messages'],
+  ['rid.passthrough', 'RID'],
+  ['text.stream', 'Stream'],
+  ['structured.output.object', 'Structured'],
+  ['tool.loop.deterministic', 'Tools'],
+  ['agent.tool_loop', 'Agent'],
+  ['structured.plus.tools', 'Structured+Tools'],
+  ['vision.image_input', 'Vision'],
+  ['reasoning.visibility', 'Reasoning'],
+];
 
 const artifactDir = resolveArtifactDir(process.argv.slice(2));
 const resultsPath = join(artifactDir, 'results.json');
@@ -85,7 +98,9 @@ function summarizeProviders(cases) {
     summaries.set(testCase.provider, summary);
   }
 
-  return [...summaries.entries()].sort(([left], [right]) => left.localeCompare(right));
+  return providerOrder
+    .filter((provider) => summaries.has(provider))
+    .map((provider) => [provider, summaries.get(provider)]);
 }
 
 function createMatrixDoc(record, artifactDir, providerSummaries, statusCounts) {
@@ -100,10 +115,11 @@ function createMatrixDoc(record, artifactDir, providerSummaries, statusCounts) {
     `- Artifact: \`${relativeToWorkspace(artifactDir)}\``,
     `- Started: ${record.startedAt}`,
     `- Finished: ${record.finishedAt ?? 'in-progress'}`,
-    `- Models: openai=\`${record.models.openai}\`, anthropic=\`${record.models.anthropic}\`, google=\`${record.models.google}\``,
+    `- Default Models: openai=\`${record.models.openai}\`, anthropic=\`${record.models.anthropic}\`, google=\`${record.models.google}\``,
+    `- Model Scope: \`${record.modelScope ?? 'canonical'}\``,
     `- Status Counts: ${statusCounts.map(([status, count]) => `\`${status}\`: ${count}`).join(', ')}`,
     '',
-    'The live suite is the canonical verification surface for proxy-sensitive behavior. Rows marked `skipped` are intentionally out of scope for the current stack or package surface. Rows marked `proxy-rejected` are real proxy or request-shape failures that need investigation.',
+    'The live suite is the canonical verification surface for proxy-sensitive behavior. The default per-provider models are the hard gate; the rest of the catalog rows are investigation coverage and are allowed to surface non-pass results without failing the suite. Rows marked `skipped` are intentionally out of scope for the current stack or package surface. Rows marked `proxy-rejected` are real proxy or request-shape failures that need investigation.',
     '',
     '## Provider Summary',
     '',
@@ -115,6 +131,23 @@ function createMatrixDoc(record, artifactDir, providerSummaries, statusCounts) {
     lines.push(
       `| ${provider} | ${summary.pass} | ${summary.skipped} | ${summary['proxy-rejected']} | ${summary.unsupported} | ${summary.fail} |`,
     );
+  }
+
+  lines.push(
+    '',
+    '## Provider Capability Tables',
+    '',
+    'Rows are models. Columns are the primary live language-model capabilities. Newer models appear first within each provider.',
+  );
+
+  for (const provider of providerOrder) {
+    const table = createProviderCapabilityTable(record, provider);
+
+    if (!table) {
+      continue;
+    }
+
+    lines.push('', `### ${provider}`, '', ...table, '');
   }
 
   lines.push(
@@ -160,8 +193,11 @@ function createReadmeSummary(record, providerSummaries, statusCounts) {
     '',
     `Latest snapshot: \`${record.runId}\``,
     '',
-    `- Models: openai=\`${record.models.openai}\`, anthropic=\`${record.models.anthropic}\`, google=\`${record.models.google}\``,
+    `- Default Models: openai=\`${record.models.openai}\`, anthropic=\`${record.models.anthropic}\`, google=\`${record.models.google}\``,
+    `- Model Scope: \`${record.modelScope ?? 'canonical'}\``,
     `- Status Counts: ${statusCounts.map(([status, count]) => `\`${status}\`: ${count}`).join(', ')}`,
+    '',
+    'The default per-provider models are the hard gate. Additional catalog rows are investigation coverage and may surface non-pass results without failing the suite.',
     '',
     '| Provider | Pass | Skipped | Proxy Rejected | Unsupported | Fail |',
     '|---|---:|---:|---:|---:|---:|',
@@ -173,8 +209,19 @@ function createReadmeSummary(record, providerSummaries, statusCounts) {
     );
   }
 
+  lines.push('', '### Provider Tables', '');
+
+  for (const provider of providerOrder) {
+    const table = createProviderCapabilityTable(record, provider);
+
+    if (!table) {
+      continue;
+    }
+
+    lines.push(`#### ${provider}`, '', ...table, '');
+  }
+
   lines.push(
-    '',
     'See [docs/live-capability-matrix.md](./docs/live-capability-matrix.md) for the full row-by-row matrix and non-pass details.',
     readmeMarkerEnd,
   );
@@ -208,6 +255,72 @@ function getCaseNote(testCase) {
 
 function escapeTable(value) {
   return String(value).replaceAll('|', '\\|').replaceAll('\n', ' ');
+}
+
+function createProviderCapabilityTable(record, provider) {
+  const providerCases = record.cases.filter(
+    (testCase) =>
+      testCase.provider === provider &&
+      modelCapabilityColumns.some(([capability]) => capability === testCase.capability),
+  );
+
+  if (providerCases.length === 0) {
+    return null;
+  }
+
+  const casesByModel = new Map();
+
+  for (const testCase of providerCases) {
+    const capabilities = casesByModel.get(testCase.modelId) ?? new Map();
+    capabilities.set(testCase.capability, testCase);
+    casesByModel.set(testCase.modelId, capabilities);
+  }
+
+  const orderedModels = getProviderModels(record, provider, casesByModel);
+  const header = ['| Model |', ...modelCapabilityColumns.map(([, label]) => `${label} |`)].join(
+    ' ',
+  );
+  const divider = ['|---|', ...modelCapabilityColumns.map(() => '---|')].join('');
+  const rows = [header, divider];
+
+  for (const modelId of orderedModels) {
+    const capabilities = casesByModel.get(modelId) ?? new Map();
+    const cells = modelCapabilityColumns.map(([capability]) =>
+      formatStatusCell(capabilities.get(capability)?.status),
+    );
+
+    rows.push(`| \`${modelId}\` | ${cells.join(' | ')} |`);
+  }
+
+  return rows;
+}
+
+function getProviderModels(record, provider, casesByModel) {
+  const configuredModels = Array.isArray(record.matrixModels?.[provider])
+    ? record.matrixModels[provider]
+    : [];
+
+  if (configuredModels.length > 0) {
+    return configuredModels.filter((modelId) => casesByModel.has(modelId));
+  }
+
+  return [...casesByModel.keys()];
+}
+
+function formatStatusCell(status) {
+  if (status == null) {
+    return '-';
+  }
+
+  if (status === 'proxy-rejected') {
+    return 'proxy';
+  }
+
+  if (status === 'unsupported') {
+    return 'unsupported';
+  }
+
+  return status;
 }
 
 function relativeToWorkspace(path) {

@@ -129,3 +129,64 @@ const registry = createProviderRegistry({
 - unit tests for application-level `createProviderRegistry` composition using the public provider factories
 - live verification for direct OpenAI, Anthropic, and Google calls, plus registry composition via AI SDK
 - targeted beta probing for xAI endpoint behavior and current failure modes on the active enrollment
+
+## Live Capability Matrix
+
+The live suite in `packages/foundry-ai/src/__tests__/foundry.live.test.ts` is the canonical verification surface for proxy-sensitive behavior.
+
+- The default per-provider models are the hard gate:
+  - OpenAI: `gpt-5-mini`
+  - Anthropic: `claude-sonnet-4.6`
+  - Google: `gemini-3.1-flash-lite`
+- The rest of the catalog is survey coverage. Those rows remain visible in the matrix and docs, but non-pass results do not fail the suite by default.
+- The suite records local artifacts under `.memory/capability-runs/<run-id>/`:
+  - `results.json`
+  - `summary.md`
+  - `otel-spans.json`
+- `pnpm test:live` should show incremental progress while the matrix runs.
+- Survey rows may run concurrently, but the canonical must-pass rows should stay straightforward and stable.
+- Generated docs must present the matrix in a model-first view:
+  - one table per provider
+  - models as rows
+  - capabilities as columns
+  - newest models at the top of each provider table
+- Full unfiltered live runs may refresh the committed matrix docs. Targeted/debug runs should not rewrite committed docs unless explicitly requested.
+
+Primary live language-model capabilities currently covered:
+
+- `text.generate`
+- `messages.generate`
+- `rid.passthrough`
+- `text.stream`
+- `structured.output.object`
+- `tool.loop.deterministic`
+- `agent.tool_loop`
+- `structured.plus.tools`
+- `vision.image_input`
+- `reasoning.visibility`
+- `registry.routing`
+- `embedding.proxy_probe` where the stack has an explicitly configured supported target
+
+Explicitly unsupported or out-of-scope capabilities should stay visible in the matrix as `skipped` until the package or the active Foundry stack actually supports them.
+
+## Verification Reporting
+
+- The committed verification docs should eventually use provider-specific support tables in the style of the AI SDK provider pages: one table per provider, models as rows, capabilities as columns.
+- Newer models should appear at the top of each provider table.
+- The live capability matrix remains the source artifact, but the published docs should present that artifact in a model-first view for faster review.
+
+## Current Investigation Backlog
+
+The matrix should separate real provider/proxy issues from harness mistakes. Current findings from the latest full catalog run:
+
+- OpenAI:
+  - `o3` no longer fails due to request-shape issues, but it currently refuses the message-history memory prompt instead of replaying the prior assistant context verbatim.
+  - `gpt-5.1-codex-mini` still fails the structured output rows by returning no parsed output. Treat that as real model behavior until a model-specific prompt or option change proves otherwise.
+  - `o3` / `o4-mini` medium-verbosity handling and the `gpt-5.2` reasoning probe assertion were harness fixes, not ongoing provider issues.
+- Anthropic:
+  - Several older models currently fail the reasoning visibility probe before any step output is produced. That remains a real investigation item.
+  - `claude-opus-4` and `claude-opus-4.1` also hit repeated `429` rate limits in multi-step/tool-heavy rows on the active stack.
+- Google:
+  - `gemini-3-pro` is not available on the active stack; current 404s are enrollment or access failures, not harness bugs.
+  - `gemini-2.5-pro` truncates the structured-output row at `MAX_TOKENS` after spending most output budget on reasoning, and its structured-plus-tools row currently ends with `MALFORMED_FUNCTION_CALL`.
+  - `gemini-2.5-flash-lite` returns structured JSON for the structured-plus-tools prompt, but the `status` field is wrong (`"ONCOLOGY"` instead of the tool result), so the tool-composition semantics are not reliable yet.

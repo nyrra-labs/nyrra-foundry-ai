@@ -1,22 +1,44 @@
 #!/usr/bin/env node
 
 import { spawn } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import process from 'node:process';
+import { fileURLToPath } from 'node:url';
 
 const workspaceRoot = process.cwd();
+const artifactRoot = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  '..',
+  '.memory',
+  'capability-runs',
+);
+const runId = createRunId();
+const { extraVitestArgs, shouldUpdateDocs } = parseArgs(process.argv.slice(2));
 
-const testExitCode = await runCommand('pnpm', [
-  'exec',
-  'vitest',
-  'run',
-  '--config',
-  'packages/foundry-ai/vitest.live.config.ts',
-]);
+const testExitCode = await runCommandWithProgress(
+  'pnpm',
+  [
+    'exec',
+    'vitest',
+    'run',
+    '--config',
+    'packages/foundry-ai/vitest.live.config.ts',
+    ...extraVitestArgs,
+  ],
+  { LIVE_CAPABILITY_RUN_ID: runId },
+);
 
-const docsExitCode = await runCommand('node', ['scripts/update-live-matrix-docs.mjs']);
+if (shouldUpdateDocs) {
+  const docsExitCode = await runCommand('node', [
+    'scripts/update-live-matrix-docs.mjs',
+    '--artifact',
+    `.memory/capability-runs/${runId}`,
+  ]);
 
-if (docsExitCode !== 0) {
-  process.exit(docsExitCode);
+  if (docsExitCode !== 0) {
+    process.exit(docsExitCode);
+  }
 }
 
 process.exit(testExitCode);
@@ -39,4 +61,110 @@ function runCommand(command, args) {
       resolve(code ?? 1);
     });
   });
+}
+
+function runCommandWithProgress(command, args, extraEnv) {
+  return new Promise((resolve) => {
+    const child = spawn(command, args, {
+      cwd: workspaceRoot,
+      env: { ...process.env, ...extraEnv },
+      stdio: 'inherit',
+    });
+    let lastProgressKey = '';
+    let progressTimer = setInterval(() => {
+      const snapshot = readProgressSnapshot(runId);
+
+      if (!snapshot) {
+        return;
+      }
+
+      const progressKey = `${snapshot.runId}:${snapshot.caseCount}:${snapshot.latestCaseKey}`;
+
+      if (progressKey === lastProgressKey) {
+        return;
+      }
+
+      lastProgressKey = progressKey;
+      process.stdout.write(
+        `[live:progress] run=${snapshot.runId} cases=${snapshot.caseCount} ${snapshot.statusSummary}${snapshot.latestCaseKey ? ` latest=${snapshot.latestCaseKey}` : ''}\n`,
+      );
+    }, 2_000);
+
+    child.on('exit', (code, signal) => {
+      clearInterval(progressTimer);
+      progressTimer = null;
+
+      if (signal) {
+        process.stderr.write(`${command} terminated with signal ${signal}.\n`);
+        resolve(1);
+        return;
+      }
+
+      resolve(code ?? 1);
+    });
+  });
+}
+
+function readProgressSnapshot(currentRunId) {
+  const runDir = join(artifactRoot, currentRunId);
+  const resultsPath = join(runDir, 'results.json');
+
+  if (!existsSync(resultsPath)) {
+    return null;
+  }
+
+  try {
+    const record = JSON.parse(readFileSync(resultsPath, 'utf8'));
+    const counts = summarizeStatuses(record.cases ?? []);
+    const latestCase = Array.isArray(record.cases) ? record.cases.at(-1) : undefined;
+
+    return {
+      caseCount: Array.isArray(record.cases) ? record.cases.length : 0,
+      latestCaseKey: latestCase
+        ? `${latestCase.provider}:${latestCase.modelId}:${latestCase.capability}=${latestCase.status}`
+        : '',
+      runId: record.runId ?? currentRunId,
+      statusSummary: Object.entries(counts)
+        .map(([status, count]) => `${status}=${count}`)
+        .join(' '),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function summarizeStatuses(cases) {
+  return cases.reduce((counts, testCase) => {
+    counts[testCase.status] = (counts[testCase.status] ?? 0) + 1;
+    return counts;
+  }, {});
+}
+
+function createRunId() {
+  const timestamp = new Date().toISOString().replaceAll(':', '-');
+  return `${timestamp}-${Math.random().toString(16).slice(2, 8)}`;
+}
+
+function parseArgs(args) {
+  const passthroughArgs = [];
+  let shouldUpdateDocs = args.length === 0;
+
+  for (const arg of args) {
+    if (arg === '--update-docs') {
+      shouldUpdateDocs = true;
+      continue;
+    }
+
+    if (arg === '--no-update-docs') {
+      shouldUpdateDocs = false;
+      continue;
+    }
+
+    passthroughArgs.push(arg);
+  }
+
+  return {
+    extraVitestArgs: passthroughArgs,
+    shouldUpdateDocs,
+  };
 }
