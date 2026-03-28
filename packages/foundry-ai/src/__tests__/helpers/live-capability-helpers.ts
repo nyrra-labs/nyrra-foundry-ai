@@ -272,13 +272,15 @@ function requiresMediumOpenAITextVerbosity(modelId?: string) {
     'gpt-5-codex',
     'gpt-5.1-codex',
     'gpt-5.1-codex-mini',
+    'gpt-5.4-mini',
+    'gpt-5.4-nano',
     'o3',
     'o4-mini',
   ].includes(modelId);
 }
 
 function supportsExplicitLowReasoningEffort(modelId: string) {
-  return ['gpt-5.2', 'gpt-5.4', 'o3', 'o4-mini'].includes(modelId);
+  return ['gpt-5.2', 'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.4-nano', 'o3', 'o4-mini'].includes(modelId);
 }
 
 function supportsMinimalReasoningEffort(modelId: string) {

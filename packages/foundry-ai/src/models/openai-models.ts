@@ -41,7 +41,7 @@ export const OPENAI_MODELS = {
   'gpt-4o-mini': createOpenAIModel(
     'ri.language-model-service..language-model.gpt-4-o-mini',
     'GPT-4o Mini',
-    { lifecycle: 'ga' },
+    { lifecycle: 'sunset' },
   ),
   'gpt-5': createOpenAIModel('ri.language-model-service..language-model.gpt-5', 'GPT-5', {
     lifecycle: 'ga',
@@ -80,6 +80,16 @@ export const OPENAI_MODELS = {
   'gpt-5.4': createOpenAIModel('ri.language-model-service..language-model.gpt-5-4', 'GPT-5.4', {
     lifecycle: 'experimental',
   }),
+  'gpt-5.4-mini': createOpenAIModel(
+    'ri.language-model-service..language-model.gpt-5-4-mini',
+    'GPT-5.4 Mini',
+    { lifecycle: 'experimental' },
+  ),
+  'gpt-5.4-nano': createOpenAIModel(
+    'ri.language-model-service..language-model.gpt-5-4-nano',
+    'GPT-5.4 Nano',
+    { lifecycle: 'experimental' },
+  ),
   o3: createOpenAIModel('ri.language-model-service..language-model.o-3', 'o3', { lifecycle: 'ga' }),
   'o4-mini': createOpenAIModel('ri.language-model-service..language-model.o-4-mini', 'o4 Mini', {
     lifecycle: 'ga',
@@ -92,6 +102,8 @@ const OPENAI_REASONING_MODEL_IDS = new Set<KnownOpenAIModelId>([
   'gpt-5-nano',
   'gpt-5.2',
   'gpt-5.4',
+  'gpt-5.4-mini',
+  'gpt-5.4-nano',
   'o3',
   'o4-mini',
 ]);

@@ -85,8 +85,10 @@ Current Google alias-to-RID mappings:
 ### xAI-specific behavior
 
 - The Foundry xAI-compatible endpoints currently remain out of package scope.
+- The active enrollment now includes licensed Grok models and verified Foundry RIDs, but the proxy contract still is not usable.
 - We probed both `/api/v2/llm/proxy/xai/v1/chat/completions` and `/api/v2/llm/proxy/xai/v1/responses` on the active enrollment and they rejected documented request shapes during request deserialization with `LanguageModelService:InvalidRequest`.
-- Keep xAI tracked as a spec item until the endpoint contract is usable and we have enrollment-backed model RIDs to catalog.
+- We also probed the OpenAI-compatible proxy with Grok RIDs and it returned `LanguageModelService:LanguageModelNotAvailable` with `Backend not supported for OpenAI proxy`.
+- Keep xAI tracked as a spec item until the dedicated xAI proxy contract is usable end to end.
 
 ## Catalog Design
 
@@ -102,6 +104,7 @@ The public catalog contains only stable cross-provider metadata:
 Behavior-driving compatibility flags are kept out of the public metadata contract unless they can be represented accurately and maintained reliably.
 
 Google is now included in the shared catalog using verified enrollment RIDs. xAI remains intentionally excluded until the beta proxy contract is stable enough to document and verify consistently.
+Enrolled models are not added automatically. The public catalog should include only aliases the current adapter surface can actually serve. That is why the catalog can lag enrollment for cases such as `o1`, where the active Foundry enrollment does not currently expose the responses-capable shape this package depends on.
 
 ## Example Registry Composition
 
@@ -139,6 +142,7 @@ The live suite in `packages/foundry-ai/src/__tests__/foundry.live.test.ts` is th
   - Anthropic: `claude-sonnet-4.6`
   - Google: `gemini-3.1-flash-lite`
 - The rest of the catalog is survey coverage. Those rows remain visible in the matrix and docs, but non-pass results do not fail the suite by default.
+- Survey coverage excludes models whose catalog lifecycle is `sunset` or `deprecated`.
 - The suite records local artifacts under `.memory/capability-runs/<run-id>/`:
   - `results.json`
   - `summary.md`
@@ -177,7 +181,7 @@ Explicitly unsupported or out-of-scope capabilities should stay visible in the m
 
 ## Current Investigation Backlog
 
-The matrix should separate real provider/proxy issues from harness mistakes. Latest full catalog run: `.memory/capability-runs/2026-03-28T07-45-09.047Z-dec73f`.
+The matrix should separate real provider/proxy issues from harness mistakes. Latest full catalog run: `.memory/capability-runs/2026-03-28T08-29-30.093Z-32e0e4`.
 
 Harness items that are now considered fixed:
 
@@ -193,6 +197,6 @@ Current real investigation items from the latest run:
   - `claude-opus-4` and `claude-opus-4.1` hit repeated `429` rate limits on multi-step/tool-heavy rows (`agent.tool_loop`, `structured.plus.tools`, `vision.image_input`) on the active stack.
   - `claude-opus-4` and `claude-opus-4.1` also still fail `tool.loop.deterministic` with `No output generated`, which now looks like a provider or stack-level limitation rather than a harness mistake.
 - Google:
-  - `gemini-3-pro` remains unavailable on the active stack. The matrix records both direct `fail` and `proxy-rejected` rows there, which should be treated as enrollment or access issues until the model is actually enabled.
-  - `gemini-3-flash` still fails `structured.output.object` in the latest run.
-  - `gemini-2.5-flash` still fails `agent.tool_loop` in the latest run.
+  - `gemini-2.5-pro` still fails `structured.output.object` in the latest run.
+- OpenAI:
+  - `gpt-5-codex` still fails the current `text.generate` probe wording by refusing the provider-name echo prompt. This looks like a probe-design issue, not a proxy-contract issue.
