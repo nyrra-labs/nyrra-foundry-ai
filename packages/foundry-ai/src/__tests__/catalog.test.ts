@@ -25,6 +25,9 @@ describe('model catalog', () => {
     expect(resolveModelRid('gpt-5-mini')).toBe(
       'ri.language-model-service..language-model.gpt-5-mini',
     );
+    expect(resolveModelRid('gpt-5.4-mini')).toBe(
+      'ri.language-model-service..language-model.gpt-5-4-mini',
+    );
     expect(resolveModelProvider('gpt-5-mini')).toBe('openai');
     expect(getModelMetadata('gpt-5-mini')).toMatchObject({
       displayName: 'GPT-5 Mini',
@@ -32,6 +35,11 @@ describe('model catalog', () => {
       provider: 'openai',
       supportsResponses: true,
       supportsVision: true,
+    });
+    expect(getModelMetadata('gpt-4o-mini')).toMatchObject({
+      displayName: 'GPT-4o Mini',
+      lifecycle: 'sunset',
+      provider: 'openai',
     });
   });
 
@@ -129,8 +137,8 @@ describe('config loading', () => {
 
 describe('type surface', () => {
   it('accepts known aliases and raw RIDs', () => {
-    const knownOpenAiAlias: KnownOpenAIModelId = 'gpt-5-mini';
-    const openAiAlias: OpenAIModelId = 'gpt-5-mini';
+    const knownOpenAiAlias: KnownOpenAIModelId = 'gpt-5.4-mini';
+    const openAiAlias: OpenAIModelId = 'gpt-5.4-mini';
     const openAiRid: OpenAIModelId = 'ri.language-model-service..language-model.gpt-5-2';
     const knownAnthropicAlias: KnownAnthropicModelId = 'claude-sonnet-4.6';
     const anthropicAlias: AnthropicModelId = 'claude-sonnet-4.6';
@@ -142,8 +150,8 @@ describe('type surface', () => {
       'ri.language-model-service..language-model.gemini-3-1-flash-lite';
     const knownModel: KnownModelId = 'gemini-3.1-flash-lite';
 
-    expect(knownOpenAiAlias).toBe('gpt-5-mini');
-    expect(openAiAlias).toBe('gpt-5-mini');
+    expect(knownOpenAiAlias).toBe('gpt-5.4-mini');
+    expect(openAiAlias).toBe('gpt-5.4-mini');
     expect(openAiRid).toBe('ri.language-model-service..language-model.gpt-5-2');
     expect(knownAnthropicAlias).toBe('claude-sonnet-4.6');
     expect(anthropicAlias).toBe('claude-sonnet-4.6');

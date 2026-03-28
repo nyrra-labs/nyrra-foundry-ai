@@ -19,6 +19,8 @@ export const OPENAI_MODEL_IDS = [
   'gpt-5.1-codex-mini',
   'gpt-5.2',
   'gpt-5.4',
+  'gpt-5.4-mini',
+  'gpt-5.4-nano',
   'o3',
   'o4-mini',
 ] as const;
