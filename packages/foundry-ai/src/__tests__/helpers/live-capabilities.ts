@@ -809,6 +809,11 @@ function sanitizeForArtifact(value: unknown, seen = new WeakSet<object>()): unkn
   }
 
   if (Array.isArray(value)) {
+    if (seen.has(value)) {
+      return '[Circular]';
+    }
+
+    seen.add(value);
     return value.map((item) => sanitizeForArtifact(item, seen));
   }
 

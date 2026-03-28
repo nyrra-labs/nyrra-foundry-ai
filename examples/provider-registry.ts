@@ -1,11 +1,13 @@
 import { loadFoundryConfig } from '@nyrra/foundry-ai';
 import { createFoundryAnthropic } from '@nyrra/foundry-ai/anthropic';
+import { createFoundryGoogle } from '@nyrra/foundry-ai/google';
 import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
 import { createProviderRegistry, generateText } from 'ai';
 
 const config = loadFoundryConfig();
 const registry = createProviderRegistry({
   anthropic: createFoundryAnthropic(config),
+  google: createFoundryGoogle(config),
   openai: createFoundryOpenAI(config),
 });
 const prompt =
@@ -21,5 +23,11 @@ const anthropicResult = await generateText({
   prompt,
 });
 
+const googleResult = await generateText({
+  model: registry.languageModel('google:gemini-3.1-flash-lite'),
+  prompt,
+});
+
 console.log('openai:', openAiResult.text);
 console.log('anthropic:', anthropicResult.text);
+console.log('google:', googleResult.text);
