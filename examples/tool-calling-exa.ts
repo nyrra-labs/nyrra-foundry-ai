@@ -2,12 +2,18 @@ import type { AnthropicLanguageModelOptions } from '@ai-sdk/anthropic';
 import type { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai';
 import { webSearch } from '@exalabs/ai-sdk';
 import { stepCountIs, streamText } from 'ai';
-import { createExampleLanguageModel, requireEnv } from './shared.js';
+import {
+  createExampleLanguageModel,
+  logExampleError,
+  logExampleValue,
+  requireEnv,
+} from './shared.js';
 
 requireEnv('EXA_API_KEY');
 
 const { model, modelId, provider } = createExampleLanguageModel(undefined, {
   anthropicModel: 'claude-sonnet-4.6',
+  googleModel: 'gemini-3.1-flash-lite',
   openaiModel: 'gpt-5-mini',
 });
 const prompt =
@@ -40,18 +46,21 @@ const providerOptions: ExampleProviderOptions =
           textVerbosity: 'low',
         } satisfies OpenAILanguageModelResponsesOptions,
       }
-    : {
-        anthropic: {
-          effort: 'low',
-          thinking: {
-            type: 'enabled',
-            budgetTokens: 1024,
-          },
-          sendReasoning: true,
-          toolStreaming: true,
-          disableParallelToolUse: true,
-        } satisfies AnthropicLanguageModelOptions,
-      };
+    : provider === 'anthropic'
+      ? {
+          anthropic: {
+            effort: 'low',
+            thinking: {
+              type: 'enabled',
+              budgetTokens: 1024,
+            },
+            sendReasoning: true,
+            toolStreaming: true,
+            disableParallelToolUse: true,
+          } satisfies AnthropicLanguageModelOptions,
+        }
+      : {};
+
 const result = streamText({
   model,
   prompt,
@@ -63,7 +72,7 @@ const result = streamText({
 
 console.log(`provider: ${provider}`);
 console.log(`model: ${modelId}`);
-console.log(JSON.stringify({ type: 'provider-options', providerOptions }));
+logExampleValue({ type: 'provider-options', providerOptions });
 
 let text = '';
 
@@ -73,13 +82,13 @@ for await (const part of result.fullStream) {
   }
 
   if (part.type === 'tool-error' || part.type === 'error') {
-    console.error(part.error);
+    logExampleError(part);
     throw part.error;
   }
 
-  console.log(JSON.stringify(part));
+  logExampleValue(part);
 }
 
 const steps = await result.steps;
-console.log(JSON.stringify({ type: 'final-text', text }));
-console.log(JSON.stringify({ type: 'summary', steps: steps.length }));
+logExampleValue({ type: 'final-text', text });
+logExampleValue({ type: 'summary', steps: steps.length });

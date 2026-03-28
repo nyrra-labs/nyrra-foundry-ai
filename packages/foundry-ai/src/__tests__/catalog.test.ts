@@ -12,7 +12,9 @@ import {
 } from '../models/catalog.js';
 import type {
   AnthropicModelId,
+  GoogleModelId,
   KnownAnthropicModelId,
+  KnownGoogleModelId,
   KnownModelId,
   KnownOpenAIModelId,
   OpenAIModelId,
@@ -40,12 +42,32 @@ describe('model catalog', () => {
     expect(resolveModelProvider('claude-sonnet-4.6')).toBe('anthropic');
   });
 
+  it('resolves metadata for known Google models', () => {
+    expect(resolveModelRid('gemini-3.1-flash-lite')).toBe(
+      'ri.language-model-service..language-model.gemini-3-1-flash-lite',
+    );
+    expect(resolveModelProvider('gemini-3.1-flash-lite')).toBe('google');
+    expect(getModelMetadata('gemini-3.1-flash-lite')).toMatchObject({
+      displayName: 'Gemini 3.1 Flash Lite (Preview)',
+      lifecycle: 'experimental',
+      provider: 'google',
+      supportsResponses: false,
+      supportsVision: true,
+    });
+  });
+
   it('exports a reverse RID lookup for known models', () => {
     expect(
       MODEL_CATALOG_BY_RID['ri.language-model-service..language-model.gpt-5-mini'],
     ).toMatchObject({
       displayName: 'GPT-5 Mini',
       provider: 'openai',
+    });
+    expect(
+      MODEL_CATALOG_BY_RID['ri.language-model-service..language-model.gemini-3-1-flash-lite'],
+    ).toMatchObject({
+      displayName: 'Gemini 3.1 Flash Lite (Preview)',
+      provider: 'google',
     });
   });
 
@@ -114,7 +136,11 @@ describe('type surface', () => {
     const anthropicAlias: AnthropicModelId = 'claude-sonnet-4.6';
     const anthropicRid: AnthropicModelId =
       'ri.language-model-service..language-model.anthropic-claude-4-6-sonnet';
-    const knownModel: KnownModelId = 'claude-sonnet-4.6';
+    const knownGoogleAlias: KnownGoogleModelId = 'gemini-3.1-flash-lite';
+    const googleAlias: GoogleModelId = 'gemini-3.1-flash-lite';
+    const googleRid: GoogleModelId =
+      'ri.language-model-service..language-model.gemini-3-1-flash-lite';
+    const knownModel: KnownModelId = 'gemini-3.1-flash-lite';
 
     expect(knownOpenAiAlias).toBe('gpt-5-mini');
     expect(openAiAlias).toBe('gpt-5-mini');
@@ -124,6 +150,9 @@ describe('type surface', () => {
     expect(anthropicRid).toBe(
       'ri.language-model-service..language-model.anthropic-claude-4-6-sonnet',
     );
-    expect(knownModel).toBe('claude-sonnet-4.6');
+    expect(knownGoogleAlias).toBe('gemini-3.1-flash-lite');
+    expect(googleAlias).toBe('gemini-3.1-flash-lite');
+    expect(googleRid).toBe('ri.language-model-service..language-model.gemini-3-1-flash-lite');
+    expect(knownModel).toBe('gemini-3.1-flash-lite');
   });
 });

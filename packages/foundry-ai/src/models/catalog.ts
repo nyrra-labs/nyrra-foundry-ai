@@ -1,11 +1,13 @@
 import { FoundryModelNotFoundError } from '../errors.js';
 import type { KnownModelId, ModelMetadata, ModelProvider, ResolvedModelTarget } from '../types.js';
 import { ANTHROPIC_MODELS } from './anthropic-models.js';
+import { GOOGLE_MODELS } from './google-models.js';
 import { OPENAI_MODELS } from './openai-models.js';
 
 export const MODEL_CATALOG = {
   ...OPENAI_MODELS,
   ...ANTHROPIC_MODELS,
+  ...GOOGLE_MODELS,
 } as const satisfies Record<KnownModelId, ModelMetadata>;
 export const MODEL_CATALOG_BY_RID = Object.fromEntries(
   Object.values(MODEL_CATALOG).map((metadata) => [metadata.rid, metadata]),

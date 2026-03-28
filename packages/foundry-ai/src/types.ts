@@ -44,10 +44,24 @@ export type KnownAnthropicModelId = (typeof ANTHROPIC_MODEL_IDS)[number];
 
 export type AnthropicModelId = KnownAnthropicModelId | (string & {});
 
-export type KnownModelId = KnownOpenAIModelId | KnownAnthropicModelId;
+export const GOOGLE_MODEL_IDS = [
+  'gemini-2.5-pro',
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+  'gemini-3-pro',
+  'gemini-3-flash',
+  'gemini-3.1-pro',
+  'gemini-3.1-flash-lite',
+] as const;
 
-export type ModelProvider = 'openai' | 'anthropic';
-export type ModelLifecycle = 'ga' | 'experimental' | 'deprecated';
+export type KnownGoogleModelId = (typeof GOOGLE_MODEL_IDS)[number];
+
+export type GoogleModelId = KnownGoogleModelId | (string & {});
+
+export type KnownModelId = KnownOpenAIModelId | KnownAnthropicModelId | KnownGoogleModelId;
+
+export type ModelProvider = 'openai' | 'anthropic' | 'google';
+export type ModelLifecycle = 'ga' | 'experimental' | 'sunset' | 'deprecated';
 
 export interface ModelMetadata {
   rid: string;

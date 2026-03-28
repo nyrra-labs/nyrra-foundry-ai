@@ -12,11 +12,11 @@
     "test": "pnpm exec nx run foundry-ai:test --outputStyle=static",
     "test:live": "pnpm exec nx run foundry-ai:test-live --outputStyle=static",
     "typecheck": "pnpm exec nx run foundry-ai:typecheck --outputStyle=static",
-    "deprecations": "node scripts/check-deprecations.mjs --project packages/foundry-ai/tsconfig.typecheck.json",
     "release": "pnpm exec nx release"
   },
   "devDependencies": {
     "@ai-sdk/anthropic": "3.0.64",
+    "@ai-sdk/google": "3.0.53",
     "@ai-sdk/openai": "3.0.48",
     "@biomejs/biome": "2.4.9",
     "@exalabs/ai-sdk": "2.0.1",

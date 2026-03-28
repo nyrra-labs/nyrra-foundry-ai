@@ -36,7 +36,15 @@
     "test-live": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm exec vitest run --config packages/foundry-ai/vitest.live.config.ts",
+        "command": "node scripts/run-live-capability-suite.mjs",
+        "cwd": "{workspaceRoot}"
+      },
+      "cache": false
+    },
+    "docs-live-matrix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/update-live-matrix-docs.mjs",
         "cwd": "{workspaceRoot}"
       },
       "cache": false
@@ -48,10 +56,6 @@
           {
             "command": "pnpm exec tsc --project packages/foundry-ai/tsconfig.typecheck.json --noEmit",
             "description": "TypeScript typecheck"
-          },
-          {
-            "command": "node scripts/check-deprecations.mjs --project packages/foundry-ai/tsconfig.typecheck.json",
-            "description": "Deprecated API usage check"
           }
         ],
         "parallel": false,

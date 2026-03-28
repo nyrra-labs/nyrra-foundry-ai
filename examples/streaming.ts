@@ -1,7 +1,7 @@
 import type { AnthropicLanguageModelOptions } from '@ai-sdk/anthropic';
 import type { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai';
 import { streamText } from 'ai';
-import { createExampleLanguageModel } from './shared.js';
+import { createExampleLanguageModel, logExampleError, logExampleValue } from './shared.js';
 
 const { model, modelId, provider } = createExampleLanguageModel();
 const prompt =
@@ -16,15 +16,18 @@ const providerOptions: ExampleProviderOptions =
           textVerbosity: 'low',
         } satisfies OpenAILanguageModelResponsesOptions,
       }
-    : {
-        anthropic: {
-          thinking: {
-            type: 'enabled',
-            budgetTokens: 1024,
-          },
-          sendReasoning: true,
-        } satisfies AnthropicLanguageModelOptions,
-      };
+    : provider === 'anthropic'
+      ? {
+          anthropic: {
+            thinking: {
+              type: 'enabled',
+              budgetTokens: 1024,
+            },
+            sendReasoning: true,
+          } satisfies AnthropicLanguageModelOptions,
+        }
+      : {};
+
 const result = streamText({
   model,
   prompt,
@@ -33,7 +36,7 @@ const result = streamText({
 
 console.log(`provider: ${provider}`);
 console.log(`model: ${modelId}`);
-console.log(JSON.stringify({ type: 'provider-options', providerOptions }));
+logExampleValue({ type: 'provider-options', providerOptions });
 
 let text = '';
 
@@ -43,11 +46,11 @@ for await (const part of result.fullStream) {
   }
 
   if (part.type === 'error') {
-    console.error(part.error);
+    logExampleError(part);
     throw part.error;
   }
 
-  console.log(JSON.stringify(part));
+  logExampleValue(part);
 }
 
-console.log(JSON.stringify({ type: 'final-text', text }));
+logExampleValue({ type: 'final-text', text });

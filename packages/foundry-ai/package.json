@@ -26,6 +26,11 @@
       "types": "./dist/providers/anthropic.d.ts",
       "import": "./dist/providers/anthropic.mjs",
       "require": "./dist/providers/anthropic.cjs"
+    },
+    "./google": {
+      "types": "./dist/providers/google.d.ts",
+      "import": "./dist/providers/google.mjs",
+      "require": "./dist/providers/google.cjs"
     }
   },
   "files": [
@@ -37,10 +42,14 @@
   "peerDependencies": {
     "ai": "^6.0.138",
     "@ai-sdk/anthropic": "^3.0.64",
+    "@ai-sdk/google": "^3.0.53",
     "@ai-sdk/openai": "^3.0.48"
   },
   "peerDependenciesMeta": {
     "@ai-sdk/anthropic": {
+      "optional": true
+    },
+    "@ai-sdk/google": {
       "optional": true
     },
     "@ai-sdk/openai": {

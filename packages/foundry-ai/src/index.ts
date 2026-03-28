@@ -11,11 +11,14 @@ export {
   resolveModelRid,
   resolveModelTarget,
 } from './models/catalog.js';
+export { GOOGLE_MODELS } from './models/google-models.js';
 export { OPENAI_MODELS } from './models/openai-models.js';
 export type {
   AnthropicModelId,
   FoundryConfig,
+  GoogleModelId,
   KnownAnthropicModelId,
+  KnownGoogleModelId,
   KnownModelId,
   KnownOpenAIModelId,
   ModelLifecycle,
@@ -24,4 +27,4 @@ export type {
   OpenAIModelId,
   ResolvedModelTarget,
 } from './types.js';
-export { ANTHROPIC_MODEL_IDS, OPENAI_MODEL_IDS } from './types.js';
+export { ANTHROPIC_MODEL_IDS, GOOGLE_MODEL_IDS, OPENAI_MODEL_IDS } from './types.js';

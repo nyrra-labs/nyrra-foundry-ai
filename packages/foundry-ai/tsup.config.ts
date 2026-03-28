@@ -7,8 +7,9 @@ export default defineConfig({
     index: 'src/index.ts',
     'providers/openai': 'src/providers/openai.ts',
     'providers/anthropic': 'src/providers/anthropic.ts',
+    'providers/google': 'src/providers/google.ts',
   },
-  external: ['ai', '@ai-sdk/openai', '@ai-sdk/anthropic'],
+  external: ['ai', '@ai-sdk/anthropic', '@ai-sdk/google', '@ai-sdk/openai'],
   format: ['esm', 'cjs'],
   outExtension({ format }) {
     return {
