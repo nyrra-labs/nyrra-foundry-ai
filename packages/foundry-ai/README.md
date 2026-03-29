@@ -1,10 +1,17 @@
 # @nyrra/foundry-ai
 
-Thin Foundry provider adapters and model catalog for the Vercel AI SDK.
+Thin Palantir Foundry provider adapters and model catalog for the Vercel AI SDK.
+
+## What It Does
+
+- Routes AI SDK language-model calls through Foundry's provider-compatible proxy endpoints.
+- Maps friendly model aliases such as `gpt-5-mini` and `claude-sonnet-4.6` to Foundry RIDs.
+- Keeps installs lean by exposing provider-specific subpaths and optional peer dependencies.
+- Ships a TanStack Intent skill for provider-specific setup and troubleshooting.
 
 ## Install
 
-Install the package and the peer dependencies for the provider you plan to use:
+Install `ai`, this package, and only the provider peer dependency you need:
 
 ```bash
 pnpm add @nyrra/foundry-ai ai @ai-sdk/openai
@@ -18,20 +25,28 @@ pnpm add @nyrra/foundry-ai ai @ai-sdk/anthropic
 pnpm add @nyrra/foundry-ai ai @ai-sdk/google
 ```
 
-## Usage
+If you use more than one provider, install both peers. For the rationale and bundle-size tradeoffs, see the [dependency strategy guide](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/docs/dependency-strategy.md).
+
+## Verified Use Case
+
+Use this package when you want local development and deployed server workloads to call secure/private Foundry proxy endpoints instead of public provider endpoints directly.
+
+The verified path today is env-based server usage with `FOUNDRY_URL` and `FOUNDRY_TOKEN`. Palantir documents the same proxy family for OSDK and other Foundry-native runtimes, but this package has not yet been validated end to end in Palantir TSv1/TSv2 standalone functions or `PlatformClient`-driven fetch flows.
+
+## Quick Start
+
+```bash
+FOUNDRY_URL=https://your-stack.palantirfoundry.com
+FOUNDRY_TOKEN=your-token
+FOUNDRY_ATTRIBUTION_RID=
+```
 
 ```ts
 import { loadFoundryConfig } from '@nyrra/foundry-ai';
 import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
 import { generateText } from 'ai';
 
-const openai = createFoundryOpenAI(
-  loadFoundryConfig({
-    foundryUrl: process.env.FOUNDRY_URL,
-    token: process.env.FOUNDRY_TOKEN,
-    attributionRid: process.env.FOUNDRY_ATTRIBUTION_RID,
-  }),
-);
+const openai = createFoundryOpenAI(loadFoundryConfig());
 
 const result = await generateText({
   model: openai('gpt-5-mini'),
@@ -41,99 +56,56 @@ const result = await generateText({
 console.log(result.text);
 ```
 
-## Exports
+## Provider Surface
 
-- `@nyrra/foundry-ai`
-- `@nyrra/foundry-ai/openai`
-- `@nyrra/foundry-ai/anthropic`
-- `@nyrra/foundry-ai/google`
+- Root exports config loading, catalog helpers, errors, and model ID types.
+- `@nyrra/foundry-ai/openai` exports `createFoundryOpenAI`.
+- `@nyrra/foundry-ai/anthropic` exports `createFoundryAnthropic`.
+- `@nyrra/foundry-ai/google` exports `createFoundryGoogle`.
+- There is no package-level registry helper. Compose multi-provider routing in application code with AI SDK `createProviderRegistry`.
 
-There is no published registry helper. Compose multi-provider routing in application code with AI SDK `createProviderRegistry`.
+## Model IDs
 
-## Notes
+- Use friendly aliases for catalogued models such as `gpt-5-mini`, `claude-sonnet-4.6`, and `gemini-3.1-flash-lite`.
+- Use raw Foundry RIDs when your stack exposes a model that is not yet in the package catalog.
+- Alias and raw-RID behavior are documented in the [model support guide](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/docs/model-support.md).
+
+## Foundry-Specific Behavior
 
 - OpenAI traffic always uses Foundry-safe compatibility defaults where required.
 - `providerOptions.openai.store=true` throws before the request is sent.
-- Unknown model strings pass through as raw targets when you call a provider factory directly.
-- OpenAI, Anthropic, and Google friendly aliases resolve through the shared catalog.
+- Known OpenAI reasoning aliases automatically get `providerOptions.openai.forceReasoning=true` unless the caller already set it.
 - The Google adapter rewrites the AI SDK's `x-goog-api-key` auth into the bearer-token header that Foundry expects.
+- Embedding, image, audio, video, and rerank methods are not exposed by this package yet.
 
-## Verification
+## Docs And Examples
 
-The examples are demos. The canonical verification surface is the live capability matrix in [`src/__tests__/foundry.live.test.ts`](./src/__tests__/foundry.live.test.ts).
+- [Usage guide](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/docs/usage.md)
+- [Model support guide](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/docs/model-support.md)
+- [Dependency strategy guide](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/docs/dependency-strategy.md)
+- [Live capability matrix](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/docs/live-capability-matrix.md)
+- [AI SDK community provider draft](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/docs/ai-sdk-community-provider.mdx)
+- [TanStack Intent skill](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/skills/foundry-ai-provider/SKILL.md)
+- [Published registry example](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/skills/foundry-ai-provider/references/examples/provider-registry.ts)
+- [Published tool-calling example](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/skills/foundry-ai-provider/references/examples/tool-calling.ts)
+- [Published tool-calling streaming example](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/skills/foundry-ai-provider/references/examples/tool-calling-streaming.ts)
+- [Root examples overview](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/examples/README.md)
+- [Basic text example](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/examples/basic-text.ts)
+- [Streaming example](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/examples/streaming.ts)
+- [Structured output example](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/examples/structured-output.ts)
+- [Optional Exa tool-calling example](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/examples/tool-calling-exa.ts)
 
-Each live run writes structured artifacts under `.memory/capability-runs/<run-id>/`. Full unfiltered `pnpm test:live` runs refresh the checked-in matrix docs from the latest artifact even when investigation rows surface failures.
+## Testing And CI
 
-<!-- live-matrix:start -->
-## Live Capability Matrix
+| Layer | Present | Tooling | Runs in CI |
+|---|---|---|---|
+| unit | yes | Vitest | yes |
+| integration | no | none | no |
+| e2e api | yes | live Vitest suite + manual example scripts against Foundry | no |
+| e2e web | no | none | no |
 
-Generated from the latest local live verification artifact checked into this branch.
+CI runs lint, unit tests, typecheck, build, TanStack Intent skill validation, and a package-content audit. Live verification remains manual through `pnpm test:live`.
 
-Latest snapshot: `2026-03-28T08-29-30.093Z-32e0e4`
+## License
 
-- Default Models: openai=`gpt-5-mini`, anthropic=`claude-sonnet-4.6`, google=`gemini-3.1-flash-lite`
-- Model Scope: `catalog`
-- Status Counts: `pass`: 297, `skipped`: 184, `fail`: 18
-
-The default per-provider models are the hard gate. Additional catalog rows are investigation coverage, exclude lifecycle `sunset` and `deprecated` models, and may surface non-pass results without failing the suite.
-
-| Provider | Pass | Skipped | Proxy Rejected | Unsupported | Fail |
-|---|---:|---:|---:|---:|---:|
-| openai | 160 | 96 | 0 | 0 | 1 |
-| anthropic | 84 | 51 | 0 | 0 | 16 |
-| google | 53 | 37 | 0 | 0 | 1 |
-
-### Provider Tables
-
-#### openai
-
-| Model | Text | Messages | RID | Stream | Structured | Tools | Agent | Structured+Tools | Vision | Reasoning |
-|---|---|---|---|---|---|---|---|---|---|---|
-| `gpt-5.4-nano` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
-| `gpt-5.4-mini` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
-| `gpt-5.4` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
-| `gpt-5.2` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
-| `gpt-5.1-codex-mini` | pass | pass | pass | pass | pass | pass | pass | pass | skipped | skipped |
-| `gpt-5.1-codex` | pass | pass | pass | pass | pass | pass | pass | pass | skipped | skipped |
-| `gpt-5.1` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
-| `gpt-5-nano` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
-| `gpt-5-mini` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
-| `gpt-5-codex` | fail | pass | pass | pass | pass | pass | pass | pass | skipped | skipped |
-| `gpt-5` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
-| `gpt-4.1-nano` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
-| `gpt-4.1-mini` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
-| `gpt-4.1` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
-| `o4-mini` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
-| `gpt-4o` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
-| `o3` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
-
-#### anthropic
-
-| Model | Text | Messages | RID | Stream | Structured | Tools | Agent | Structured+Tools | Vision | Reasoning |
-|---|---|---|---|---|---|---|---|---|---|---|
-| `claude-sonnet-4.6` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
-| `claude-opus-4.6` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
-| `claude-sonnet-4.5` | pass | pass | pass | pass | pass | pass | pass | pass | pass | fail |
-| `claude-opus-4.5` | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |
-| `claude-haiku-4.5` | pass | pass | pass | pass | pass | pass | pass | pass | pass | fail |
-| `claude-opus-4.1` | pass | pass | pass | pass | fail | fail | fail | fail | fail | fail |
-| `claude-sonnet-4` | pass | pass | pass | pass | pass | pass | pass | pass | pass | fail |
-| `claude-opus-4` | pass | pass | pass | pass | pass | fail | fail | fail | fail | fail |
-| `claude-3.7-sonnet` | pass | pass | pass | pass | pass | pass | pass | pass | pass | fail |
-| `claude-3.5-haiku` | pass | pass | pass | pass | pass | pass | pass | pass | pass | fail |
-
-#### google
-
-| Model | Text | Messages | RID | Stream | Structured | Tools | Agent | Structured+Tools | Vision | Reasoning |
-|---|---|---|---|---|---|---|---|---|---|---|
-| `gemini-3.1-pro` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
-| `gemini-3.1-flash-lite` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
-| `gemini-3-flash` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
-| `gemini-2.5-pro` | pass | pass | pass | pass | fail | pass | pass | pass | pass | skipped |
-| `gemini-2.5-flash-lite` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
-| `gemini-2.5-flash` | pass | pass | pass | pass | pass | pass | pass | pass | pass | skipped |
-
-See [docs/live-capability-matrix.md](./docs/live-capability-matrix.md) for the full row-by-row matrix and non-pass details.
-<!-- live-matrix:end -->
-
-See the repo root README for the full catalog, examples, and release notes.
+MIT

@@ -35,6 +35,9 @@ importers:
       '@swc/helpers':
         specifier: ~0.5.20
         version: 0.5.20
+      '@tanstack/intent':
+        specifier: 0.0.27
+        version: 0.0.27
       '@types/node':
         specifier: 25.5.0
         version: 25.5.0
@@ -63,6 +66,12 @@ importers:
         specifier: 4.3.6
         version: 4.3.6
 
+  .memory/intent-smoke/consumer:
+    dependencies:
+      '@nyrra/foundry-ai':
+        specifier: file:../nyrra-foundry-ai-0.0.2.tgz
+        version: file:.memory/intent-smoke/nyrra-foundry-ai-0.0.2.tgz(@ai-sdk/anthropic@3.0.64(zod@4.3.6))(@ai-sdk/google@3.0.53(zod@4.3.6))(@ai-sdk/openai@3.0.48(zod@4.3.6))(ai@6.0.140(zod@4.3.6))
+
   packages/foundry-ai:
     dependencies:
       '@ai-sdk/anthropic':
@@ -77,6 +86,10 @@ importers:
       ai:
         specifier: ^6.0.138
         version: 6.0.138(zod@4.3.6)
+    devDependencies:
+      '@tanstack/intent':
+        specifier: 0.0.27
+        version: 0.0.27
 
 packages:
 
@@ -1143,6 +1156,22 @@ packages:
   '@nx/workspace@22.6.2':
     resolution: {integrity: sha512-G5Ft3eb7ZrvNN0D3j1tyIyT6BuRwMNbjgvNWfEnZ1fKHRTIwqsXvx5S5fK4aJhCgpxTlPzQZpIr0XUTS0t6sjQ==}
 
+  '@nyrra/foundry-ai@file:.memory/intent-smoke/nyrra-foundry-ai-0.0.2.tgz':
+    resolution: {integrity: sha512-O2Cp6R5IRM66c02YdG3Dy5Kvt6X6b/y8siTTpY5XElcQWmm9CLfnMmDUD1JMf08EG/6w6tRm8hEfyHOr3T/l7g==, tarball: file:.memory/intent-smoke/nyrra-foundry-ai-0.0.2.tgz}
+    version: 0.0.2
+    peerDependencies:
+      '@ai-sdk/anthropic': ^3.0.64
+      '@ai-sdk/google': ^3.0.53
+      '@ai-sdk/openai': ^3.0.48
+      ai: ^6.0.138
+    peerDependenciesMeta:
+      '@ai-sdk/anthropic':
+        optional: true
+      '@ai-sdk/google':
+        optional: true
+      '@ai-sdk/openai':
+        optional: true
+
   '@opentelemetry/api@1.9.0':
     resolution: {integrity: sha512-3giAOQvZiH5F9bMlMiv8+GSPMeqg0dbaeo58/0SlA9sxSqZhnUtxzX9/2FzyhS9sWQf5S0GJE0AKBrFqjpeYcg==}
     engines: {node: '>=8.0.0'}
@@ -1494,6 +1523,10 @@ packages:
   '@szmarczak/http-timer@4.0.6':
     resolution: {integrity: sha512-4BAffykYOgO+5nzBWYwE3W90sBgLJoUPRWWcL8wlyiM8IB8ipJz3UMJ9KXQd1RKQXpKp8Tutn80HZtWsu2u76w==}
     engines: {node: '>=10'}
+
+  '@tanstack/intent@0.0.27':
+    resolution: {integrity: sha512-R8U4uadLrp9uosW5G1J5s4RQtT7F0S2oqIfWX6OD7uObuM6vJLO0jZzw+Et7H3PFMnue3snjdzJYX5BmNV1RXA==}
+    hasBin: true
 
   '@tybys/wasm-util@0.10.1':
     resolution: {integrity: sha512-9tTaPJLSiejZKx+Bmog4uSubteqTvFrVrURwkmHixBo0G4seD0zUxp98E1DzUBJxLQ3NPwXrGKDiVjwx/DpPsg==}
@@ -4618,6 +4651,14 @@ snapshots:
       - '@swc/core'
       - debug
 
+  '@nyrra/foundry-ai@file:.memory/intent-smoke/nyrra-foundry-ai-0.0.2.tgz(@ai-sdk/anthropic@3.0.64(zod@4.3.6))(@ai-sdk/google@3.0.53(zod@4.3.6))(@ai-sdk/openai@3.0.48(zod@4.3.6))(ai@6.0.140(zod@4.3.6))':
+    dependencies:
+      ai: 6.0.140(zod@4.3.6)
+    optionalDependencies:
+      '@ai-sdk/anthropic': 3.0.64(zod@4.3.6)
+      '@ai-sdk/google': 3.0.53(zod@4.3.6)
+      '@ai-sdk/openai': 3.0.48(zod@4.3.6)
+
   '@opentelemetry/api@1.9.0': {}
 
   '@oxc-resolver/binding-android-arm-eabi@11.19.1':
@@ -4861,6 +4902,11 @@ snapshots:
     dependencies:
       defer-to-connect: 2.0.1
     optional: true
+
+  '@tanstack/intent@0.0.27':
+    dependencies:
+      cac: 6.7.14
+      yaml: 2.8.3
 
   '@tybys/wasm-util@0.10.1':
     dependencies:

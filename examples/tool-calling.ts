@@ -1,0 +1,1 @@
+../packages/foundry-ai/skills/foundry-ai-provider/references/examples/tool-calling.ts

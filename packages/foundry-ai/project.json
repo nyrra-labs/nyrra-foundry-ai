@@ -49,6 +49,21 @@
       },
       "cache": false
     },
+    "skills-validate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm exec intent validate packages/foundry-ai/skills",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "package-audit": {
+      "dependsOn": ["build"],
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/check-package-contents.mjs",
+        "cwd": "{workspaceRoot}"
+      }
+    },
     "typecheck": {
       "executor": "nx:run-commands",
       "options": {

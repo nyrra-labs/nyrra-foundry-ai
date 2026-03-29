@@ -1,6 +1,6 @@
 # @nyrra/foundry-ai
 
-Thin Foundry provider adapters and model catalog for the Vercel AI SDK.
+Thin Palantir Foundry provider adapters and model catalog for the Vercel AI SDK.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.2-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![AI%20SDK](https://img.shields.io/badge/AI%20SDK-6.0.140-000000?logo=vercel&logoColor=white)](https://sdk.vercel.ai/)
@@ -21,6 +21,7 @@ Thin Foundry provider adapters and model catalog for the Vercel AI SDK.
 - Preserves a raw RID escape hatch when a model is not yet in the catalog.
 - Exposes both alias and reverse-RID catalog lookups for app-level validation and routing.
 - Adds a beta Gemini adapter backed by an explicit Foundry RID catalog.
+- Ships a TanStack Intent skill for provider-specific setup and troubleshooting.
 
 ## Package Contract
 
@@ -170,13 +171,24 @@ OpenAI, Anthropic, and Google friendly names resolve through the shared RID cata
 
 ## Examples
 
-The repo includes runnable scripts for direct provider usage and registry composition:
+Base examples are the published skill references and the repo-root files are symlinked to them:
+
+- [`examples/provider-registry.ts`](./examples/provider-registry.ts)
+- [`examples/tool-calling.ts`](./examples/tool-calling.ts)
+- [`examples/tool-calling-streaming.ts`](./examples/tool-calling-streaming.ts)
+
+Canonical source files:
+
+- [`packages/foundry-ai/skills/foundry-ai-provider/references/examples/provider-registry.ts`](./packages/foundry-ai/skills/foundry-ai-provider/references/examples/provider-registry.ts)
+- [`packages/foundry-ai/skills/foundry-ai-provider/references/examples/tool-calling.ts`](./packages/foundry-ai/skills/foundry-ai-provider/references/examples/tool-calling.ts)
+- [`packages/foundry-ai/skills/foundry-ai-provider/references/examples/tool-calling-streaming.ts`](./packages/foundry-ai/skills/foundry-ai-provider/references/examples/tool-calling-streaming.ts)
+
+Advanced repo-only examples:
 
 - [`examples/basic-text.ts`](./examples/basic-text.ts)
 - [`examples/streaming.ts`](./examples/streaming.ts)
 - [`examples/structured-output.ts`](./examples/structured-output.ts)
 - [`examples/tool-calling-exa.ts`](./examples/tool-calling-exa.ts)
-- [`examples/provider-registry.ts`](./examples/provider-registry.ts)
 - [`examples/README.md`](./examples/README.md)
 
 Run them from the repo root. For a safe run that rebuilds the package first, use:
@@ -186,18 +198,24 @@ Run them from the repo root. For a safe run that rebuilds the package first, use
 pnpm run example basic-text openai
 pnpm run example streaming openai
 pnpm run example structured-output openai
+pnpm run example tool-calling openai
+pnpm run example tool-calling-streaming openai
 pnpm run example tool-calling-exa openai
 
 # Anthropic
 pnpm run example basic-text anthropic
 pnpm run example streaming anthropic
 pnpm run example structured-output anthropic
+pnpm run example tool-calling anthropic
+pnpm run example tool-calling-streaming anthropic
 pnpm run example tool-calling-exa anthropic
 
 # Google
 pnpm run example basic-text google
 pnpm run example streaming google
 pnpm run example structured-output google
+pnpm run example tool-calling google
+pnpm run example tool-calling-streaming google
 pnpm run example tool-calling-exa google
 
 # Registry composition
@@ -211,23 +229,41 @@ If you want the shortest path, Bun works directly too:
 bun examples/basic-text.ts openai
 bun examples/streaming.ts openai
 bun examples/structured-output.ts openai
+bun examples/tool-calling.ts openai
+bun examples/tool-calling-streaming.ts openai
 bun examples/tool-calling-exa.ts openai
 
 # Anthropic
 bun examples/basic-text.ts anthropic
 bun examples/streaming.ts anthropic
 bun examples/structured-output.ts anthropic
+bun examples/tool-calling.ts anthropic
+bun examples/tool-calling-streaming.ts anthropic
 bun examples/tool-calling-exa.ts anthropic
 
 # Google
 bun examples/basic-text.ts google
 bun examples/streaming.ts google
 bun examples/structured-output.ts google
+bun examples/tool-calling.ts google
+bun examples/tool-calling-streaming.ts google
 bun examples/tool-calling-exa.ts google
 
 # Registry composition
 bun examples/provider-registry.ts
 ```
+
+## Package Docs
+
+The npm-facing package docs now live with the package itself:
+
+- [`packages/foundry-ai/README.md`](./packages/foundry-ai/README.md)
+- [`packages/foundry-ai/docs/usage.md`](./packages/foundry-ai/docs/usage.md)
+- [`packages/foundry-ai/docs/model-support.md`](./packages/foundry-ai/docs/model-support.md)
+- [`packages/foundry-ai/docs/dependency-strategy.md`](./packages/foundry-ai/docs/dependency-strategy.md)
+- [`packages/foundry-ai/docs/live-capability-matrix.md`](./packages/foundry-ai/docs/live-capability-matrix.md)
+- [`packages/foundry-ai/docs/ai-sdk-community-provider.mdx`](./packages/foundry-ai/docs/ai-sdk-community-provider.mdx)
+- [`packages/foundry-ai/skills/foundry-ai-provider/SKILL.md`](./packages/foundry-ai/skills/foundry-ai-provider/SKILL.md)
 
 ## Verified Provider Options
 
@@ -253,7 +289,7 @@ Google is still a beta Palantir proxy endpoint. During live verification on Marc
 | e2e api | yes | Vitest live tests + manual Bun/Node example scripts against live Foundry | no |
 | e2e web | no | none | no |
 
-GitHub Actions runs CI checks on `main` and pull requests, Semgrep on pull requests plus scheduled/manual runs, and manual release workflows for stable/prerelease publishing. Live API verification still requires Foundry credentials and remains manual through `pnpm test:live` or the standalone scripts in [`examples/`](./examples).
+GitHub Actions runs lint, unit tests, typecheck, build, TanStack Intent skill validation, and package-content audit checks on `main` and pull requests. Semgrep runs on pull requests plus scheduled/manual runs, and stable/prerelease publishing stays on the manual `Release` workflow. Live API verification still requires Foundry credentials and remains manual through `pnpm test:live` or the standalone scripts in [`examples/`](./examples).
 
 The scripts in [`examples/`](./examples) are demos. The canonical verification surface is the live capability matrix in [`packages/foundry-ai/src/__tests__/foundry.live.test.ts`](./packages/foundry-ai/src/__tests__/foundry.live.test.ts).
 
@@ -285,6 +321,8 @@ pnpm test
 pnpm test:live
 pnpm typecheck
 pnpm build
+pnpm exec nx run foundry-ai:skills-validate --outputStyle=static
+pnpm exec nx run foundry-ai:package-audit --outputStyle=static
 ```
 
 For direct Nx targets:
@@ -294,6 +332,8 @@ pnpm exec nx run foundry-ai:lint --outputStyle=static
 pnpm exec nx run foundry-ai:test --outputStyle=static
 pnpm exec nx run foundry-ai:typecheck --outputStyle=static
 pnpm exec nx run foundry-ai:build --outputStyle=static
+pnpm exec nx run foundry-ai:skills-validate --outputStyle=static
+pnpm exec nx run foundry-ai:package-audit --outputStyle=static
 ```
 
 ## Releasing

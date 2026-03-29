@@ -78,7 +78,7 @@ jobs:
           node --version
           npm --version
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec nx run-many -t lint test typecheck build --projects=foundry-ai --outputStyle=static
+      - run: pnpm exec nx run-many -t lint test typecheck build skills-validate package-audit --projects=foundry-ai --outputStyle=static
       - name: Configure git author
         run: |
           git config user.name "github-actions[bot]"

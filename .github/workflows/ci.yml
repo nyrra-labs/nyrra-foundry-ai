@@ -33,4 +33,4 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec nx run-many -t lint test typecheck build --projects=foundry-ai --outputStyle=static
+      - run: pnpm exec nx run-many -t lint test typecheck build skills-validate package-audit --projects=foundry-ai --outputStyle=static

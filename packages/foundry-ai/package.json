@@ -1,11 +1,24 @@
 {
   "name": "@nyrra/foundry-ai",
   "version": "0.0.2",
-  "description": "Thin Foundry provider adapters and model catalog for the Vercel AI SDK.",
+  "description": "Thin Palantir Foundry provider adapters and model catalog for the Vercel AI SDK.",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nyrra-labs/nyrra-foundry-ai.git"
   },
+  "homepage": "https://github.com/nyrra-labs/nyrra-foundry-ai/tree/main/packages/foundry-ai#readme",
+  "bugs": {
+    "url": "https://github.com/nyrra-labs/nyrra-foundry-ai/issues"
+  },
+  "keywords": [
+    "ai-sdk",
+    "vercel-ai-sdk",
+    "palantir-foundry",
+    "foundry",
+    "llm-proxy",
+    "tanstack-intent"
+  ],
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.cjs",
@@ -34,10 +47,17 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "docs",
+    "skills",
+    "LICENSE",
+    "README.md"
   ],
   "publishConfig": {
     "access": "public"
+  },
+  "devDependencies": {
+    "@tanstack/intent": "0.0.27"
   },
   "peerDependencies": {
     "ai": "^6.0.138",
