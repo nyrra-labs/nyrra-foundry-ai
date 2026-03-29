@@ -72,7 +72,7 @@
 
 ## Live verification
 
-The checked-in [live capability matrix](./live-capability-matrix.md) is the canonical model-by-capability record.
+The checked-in [harness capability results](./harness-capability-results.md) are the canonical model-by-capability record from the live verification harness.
 
 The current snapshot shows:
 

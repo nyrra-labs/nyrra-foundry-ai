@@ -31,7 +31,7 @@ const testExitCode = await runCommandWithProgress(
 
 if (shouldUpdateDocs) {
   const docsExitCode = await runCommand('node', [
-    'scripts/update-live-matrix-docs.mjs',
+    'scripts/update-harness-results-docs.mjs',
     '--artifact',
     `.memory/capability-runs/${runId}`,
   ]);

@@ -1,6 +1,6 @@
 import { generateText, Output } from 'ai';
 import { z } from 'zod';
-import { createExampleLanguageModel } from './shared.js';
+import { createExampleLanguageModel } from '../base/shared.js';
 
 const signalSchema = z.object({
   indication: z.string(),

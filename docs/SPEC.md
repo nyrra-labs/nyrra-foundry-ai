@@ -133,9 +133,9 @@ const registry = createProviderRegistry({
 - live verification for direct OpenAI, Anthropic, and Google calls, plus registry composition via AI SDK
 - targeted beta probing for xAI endpoint behavior and current failure modes on the active enrollment
 
-## Live Capability Matrix
+## Harness Capability Results
 
-The live suite in `packages/foundry-ai/src/__tests__/foundry.live.test.ts` is the canonical verification surface for proxy-sensitive behavior.
+The live suite in `packages/foundry-ai/src/__tests__/foundry.live.test.ts` is the canonical verification harness for proxy-sensitive behavior.
 
 - The default per-provider models are the hard gate:
   - OpenAI: `gpt-5-mini`
@@ -177,7 +177,7 @@ Explicitly unsupported or out-of-scope capabilities should stay visible in the m
 
 - The committed verification docs should eventually use provider-specific support tables in the style of the AI SDK provider pages: one table per provider, models as rows, capabilities as columns.
 - Newer models should appear at the top of each provider table.
-- The live capability matrix remains the source artifact, but the published docs should present that artifact in a model-first view for faster review.
+- The harness results artifact remains the source record, but the published docs should present that artifact in a model-first view for faster review.
 
 ## Current Investigation Backlog
 

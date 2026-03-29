@@ -1,5 +1,5 @@
 import { generateText } from 'ai';
-import { createExampleLanguageModel } from './shared.js';
+import { createExampleLanguageModel } from '../base/shared.js';
 
 const { model, modelId, provider } = createExampleLanguageModel();
 

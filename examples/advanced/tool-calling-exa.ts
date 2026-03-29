@@ -7,7 +7,7 @@ import {
   logExampleError,
   logExampleValue,
   requireEnv,
-} from './shared.js';
+} from '../base/shared.js';
 
 requireEnv('EXA_API_KEY');
 

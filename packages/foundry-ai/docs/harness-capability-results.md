@@ -1,6 +1,6 @@
-# Live Capability Matrix
+# Harness Capability Results
 
-Generated from the latest local live verification artifact.
+Generated from the latest local live verification harness artifact.
 
 - Run ID: `2026-03-28T08-29-30.093Z-32e0e4`
 - Git SHA: `340b2bf`

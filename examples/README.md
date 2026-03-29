@@ -8,20 +8,18 @@ Supported provider arguments are `openai`, `anthropic`, and `google`.
 
 ## Base vs Advanced
 
-Base examples are the published skill references:
+`examples/base/` is a symlink to the published skill reference examples:
 
-- `provider-registry.ts`
-- `tool-calling.ts`
-- `tool-calling-streaming.ts`
+- `examples/base/provider-registry.ts`
+- `examples/base/tool-calling.ts`
+- `examples/base/tool-calling-streaming.ts`
 
-Those repo-root files are symlinked to the packaged skill references so there is only one maintained source.
+`examples/advanced/` stays repo-only:
 
-Advanced examples stay repo-only:
-
-- `basic-text.ts`
-- `streaming.ts`
-- `structured-output.ts`
-- `tool-calling-exa.ts`
+- `examples/advanced/basic-text.ts`
+- `examples/advanced/streaming.ts`
+- `examples/advanced/structured-output.ts`
+- `examples/advanced/tool-calling-exa.ts`
 
 ## Required Env
 
@@ -63,7 +61,7 @@ pnpm run example tool-calling-exa google
 pnpm run example provider-registry
 ```
 
-`provider-registry.ts`, `tool-calling.ts`, and `tool-calling-streaming.ts` are symlinked to the published skill reference examples, so the local runnable scripts and shipped skill stay in sync.
+The safe runner still accepts short names like `tool-calling` and `basic-text`; it resolves them through `examples/base/` first and then `examples/advanced/`.
 
 ## Bun
 
@@ -71,31 +69,31 @@ Use Bun directly when you do not need the rebuild step:
 
 ```bash
 # OpenAI
-bun examples/basic-text.ts openai
-bun examples/streaming.ts openai
-bun examples/structured-output.ts openai
-bun examples/tool-calling.ts openai
-bun examples/tool-calling-streaming.ts openai
-bun examples/tool-calling-exa.ts openai
+bun examples/advanced/basic-text.ts openai
+bun examples/advanced/streaming.ts openai
+bun examples/advanced/structured-output.ts openai
+bun examples/base/tool-calling.ts openai
+bun examples/base/tool-calling-streaming.ts openai
+bun examples/advanced/tool-calling-exa.ts openai
 
 # Anthropic
-bun examples/basic-text.ts anthropic
-bun examples/streaming.ts anthropic
-bun examples/structured-output.ts anthropic
-bun examples/tool-calling.ts anthropic
-bun examples/tool-calling-streaming.ts anthropic
-bun examples/tool-calling-exa.ts anthropic
+bun examples/advanced/basic-text.ts anthropic
+bun examples/advanced/streaming.ts anthropic
+bun examples/advanced/structured-output.ts anthropic
+bun examples/base/tool-calling.ts anthropic
+bun examples/base/tool-calling-streaming.ts anthropic
+bun examples/advanced/tool-calling-exa.ts anthropic
 
 # Google
-bun examples/basic-text.ts google
-bun examples/streaming.ts google
-bun examples/structured-output.ts google
-bun examples/tool-calling.ts google
-bun examples/tool-calling-streaming.ts google
-bun examples/tool-calling-exa.ts google
+bun examples/advanced/basic-text.ts google
+bun examples/advanced/streaming.ts google
+bun examples/advanced/structured-output.ts google
+bun examples/base/tool-calling.ts google
+bun examples/base/tool-calling-streaming.ts google
+bun examples/advanced/tool-calling-exa.ts google
 
 # Registry composition
-bun examples/provider-registry.ts
+bun examples/base/provider-registry.ts
 ```
 
 ## Model Override
@@ -103,19 +101,19 @@ bun examples/provider-registry.ts
 Pass a third argument when you want to force a specific model:
 
 ```bash
-bun examples/streaming.ts anthropic claude-sonnet-4.6
+bun examples/advanced/streaming.ts anthropic claude-sonnet-4.6
 ```
 
 ```bash
-bun examples/tool-calling.ts anthropic claude-sonnet-4.6
+bun examples/base/tool-calling.ts anthropic claude-sonnet-4.6
 ```
 
 ```bash
-bun examples/tool-calling-streaming.ts anthropic claude-sonnet-4.6
+bun examples/base/tool-calling-streaming.ts anthropic claude-sonnet-4.6
 ```
 
 ```bash
-bun examples/tool-calling-exa.ts anthropic claude-sonnet-4.6
+bun examples/advanced/tool-calling-exa.ts anthropic claude-sonnet-4.6
 ```
 
 ```bash
@@ -124,9 +122,9 @@ pnpm run example streaming anthropic claude-sonnet-4.6
 
 ## Notes
 
-- `streaming.ts` prints the exact provider options it sends and then logs `fullStream` events with Bun/Node inspect-style object output.
-- `tool-calling.ts` is the tight blocking tool-call example that now ships inside the published skill.
-- `tool-calling-streaming.ts` is the tight streaming tool-call example that now ships inside the published skill.
-- `tool-calling-exa.ts` does the same for the full tool loop, including tool calls, tool results, and final text.
+- `examples/advanced/streaming.ts` prints the exact provider options it sends and then logs `fullStream` events with Bun/Node inspect-style object output.
+- `examples/base/tool-calling.ts` is the tight blocking tool-call example that ships inside the published skill.
+- `examples/base/tool-calling-streaming.ts` is the tight streaming tool-call example that ships inside the published skill.
+- `examples/advanced/tool-calling-exa.ts` does the same for the full tool loop, including tool calls, tool results, and final text.
 - The richer Anthropic reasoning/tool example path defaults to `claude-sonnet-4.6` because that is the model we verified live with `thinking`, `sendReasoning`, `effort`, `toolStreaming`, and `disableParallelToolUse`.
 - The Google examples can use friendly aliases because the package now maps the verified Gemini aliases to Foundry RIDs.

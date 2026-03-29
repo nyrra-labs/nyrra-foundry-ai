@@ -83,17 +83,11 @@ console.log(result.text);
 - [Usage guide](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/docs/usage.md)
 - [Model support guide](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/docs/model-support.md)
 - [Dependency strategy guide](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/docs/dependency-strategy.md)
-- [Live capability matrix](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/docs/live-capability-matrix.md)
+- [Harness capability results](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/docs/harness-capability-results.md)
 - [AI SDK community provider draft](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/docs/ai-sdk-community-provider.mdx)
 - [TanStack Intent skill](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/skills/foundry-ai-provider/SKILL.md)
-- [Published registry example](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/skills/foundry-ai-provider/references/examples/provider-registry.ts)
-- [Published tool-calling example](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/skills/foundry-ai-provider/references/examples/tool-calling.ts)
-- [Published tool-calling streaming example](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/skills/foundry-ai-provider/references/examples/tool-calling-streaming.ts)
-- [Root examples overview](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/examples/README.md)
-- [Basic text example](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/examples/basic-text.ts)
-- [Streaming example](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/examples/streaming.ts)
-- [Structured output example](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/examples/structured-output.ts)
-- [Optional Exa tool-calling example](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/examples/tool-calling-exa.ts)
+- [Examples overview](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/examples/README.md)
+- [Published base examples](https://github.com/nyrra-labs/nyrra-foundry-ai/tree/main/packages/foundry-ai/skills/foundry-ai-provider/references/examples)
 
 ## Testing And CI
 
@@ -104,7 +98,7 @@ console.log(result.text);
 | e2e api | yes | live Vitest suite + manual example scripts against Foundry | no |
 | e2e web | no | none | no |
 
-CI runs lint, unit tests, typecheck, build, TanStack Intent skill validation, and a package-content audit. Live verification remains manual through `pnpm test:live`.
+CI runs lint, unit tests, typecheck, build, TanStack Intent skill validation, and a package-content audit. The harness matrix remains manual through `pnpm test:live`.
 
 ## License
 

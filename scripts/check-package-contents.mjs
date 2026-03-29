@@ -7,7 +7,7 @@ const requiredFiles = [
   'LICENSE',
   'docs/ai-sdk-community-provider.mdx',
   'docs/dependency-strategy.md',
-  'docs/live-capability-matrix.md',
+  'docs/harness-capability-results.md',
   'docs/model-support.md',
   'docs/usage.md',
   'package.json',

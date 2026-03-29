@@ -731,7 +731,7 @@ function createMarkdownSummary(record: CapabilityRunRecord) {
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([status, count]) => `\`${status}\`: ${count}`);
   const lines = [
-    '# Live Capability Matrix',
+    '# Harness Capability Results',
     '',
     `- Run ID: \`${record.runId}\``,
     `- Git SHA: \`${record.gitSha}\``,

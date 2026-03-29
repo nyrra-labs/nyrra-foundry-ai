@@ -75,14 +75,8 @@ export const registry = createProviderRegistry({
 
 ## Repo examples
 
-- [Published registry example](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/skills/foundry-ai-provider/references/examples/provider-registry.ts)
-- [Published tool-calling example](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/skills/foundry-ai-provider/references/examples/tool-calling.ts)
-- [Published tool-calling streaming example](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/skills/foundry-ai-provider/references/examples/tool-calling-streaming.ts)
 - [Examples overview with base vs advanced split](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/examples/README.md)
-- [Basic text](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/examples/basic-text.ts)
-- [Streaming](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/examples/streaming.ts)
-- [Structured output](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/examples/structured-output.ts)
-- [Optional Exa tool calling](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/examples/tool-calling-exa.ts)
+- [Published base examples](https://github.com/nyrra-labs/nyrra-foundry-ai/tree/main/packages/foundry-ai/skills/foundry-ai-provider/references/examples)
 
 ## Relevant Palantir docs
 
