@@ -14,7 +14,7 @@ describe('live capability model matrix', () => {
     restoreEnv('LIVE_MODEL_SCOPE', originalEnv.LIVE_MODEL_SCOPE);
   });
 
-  it('excludes sunset models from catalog survey coverage', () => {
+  it('only surveys current public catalog aliases', () => {
     process.env.FOUNDRY_URL = 'https://example.palantirfoundry.com';
     process.env.FOUNDRY_TOKEN = 'token-123';
     process.env.LIVE_MODEL_SCOPE = 'catalog';

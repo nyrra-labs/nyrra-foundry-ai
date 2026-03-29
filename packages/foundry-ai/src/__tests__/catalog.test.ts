@@ -36,11 +36,6 @@ describe('model catalog', () => {
       supportsResponses: true,
       supportsVision: true,
     });
-    expect(getModelMetadata('gpt-4o-mini')).toMatchObject({
-      displayName: 'GPT-4o Mini',
-      lifecycle: 'sunset',
-      provider: 'openai',
-    });
   });
 
   it('resolves metadata for known Anthropic models', () => {
@@ -102,6 +97,11 @@ describe('model catalog', () => {
       rid: rawRid,
       metadata: undefined,
     });
+  });
+
+  it('does not publish sunset aliases as known models', () => {
+    expect(getModelMetadata('gpt-4o-mini')).toBeUndefined();
+    expect(getModelMetadata('gemini-3-pro')).toBeUndefined();
   });
 
   it('throws a clear validation error for unknown aliases', () => {

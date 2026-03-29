@@ -855,12 +855,7 @@ function mergePreferredModelId(preferredModelId: string, modelIds: string[]) {
 
 function getKnownProviderModelIds(provider: LiveProvider) {
   return Object.entries(MODEL_CATALOG)
-    .filter(
-      ([, metadata]) =>
-        metadata.provider === provider &&
-        metadata.lifecycle !== 'sunset' &&
-        metadata.lifecycle !== 'deprecated',
-    )
+    .filter(([, metadata]) => metadata.provider === provider)
     .sort((left, right) => compareModelIds(right[0], left[0]))
     .map(([modelId]) => modelId);
 }

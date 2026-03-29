@@ -38,11 +38,6 @@ export const OPENAI_MODELS = {
   'gpt-4o': createOpenAIModel('ri.language-model-service..language-model.gpt-4-o', 'GPT-4o', {
     lifecycle: 'ga',
   }),
-  'gpt-4o-mini': createOpenAIModel(
-    'ri.language-model-service..language-model.gpt-4-o-mini',
-    'GPT-4o Mini',
-    { lifecycle: 'sunset' },
-  ),
   'gpt-5': createOpenAIModel('ri.language-model-service..language-model.gpt-5', 'GPT-5', {
     lifecycle: 'ga',
   }),

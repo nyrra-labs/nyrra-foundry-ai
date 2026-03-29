@@ -9,7 +9,6 @@ export const OPENAI_MODEL_IDS = [
   'gpt-4.1-mini',
   'gpt-4.1-nano',
   'gpt-4o',
-  'gpt-4o-mini',
   'gpt-5',
   'gpt-5-codex',
   'gpt-5-mini',
@@ -50,7 +49,6 @@ export const GOOGLE_MODEL_IDS = [
   'gemini-2.5-pro',
   'gemini-2.5-flash',
   'gemini-2.5-flash-lite',
-  'gemini-3-pro',
   'gemini-3-flash',
   'gemini-3.1-pro',
   'gemini-3.1-flash-lite',
@@ -63,7 +61,7 @@ export type GoogleModelId = KnownGoogleModelId | (string & {});
 export type KnownModelId = KnownOpenAIModelId | KnownAnthropicModelId | KnownGoogleModelId;
 
 export type ModelProvider = 'openai' | 'anthropic' | 'google';
-export type ModelLifecycle = 'ga' | 'experimental' | 'sunset' | 'deprecated';
+export type ModelLifecycle = 'ga' | 'experimental';
 
 export interface ModelMetadata {
   rid: string;

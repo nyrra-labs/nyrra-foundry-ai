@@ -31,11 +31,6 @@ export const GOOGLE_MODELS = {
     'Gemini 2.5 Flash Lite',
     'ga',
   ),
-  'gemini-3-pro': createGoogleModel(
-    'ri.language-model-service..language-model.gemini-3-pro',
-    'Gemini 3 Pro (Preview)',
-    'sunset',
-  ),
   'gemini-3-flash': createGoogleModel(
     'ri.language-model-service..language-model.gemini-3-flash',
     'Gemini 3 Flash (Preview)',

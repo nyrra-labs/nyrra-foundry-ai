@@ -77,7 +77,6 @@ Current Google alias-to-RID mappings:
 - `gemini-2.5-pro` -> `ri.language-model-service..language-model.gemini-2-5-pro`
 - `gemini-2.5-flash` -> `ri.language-model-service..language-model.gemini-2-5-flash`
 - `gemini-2.5-flash-lite` -> `ri.language-model-service..language-model.gemini-2-5-flash-lite`
-- `gemini-3-pro` -> `ri.language-model-service..language-model.gemini-3-pro`
 - `gemini-3-flash` -> `ri.language-model-service..language-model.gemini-3-flash`
 - `gemini-3.1-pro` -> `ri.language-model-service..language-model.gemini-3-1-pro`
 - `gemini-3.1-flash-lite` -> `ri.language-model-service..language-model.gemini-3-1-flash-lite`
@@ -92,7 +91,7 @@ Current Google alias-to-RID mappings:
 
 ## Catalog Design
 
-The public catalog contains only stable cross-provider metadata:
+The public catalog contains only current cross-provider metadata:
 
 - `rid`
 - `provider`
@@ -104,7 +103,7 @@ The public catalog contains only stable cross-provider metadata:
 Behavior-driving compatibility flags are kept out of the public metadata contract unless they can be represented accurately and maintained reliably.
 
 Google is now included in the shared catalog using verified enrollment RIDs. xAI remains intentionally excluded until the beta proxy contract is stable enough to document and verify consistently.
-Enrolled models are not added automatically. The public catalog should include only aliases the current adapter surface can actually serve. That is why the catalog can lag enrollment for cases such as `o1`, where the active Foundry enrollment does not currently expose the responses-capable shape this package depends on.
+Enrolled models are not added automatically. The public catalog should include only current aliases the adapter surface can actually serve. Sunset and deprecated models are excluded entirely from the public catalog to avoid publishing typed aliases we do not want callers to adopt. That is why the catalog can lag enrollment for cases such as `o1`, where the active Foundry enrollment does not currently expose the responses-capable shape this package depends on.
 
 ## Example Registry Composition
 
@@ -142,7 +141,7 @@ The live suite in `packages/foundry-ai/src/__tests__/foundry.live.test.ts` is th
   - Anthropic: `claude-sonnet-4.6`
   - Google: `gemini-3.1-flash-lite`
 - The rest of the catalog is survey coverage. Those rows remain visible in the matrix and docs, but non-pass results do not fail the suite by default.
-- Survey coverage excludes models whose catalog lifecycle is `sunset` or `deprecated`.
+- Survey coverage runs the current public catalog only.
 - The suite records local artifacts under `.memory/capability-runs/<run-id>/`:
   - `results.json`
   - `summary.md`
