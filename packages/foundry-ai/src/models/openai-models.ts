@@ -1,114 +1,379 @@
-import type { KnownOpenAIModelId, ModelLifecycle, ModelMetadata } from '../types.js';
+import type { ModelDefinition } from '../types.js';
+import { createProviderModelCatalog, modelSupportsInputType } from './metadata.js';
 
-function createOpenAIModel(
-  rid: string,
-  displayName: string,
-  {
-    lifecycle,
-    supportsVision = true,
-  }: {
-    lifecycle: ModelLifecycle;
-    supportsVision?: boolean;
+const OPENAI_MODEL_DEFINITIONS = {
+  'gpt-4.1': {
+    rid: 'ri.language-model-service..language-model.gpt-4-1',
+    modelIdentifier: 'GPT_4_1',
+    displayName: 'GPT-4.1',
+    lifecycle: 'ga',
+    inputTypes: [
+      'GENERIC_COMPLETION',
+      'GENERIC_CHAT_COMPLETION',
+      'GPT_CHAT_COMPLETION',
+      'GPT_WITH_VISION_COMPLETION',
+      'GENERIC_VISION_COMPLETION',
+      'OPEN_AI_RESPONSES',
+    ],
+    trainingCutoffDate: '2024-05-31T00:00:00Z',
+    performance: {
+      cost: 'MEDIUM',
+      modelClass: 'HEAVYWEIGHT',
+      speed: 'HIGH',
+    },
+    externalUrl: 'https://platform.openai.com/docs/models/gpt-4.1',
   },
-): ModelMetadata {
-  return {
-    rid,
-    provider: 'openai',
-    displayName,
-    supportsVision,
-    supportsResponses: true,
-    lifecycle,
-  };
-}
-
-export const OPENAI_MODELS = {
-  'gpt-4.1': createOpenAIModel('ri.language-model-service..language-model.gpt-4-1', 'GPT-4.1', {
+  'gpt-4.1-mini': {
+    rid: 'ri.language-model-service..language-model.gpt-4-1-mini',
+    modelIdentifier: 'GPT_4_1_MINI',
+    displayName: 'GPT-4.1 mini',
     lifecycle: 'ga',
-  }),
-  'gpt-4.1-mini': createOpenAIModel(
-    'ri.language-model-service..language-model.gpt-4-1-mini',
-    'GPT-4.1 Mini',
-    { lifecycle: 'ga' },
-  ),
-  'gpt-4.1-nano': createOpenAIModel(
-    'ri.language-model-service..language-model.gpt-4-1-nano',
-    'GPT-4.1 Nano',
-    { lifecycle: 'ga' },
-  ),
-  'gpt-4o': createOpenAIModel('ri.language-model-service..language-model.gpt-4-o', 'GPT-4o', {
+    inputTypes: [
+      'GENERIC_COMPLETION',
+      'GENERIC_CHAT_COMPLETION',
+      'GPT_CHAT_COMPLETION',
+      'GPT_WITH_VISION_COMPLETION',
+      'GENERIC_VISION_COMPLETION',
+      'OPEN_AI_RESPONSES',
+    ],
+    trainingCutoffDate: '2024-05-31T00:00:00Z',
+    performance: {
+      cost: 'LOW',
+      modelClass: 'LIGHTWEIGHT',
+      speed: 'HIGH',
+    },
+    externalUrl: 'https://platform.openai.com/docs/models/gpt-4.1-mini',
+  },
+  'gpt-4.1-nano': {
+    rid: 'ri.language-model-service..language-model.gpt-4-1-nano',
+    modelIdentifier: 'GPT_4_1_NANO',
+    displayName: 'GPT-4.1 nano',
     lifecycle: 'ga',
-  }),
-  'gpt-5': createOpenAIModel('ri.language-model-service..language-model.gpt-5', 'GPT-5', {
+    inputTypes: [
+      'GENERIC_COMPLETION',
+      'GENERIC_CHAT_COMPLETION',
+      'GPT_CHAT_COMPLETION',
+      'GPT_WITH_VISION_COMPLETION',
+      'GENERIC_VISION_COMPLETION',
+      'OPEN_AI_RESPONSES',
+    ],
+    trainingCutoffDate: '2024-05-31T00:00:00Z',
+    performance: {
+      cost: 'LOW',
+      modelClass: 'LIGHTWEIGHT',
+      speed: 'HIGH',
+    },
+    externalUrl: 'https://platform.openai.com/docs/models/gpt-4.1-nano',
+  },
+  'gpt-4o': {
+    rid: 'ri.language-model-service..language-model.gpt-4-o',
+    modelIdentifier: 'GPT_4_O',
+    displayName: 'GPT-4o',
     lifecycle: 'ga',
-  }),
-  'gpt-5-codex': createOpenAIModel(
-    'ri.language-model-service..language-model.gpt-5-codex',
-    'GPT-5 Codex',
-    { lifecycle: 'ga', supportsVision: false },
-  ),
-  'gpt-5-mini': createOpenAIModel(
-    'ri.language-model-service..language-model.gpt-5-mini',
-    'GPT-5 Mini',
-    { lifecycle: 'ga' },
-  ),
-  'gpt-5-nano': createOpenAIModel(
-    'ri.language-model-service..language-model.gpt-5-nano',
-    'GPT-5 Nano',
-    { lifecycle: 'ga' },
-  ),
-  'gpt-5.1': createOpenAIModel('ri.language-model-service..language-model.gpt-5-1', 'GPT-5.1', {
+    inputTypes: [
+      'GENERIC_COMPLETION',
+      'GENERIC_CHAT_COMPLETION',
+      'GPT_CHAT_COMPLETION',
+      'GPT_WITH_VISION_COMPLETION',
+      'GENERIC_VISION_COMPLETION',
+      'OPEN_AI_RESPONSES',
+    ],
+    trainingCutoffDate: '2023-10-01T00:00:00Z',
+    performance: {
+      cost: 'MEDIUM',
+      modelClass: 'HEAVYWEIGHT',
+      speed: 'HIGH',
+    },
+    externalUrl: 'https://platform.openai.com/docs/models/gpt-4o',
+  },
+  'gpt-5': {
+    rid: 'ri.language-model-service..language-model.gpt-5',
+    modelIdentifier: 'GPT_5',
+    displayName: 'GPT-5',
     lifecycle: 'ga',
-  }),
-  'gpt-5.1-codex': createOpenAIModel(
-    'ri.language-model-service..language-model.gpt-5-1-codex',
-    'GPT-5.1 Codex',
-    { lifecycle: 'ga', supportsVision: false },
-  ),
-  'gpt-5.1-codex-mini': createOpenAIModel(
-    'ri.language-model-service..language-model.gpt-5-1-codex-mini',
-    'GPT-5.1 Codex Mini',
-    { lifecycle: 'ga', supportsVision: false },
-  ),
-  'gpt-5.2': createOpenAIModel('ri.language-model-service..language-model.gpt-5-2', 'GPT-5.2', {
+    inputTypes: [
+      'GENERIC_COMPLETION',
+      'GENERIC_CHAT_COMPLETION',
+      'GPT_CHAT_COMPLETION',
+      'GPT_WITH_VISION_COMPLETION',
+      'GENERIC_VISION_COMPLETION',
+      'OPEN_AI_REASONING',
+      'OPEN_AI_RESPONSES',
+    ],
+    trainingCutoffDate: '2024-09-30T00:00:00Z',
+    performance: {
+      cost: 'MEDIUM',
+      modelClass: 'HEAVYWEIGHT',
+      speed: 'MEDIUM',
+    },
+    externalUrl: 'https://platform.openai.com/docs/models/gpt-5',
+  },
+  'gpt-5-codex': {
+    rid: 'ri.language-model-service..language-model.gpt-5-codex',
+    modelIdentifier: 'GPT_5_CODEX',
+    displayName: 'GPT-5 Codex',
+    lifecycle: 'ga',
+    inputTypes: [
+      'GENERIC_COMPLETION',
+      'GENERIC_CHAT_COMPLETION',
+      'GENERIC_VISION_COMPLETION',
+      'OPEN_AI_RESPONSES',
+    ],
+    trainingCutoffDate: '2024-09-29T00:00:00Z',
+    performance: {
+      cost: 'MEDIUM',
+      modelClass: 'REASONING',
+      speed: 'MEDIUM',
+    },
+    externalUrl: 'https://platform.openai.com/docs/models/gpt-5-codex',
+  },
+  'gpt-5-mini': {
+    rid: 'ri.language-model-service..language-model.gpt-5-mini',
+    modelIdentifier: 'GPT_5_MINI',
+    displayName: 'GPT-5 mini',
+    lifecycle: 'ga',
+    inputTypes: [
+      'GENERIC_COMPLETION',
+      'GENERIC_CHAT_COMPLETION',
+      'GPT_CHAT_COMPLETION',
+      'GPT_WITH_VISION_COMPLETION',
+      'GENERIC_VISION_COMPLETION',
+      'OPEN_AI_REASONING',
+      'OPEN_AI_RESPONSES',
+    ],
+    trainingCutoffDate: '2024-05-30T00:00:00Z',
+    performance: {
+      cost: 'LOW',
+      modelClass: 'LIGHTWEIGHT',
+      speed: 'MEDIUM',
+    },
+    externalUrl: 'https://platform.openai.com/docs/models/gpt-5-mini',
+  },
+  'gpt-5-nano': {
+    rid: 'ri.language-model-service..language-model.gpt-5-nano',
+    modelIdentifier: 'GPT_5_NANO',
+    displayName: 'GPT-5 nano',
+    lifecycle: 'ga',
+    inputTypes: [
+      'GENERIC_COMPLETION',
+      'GENERIC_CHAT_COMPLETION',
+      'GPT_CHAT_COMPLETION',
+      'GPT_WITH_VISION_COMPLETION',
+      'GENERIC_VISION_COMPLETION',
+      'OPEN_AI_REASONING',
+      'OPEN_AI_RESPONSES',
+    ],
+    trainingCutoffDate: '2024-05-30T00:00:00Z',
+    performance: {
+      cost: 'LOW',
+      modelClass: 'LIGHTWEIGHT',
+      speed: 'HIGH',
+    },
+    externalUrl: 'https://platform.openai.com/docs/models/gpt-5-nano',
+  },
+  'gpt-5.1': {
+    rid: 'ri.language-model-service..language-model.gpt-5-1',
+    modelIdentifier: 'GPT_5_1',
+    displayName: 'GPT-5.1',
+    lifecycle: 'ga',
+    inputTypes: [
+      'GENERIC_COMPLETION',
+      'GENERIC_CHAT_COMPLETION',
+      'GPT_CHAT_COMPLETION',
+      'GPT_WITH_VISION_COMPLETION',
+      'GENERIC_VISION_COMPLETION',
+      'OPEN_AI_RESPONSES',
+    ],
+    trainingCutoffDate: '2024-09-30T00:00:00Z',
+    performance: {
+      cost: 'MEDIUM',
+      modelClass: 'HEAVYWEIGHT',
+      speed: 'MEDIUM',
+    },
+    externalUrl: 'https://platform.openai.com/docs/models/gpt-5.1',
+  },
+  'gpt-5.1-codex': {
+    rid: 'ri.language-model-service..language-model.gpt-5-1-codex',
+    modelIdentifier: 'GPT_5_1_CODEX',
+    displayName: 'GPT-5.1 Codex',
+    lifecycle: 'ga',
+    inputTypes: [
+      'GENERIC_COMPLETION',
+      'GENERIC_CHAT_COMPLETION',
+      'GENERIC_VISION_COMPLETION',
+      'OPEN_AI_RESPONSES',
+    ],
+    trainingCutoffDate: '2024-09-30T00:00:00Z',
+    performance: {
+      cost: 'MEDIUM',
+      modelClass: 'REASONING',
+      speed: 'MEDIUM',
+    },
+    externalUrl: 'https://platform.openai.com/docs/models/gpt-5.1-codex',
+  },
+  'gpt-5.1-codex-mini': {
+    rid: 'ri.language-model-service..language-model.gpt-5-1-codex-mini',
+    modelIdentifier: 'GPT_5_1_CODEX_MINI',
+    displayName: 'GPT-5.1 Codex mini',
+    lifecycle: 'ga',
+    inputTypes: [
+      'GENERIC_COMPLETION',
+      'GENERIC_CHAT_COMPLETION',
+      'GENERIC_VISION_COMPLETION',
+      'OPEN_AI_RESPONSES',
+    ],
+    trainingCutoffDate: '2024-09-30T00:00:00Z',
+    performance: {
+      cost: 'LOW',
+      modelClass: 'LIGHTWEIGHT',
+      speed: 'MEDIUM',
+    },
+    externalUrl: 'https://platform.openai.com/docs/models/gpt-5.1-codex-mini',
+  },
+  'gpt-5.2': {
+    rid: 'ri.language-model-service..language-model.gpt-5-2',
+    modelIdentifier: 'GPT_5_2',
+    displayName: 'GPT-5.2',
     lifecycle: 'experimental',
-  }),
-  'gpt-5.4': createOpenAIModel('ri.language-model-service..language-model.gpt-5-4', 'GPT-5.4', {
+    inputTypes: [
+      'GENERIC_COMPLETION',
+      'GENERIC_CHAT_COMPLETION',
+      'GPT_CHAT_COMPLETION',
+      'GPT_WITH_VISION_COMPLETION',
+      'GENERIC_VISION_COMPLETION',
+      'OPEN_AI_REASONING',
+      'OPEN_AI_RESPONSES',
+    ],
+    trainingCutoffDate: '2025-08-31T00:00:00Z',
+    performance: {
+      cost: 'MEDIUM',
+      modelClass: 'HEAVYWEIGHT',
+      speed: 'MEDIUM',
+    },
+    externalUrl: 'https://platform.openai.com/docs/models/gpt-5.2',
+  },
+  'gpt-5.4': {
+    rid: 'ri.language-model-service..language-model.gpt-5-4',
+    modelIdentifier: 'GPT_5_4',
+    displayName: 'GPT-5.4',
     lifecycle: 'experimental',
-  }),
-  'gpt-5.4-mini': createOpenAIModel(
-    'ri.language-model-service..language-model.gpt-5-4-mini',
-    'GPT-5.4 Mini',
-    { lifecycle: 'experimental' },
-  ),
-  'gpt-5.4-nano': createOpenAIModel(
-    'ri.language-model-service..language-model.gpt-5-4-nano',
-    'GPT-5.4 Nano',
-    { lifecycle: 'experimental' },
-  ),
-  o3: createOpenAIModel('ri.language-model-service..language-model.o-3', 'o3', { lifecycle: 'ga' }),
-  'o4-mini': createOpenAIModel('ri.language-model-service..language-model.o-4-mini', 'o4 Mini', {
+    inputTypes: [
+      'GENERIC_COMPLETION',
+      'GENERIC_CHAT_COMPLETION',
+      'GPT_CHAT_COMPLETION',
+      'GPT_WITH_VISION_COMPLETION',
+      'GENERIC_VISION_COMPLETION',
+      'OPEN_AI_REASONING',
+      'OPEN_AI_RESPONSES',
+    ],
+    trainingCutoffDate: '2025-08-31T00:00:00Z',
+    performance: {
+      cost: 'MEDIUM',
+      modelClass: 'HEAVYWEIGHT',
+      speed: 'MEDIUM',
+    },
+    externalUrl: 'https://platform.openai.com/docs/models/gpt-5.4',
+  },
+  'gpt-5.4-mini': {
+    rid: 'ri.language-model-service..language-model.gpt-5-4-mini',
+    modelIdentifier: 'GPT_5_4_MINI',
+    displayName: 'GPT-5.4 mini',
+    lifecycle: 'experimental',
+    inputTypes: [
+      'GENERIC_COMPLETION',
+      'GENERIC_CHAT_COMPLETION',
+      'GPT_CHAT_COMPLETION',
+      'GPT_WITH_VISION_COMPLETION',
+      'GENERIC_VISION_COMPLETION',
+      'OPEN_AI_REASONING',
+      'OPEN_AI_RESPONSES',
+    ],
+    trainingCutoffDate: '2025-08-31T00:00:00Z',
+    performance: {
+      cost: 'LOW',
+      modelClass: 'LIGHTWEIGHT',
+      speed: 'HIGH',
+    },
+    externalUrl: 'https://platform.openai.com/docs/models/gpt-5.4-mini',
+  },
+  'gpt-5.4-nano': {
+    rid: 'ri.language-model-service..language-model.gpt-5-4-nano',
+    modelIdentifier: 'GPT_5_4_NANO',
+    displayName: 'GPT-5.4 nano',
+    lifecycle: 'experimental',
+    inputTypes: [
+      'GENERIC_COMPLETION',
+      'GENERIC_CHAT_COMPLETION',
+      'GPT_CHAT_COMPLETION',
+      'GPT_WITH_VISION_COMPLETION',
+      'GENERIC_VISION_COMPLETION',
+      'OPEN_AI_REASONING',
+      'OPEN_AI_RESPONSES',
+    ],
+    trainingCutoffDate: '2025-08-31T00:00:00Z',
+    performance: {
+      cost: 'LOW',
+      modelClass: 'LIGHTWEIGHT',
+      speed: 'HIGH',
+    },
+    externalUrl: 'https://platform.openai.com/docs/models/gpt-5.4-nano',
+  },
+  o3: {
+    rid: 'ri.language-model-service..language-model.o-3',
+    modelIdentifier: 'O_3',
+    displayName: 'o3',
     lifecycle: 'ga',
-  }),
-} as const satisfies Record<KnownOpenAIModelId, ModelMetadata>;
+    inputTypes: [
+      'GENERIC_COMPLETION',
+      'GENERIC_CHAT_COMPLETION',
+      'OPEN_AI_REASONING',
+      'GENERIC_VISION_COMPLETION',
+      'OPEN_AI_RESPONSES',
+    ],
+    trainingCutoffDate: '2024-05-31T00:00:00Z',
+    performance: {
+      cost: 'MEDIUM',
+      modelClass: 'REASONING',
+      speed: 'LOW',
+    },
+    externalUrl: 'https://platform.openai.com/docs/models/o3',
+  },
+  'o4-mini': {
+    rid: 'ri.language-model-service..language-model.o-4-mini',
+    modelIdentifier: 'O_4_MINI',
+    displayName: 'o4-mini',
+    lifecycle: 'ga',
+    inputTypes: [
+      'GENERIC_COMPLETION',
+      'GENERIC_CHAT_COMPLETION',
+      'OPEN_AI_REASONING',
+      'GENERIC_VISION_COMPLETION',
+      'OPEN_AI_RESPONSES',
+    ],
+    trainingCutoffDate: '2024-05-31T00:00:00Z',
+    performance: {
+      cost: 'MEDIUM',
+      modelClass: 'REASONING',
+      speed: 'MEDIUM',
+    },
+    externalUrl: 'https://platform.openai.com/docs/models/o4-mini',
+  },
+} as const satisfies Record<string, ModelDefinition>;
 
-const OPENAI_REASONING_MODEL_IDS = new Set<KnownOpenAIModelId>([
-  'gpt-5',
-  'gpt-5-mini',
-  'gpt-5-nano',
-  'gpt-5.2',
-  'gpt-5.4',
-  'gpt-5.4-mini',
-  'gpt-5.4-nano',
-  'o3',
-  'o4-mini',
-]);
+export const OPENAI_MODELS = createProviderModelCatalog('openai', OPENAI_MODEL_DEFINITIONS);
 
-const OPENAI_REASONING_MODEL_TARGETS = new Set<string>([
-  ...OPENAI_REASONING_MODEL_IDS,
-  ...Object.entries(OPENAI_MODELS)
-    .filter(([modelId]) => OPENAI_REASONING_MODEL_IDS.has(modelId as KnownOpenAIModelId))
-    .map(([, metadata]) => metadata.rid),
-]);
+export type KnownOpenAIModelId = keyof typeof OPENAI_MODELS;
+export type OpenAIModelId = KnownOpenAIModelId | (string & {});
+
+export const OPENAI_MODEL_IDS = Object.freeze(
+  Object.keys(OPENAI_MODELS),
+) as readonly KnownOpenAIModelId[];
+
+const OPENAI_REASONING_MODEL_TARGETS = new Set(
+  Object.entries(OPENAI_MODELS)
+    .filter(([, metadata]) => modelSupportsInputType(metadata, 'OPEN_AI_REASONING'))
+    .flatMap(([modelId, metadata]) => [modelId, metadata.rid]),
+);
 
 export function isKnownOpenAIReasoningTarget(modelId: string): boolean {
   return OPENAI_REASONING_MODEL_TARGETS.has(modelId);

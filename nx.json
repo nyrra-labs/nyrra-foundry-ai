@@ -71,5 +71,6 @@
       "workspaceChangelog": false,
       "projectChangelogs": true
     }
-  }
+  },
+  "analytics": false
 }

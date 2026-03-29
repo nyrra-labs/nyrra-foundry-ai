@@ -1,8 +1,13 @@
 import { FoundryModelNotFoundError } from '../errors.js';
-import type { KnownModelId, ModelMetadata, ModelProvider, ResolvedModelTarget } from '../types.js';
+import type { ModelMetadata, ModelProvider, ResolvedModelTarget } from '../types.js';
+import type { KnownAnthropicModelId } from './anthropic-models.js';
 import { ANTHROPIC_MODELS } from './anthropic-models.js';
+import type { KnownGoogleModelId } from './google-models.js';
 import { GOOGLE_MODELS } from './google-models.js';
+import type { KnownOpenAIModelId } from './openai-models.js';
 import { OPENAI_MODELS } from './openai-models.js';
+
+export type KnownModelId = KnownOpenAIModelId | KnownAnthropicModelId | KnownGoogleModelId;
 
 export const MODEL_CATALOG = {
   ...OPENAI_MODELS,

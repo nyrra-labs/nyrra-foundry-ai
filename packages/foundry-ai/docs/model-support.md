@@ -59,6 +59,21 @@
 - Known aliases resolve to the package catalog and then to Foundry RIDs.
 - Raw Foundry RIDs pass through unchanged when you call a provider factory directly.
 - Reverse RID lookup is available through `MODEL_CATALOG_BY_RID` and catalog helpers from the root entrypoint.
+- Sunset and deprecated enrollment entries are excluded from the public alias catalog.
+
+## Catalog metadata
+
+`getModelMetadata()` and the exported catalog objects now carry normalized metadata for each current alias:
+
+- `modelIdentifier`
+- `inputTypes`
+- `trainingCutoffDate`
+- `performance.cost`
+- `performance.modelClass`
+- `performance.speed`
+- `externalUrl`
+- derived `supportsVision`
+- derived `supportsResponses`
 
 ## Important behavior notes
 

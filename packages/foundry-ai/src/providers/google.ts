@@ -4,7 +4,8 @@ import { NoSuchModelError } from 'ai';
 import { resolveFoundryConfig } from '../config.js';
 import { wrapFoundryLanguageModel } from '../middleware.js';
 import { resolveModelTarget } from '../models/catalog.js';
-import type { FoundryConfig, GoogleModelId } from '../types.js';
+import type { GoogleModelId } from '../models/google-models.js';
+import type { FoundryConfig } from '../types.js';
 
 type FoundryLanguageModel = Parameters<typeof wrapLanguageModel>[0]['model'];
 

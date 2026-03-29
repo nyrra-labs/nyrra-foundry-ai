@@ -3,8 +3,9 @@ import type { wrapLanguageModel } from 'ai';
 import { NoSuchModelError } from 'ai';
 import { resolveFoundryConfig } from '../config.js';
 import { wrapFoundryLanguageModel } from '../middleware.js';
+import type { AnthropicModelId } from '../models/anthropic-models.js';
 import { resolveModelTarget } from '../models/catalog.js';
-import type { AnthropicModelId, FoundryConfig } from '../types.js';
+import type { FoundryConfig } from '../types.js';
 
 type FoundryLanguageModel = Parameters<typeof wrapLanguageModel>[0]['model'];
 

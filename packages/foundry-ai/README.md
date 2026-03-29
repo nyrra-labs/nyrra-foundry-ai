@@ -68,6 +68,8 @@ console.log(result.text);
 
 - Use friendly aliases for catalogued models such as `gpt-5-mini`, `claude-sonnet-4.6`, and `gemini-3.1-flash-lite`.
 - Use raw Foundry RIDs when your stack exposes a model that is not yet in the package catalog.
+- Sunset and deprecated enrollment entries are intentionally excluded from the public alias catalog.
+- `getModelMetadata()` exposes normalized catalog data for current aliases, including `modelIdentifier`, `inputTypes`, `trainingCutoffDate`, `performance`, and derived `supportsVision` / `supportsResponses` flags.
 - Alias and raw-RID behavior are documented in the [model support guide](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/docs/model-support.md).
 
 ## Foundry-Specific Behavior
