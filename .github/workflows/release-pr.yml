@@ -99,15 +99,13 @@ jobs:
             first_release="true"
           fi
 
+          # Always let nx write files so we can read the computed version.
+          # The dry_run flag only gates PR creation (the workspace is ephemeral).
           version_args=(release version --group npm-packages)
           changelog_args=(release changelog --group npm-packages)
           if [ "$first_release" = "true" ]; then
             version_args+=(--first-release)
             changelog_args+=(--first-release)
-          fi
-          if [ "${DRY_RUN}" = "true" ]; then
-            version_args+=(--dry-run)
-            changelog_args+=(--dry-run)
           fi
 
           pnpm exec nx "${version_args[@]}"
