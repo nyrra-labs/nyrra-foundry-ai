@@ -12,12 +12,16 @@
     "url": "https://github.com/nyrra-labs/nyrra-foundry-ai/issues"
   },
   "keywords": [
+    "ai",
     "ai-sdk",
-    "vercel-ai-sdk",
-    "palantir-foundry",
+    "ai-sdk-provider",
     "foundry",
     "llm-proxy",
-    "tanstack-intent"
+    "nyrra",
+    "palantir",
+    "palantir-foundry",
+    "ts",
+    "vercel-ai-sdk"
   ],
   "type": "module",
   "sideEffects": false,
