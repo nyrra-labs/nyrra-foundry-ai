@@ -7,6 +7,9 @@
 Thin Palantir Foundry provider adapters and model catalog for the Vercel AI SDK.
 
 [![AI%20SDK](https://img.shields.io/badge/AI%20SDK-6.0.140-000000?logo=vercel&logoColor=white)](https://ai-sdk.dev/)
+[![npm](https://img.shields.io/npm/v/%40nyrra%2Ffoundry-ai/latest?logo=npm&label=npm)](https://www.npmjs.com/package/@nyrra/foundry-ai)
+[![next](https://img.shields.io/npm/v/%40nyrra%2Ffoundry-ai/next?logo=npm&label=next)](https://www.npmjs.com/package/@nyrra/foundry-ai?activeTab=versions)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/nyrra-labs/nyrra-foundry-ai)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.2-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-0f172a)](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/LICENSE)
 
@@ -34,6 +37,16 @@ pnpm add @nyrra/foundry-ai ai @ai-sdk/google
 ```
 
 If you use more than one provider, install both peers. For the rationale and bundle-size tradeoffs, see the [dependency strategy guide](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/docs/dependency-strategy.md).
+
+## Agent Skill
+
+Install the published agent skill with:
+
+```bash
+npx skills add https://github.com/nyrra-labs/nyrra-foundry-ai --skill foundry-ai-provider
+```
+
+That flow lets the `skills` CLI prompt for scope and agent links interactively. The install event is what `skills.sh` uses for leaderboard/indexing. In TanStack Intent consumer repos, install `@nyrra/foundry-ai` directly, run `npx @tanstack/intent@latest list`, and map `node_modules/@nyrra/foundry-ai/skills/foundry-ai-provider/SKILL.md` in your agent config.
 
 ## Verified Use Case
 
