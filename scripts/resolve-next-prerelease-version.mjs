@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 const manifestPath = 'packages/foundry-ai/package.json';
 const packageName = '@nyrra/foundry-ai';
 const prereleaseTag = 'next';
-const prereleaseId = 'rc';
+const prereleaseId = process.argv[2] ?? 'rc';
 
 function readManifestVersion() {
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));

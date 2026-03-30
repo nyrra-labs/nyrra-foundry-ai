@@ -11,11 +11,11 @@
     "example:exa:parallel": "node scripts/run-example.mjs tool-calling-exa-parallel-devtools",
     "format": "pnpm exec biome check --write .",
     "lint": "pnpm exec nx run foundry-ai:lint --outputStyle=static",
+    "release": "node scripts/create-stable-release-pr.mjs",
     "test": "pnpm exec nx run foundry-ai:test --outputStyle=static",
     "test:live": "pnpm exec nx run foundry-ai:test-live --outputStyle=static",
     "test:live:devtools": "pnpm exec nx run foundry-ai:test-live-devtools --outputStyle=static",
-    "typecheck": "pnpm exec nx run foundry-ai:typecheck --outputStyle=static",
-    "release": "pnpm exec nx release"
+    "typecheck": "pnpm exec nx run foundry-ai:typecheck --outputStyle=static"
   },
   "devDependencies": {
     "@ai-sdk/devtools": "0.0.15",
