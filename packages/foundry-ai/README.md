@@ -7,8 +7,8 @@
 Thin Palantir Foundry provider adapters and model catalog for the Vercel AI SDK.
 
 [![AI%20SDK](https://img.shields.io/badge/AI%20SDK-6.0.140-000000?logo=vercel&logoColor=white)](https://ai-sdk.dev/)
-[![npm](https://img.shields.io/npm/v/%40nyrra%2Ffoundry-ai/latest?logo=npm&label=npm&color=0f172a)](https://www.npmjs.com/package/@nyrra/foundry-ai)
-[![next](https://img.shields.io/npm/v/%40nyrra%2Ffoundry-ai/next?logo=npm&label=next&color=0f172a)](https://www.npmjs.com/package/@nyrra/foundry-ai?activeTab=versions)
+[![npm](https://img.shields.io/npm/v/%40nyrra%2Ffoundry-ai/latest?logo=npm&label=npm)](https://www.npmjs.com/package/@nyrra/foundry-ai)
+[![next](https://img.shields.io/npm/v/%40nyrra%2Ffoundry-ai/next?logo=npm&label=next)](https://www.npmjs.com/package/@nyrra/foundry-ai?activeTab=versions)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/nyrra-labs/nyrra-foundry-ai)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.2-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-0f172a)](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/LICENSE)
