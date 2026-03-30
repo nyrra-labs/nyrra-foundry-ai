@@ -10,6 +10,7 @@ Thin Palantir Foundry provider adapters and model catalog for the Vercel AI SDK.
 [![Semgrep](https://github.com/nyrra-labs/nyrra-foundry-ai/actions/workflows/semgrep.yml/badge.svg)](https://github.com/nyrra-labs/nyrra-foundry-ai/actions/workflows/semgrep.yml)
 [![npm](https://img.shields.io/npm/v/%40nyrra%2Ffoundry-ai/latest?logo=npm&label=npm)](https://www.npmjs.com/package/@nyrra/foundry-ai)
 [![next](https://img.shields.io/npm/v/%40nyrra%2Ffoundry-ai/next?logo=npm&label=next)](https://www.npmjs.com/package/@nyrra/foundry-ai?activeTab=versions)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/nyrra-labs/nyrra-foundry-ai)
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.2-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![AI%20SDK](https://img.shields.io/badge/AI%20SDK-6.0.140-000000?logo=vercel&logoColor=white)](https://ai-sdk.dev/)
@@ -84,7 +85,9 @@ CI runs lint, unit tests, typecheck, build, TanStack Intent validation, and a pa
 ## Developer Tooling
 
 - AI SDK DevTools is wired into the live harness as an opt-in path. Run `pnpm test:live:devtools -- --no-update-docs -t "openai:gpt-5-mini"` to capture runs, then start the UI with `npx @ai-sdk/devtools` and open the local URL it prints. No extra telemetry flag is needed for this middleware-based path.
+- Install the published agent skill with `npx skills add https://github.com/nyrra-labs/nyrra-foundry-ai --skill foundry-ai-provider -g -a codex -y`. That install event is what `skills.sh` uses for leaderboard/indexing.
 - TanStack Intent validates the published skill surface with `pnpm exec intent validate packages/foundry-ai/skills`.
+- In consumer repos, TanStack Intent discovers the installed package from `node_modules`. After adding `@nyrra/foundry-ai` to the app, run `npx @tanstack/intent@latest list` and map `node_modules/@nyrra/foundry-ai/skills/foundry-ai-provider/SKILL.md` in your agent config.
 - The safe example runner builds first and then executes with Bun when available. Start with `pnpm run example tool-calling openai`, `bun run example:exa`, or `bun run example:exa:parallel`.
 
 ## Docs And Examples
