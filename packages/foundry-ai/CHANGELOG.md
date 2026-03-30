@@ -1,3 +1,14 @@
+## 0.0.4 (2026-03-30)
+
+### 🩹 Fixes
+
+- update lockfile for peer dep range changes ([62c26ff](https://github.com/nyrra-labs/nyrra-foundry-ai/commit/62c26ff))
+- sync foundry-ai peer dependency ranges with latest sdk versions ([b069db5](https://github.com/nyrra-labs/nyrra-foundry-ai/commit/b069db5))
+
+### ❤️ Thank You
+
+- anandpant
+
 ## 0.0.3 (2026-03-30)
 
 ### 🚀 Features
