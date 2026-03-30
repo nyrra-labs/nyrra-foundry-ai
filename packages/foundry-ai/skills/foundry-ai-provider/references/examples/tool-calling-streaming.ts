@@ -23,7 +23,6 @@ const result = streamText({
   },
   onError({ error }) {
     logExampleError({ type: 'error', error });
-    throw error;
   },
 });
 
