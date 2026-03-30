@@ -125,7 +125,7 @@ const registry = createProviderRegistry({
 
 ## Model Capabilities
 
-These tables reflect the latest checked-in harness capability snapshot. `-` means the capability is intentionally not asserted or is out of scope for the current stack.
+These tables reflect the latest checked-in harness capability snapshot for one Foundry stack, not raw enrollment metadata. The package catalog derives flags such as `supportsVision` from Foundry `inputTypes`, so a model can advertise a capability in metadata even when the current stack still fails that harness check. `-` means the capability is intentionally not asserted or is out of scope for the current stack.
 
 ### OpenAI
 
