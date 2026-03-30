@@ -1,0 +1,97 @@
+name: Publish Release
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: release-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: >-
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'release/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v5
+        name: Install pnpm
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm exec nx run-many -t build --projects=foundry-ai --outputStyle=static
+
+      - name: Resolve package metadata
+        id: meta
+        run: |
+          set -euo pipefail
+          package_root="packages/foundry-ai"
+          name=$(node -p "require('./${package_root}/package.json').name")
+          version=$(node -p "require('./${package_root}/package.json').version")
+
+          if echo "${version}" | grep -qE '\-'; then
+            dist_tag="next"
+          else
+            dist_tag="latest"
+          fi
+
+          echo "name=${name}" >> "$GITHUB_OUTPUT"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "dist_tag=${dist_tag}" >> "$GITHUB_OUTPUT"
+          echo "is_stable=$([ "${dist_tag}" = "latest" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Check if already published
+        id: check
+        env:
+          PKG_NAME: ${{ steps.meta.outputs.name }}
+          PKG_VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          if npm view "${PKG_NAME}@${PKG_VERSION}" version --registry=https://registry.npmjs.org >/dev/null 2>&1; then
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+            echo "${PKG_NAME}@${PKG_VERSION} is already on npm — skipping publish."
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to npm
+        if: steps.check.outputs.already_published != 'true'
+        env:
+          DIST_TAG: ${{ steps.meta.outputs.dist_tag }}
+        run: |
+          cd packages/foundry-ai
+          NODE_AUTH_TOKEN="" npm publish --access public --tag "${DIST_TAG}"
+
+      - name: Tag release
+        if: steps.meta.outputs.is_stable == 'true'
+        env:
+          PKG_NAME: ${{ steps.meta.outputs.name }}
+          PKG_VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          tag="${PKG_NAME}@${PKG_VERSION}"
+          git tag -a "${tag}" -m "Release ${tag}"
+          git push origin "${tag}"
