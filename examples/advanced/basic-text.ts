@@ -1,12 +1,11 @@
 import { generateText } from 'ai';
-import { createExampleLanguageModel } from '../base/shared.js';
+import { createExampleLanguageModel } from '../base/example-model.js';
 
 const { model, modelId, provider } = createExampleLanguageModel();
 
 const result = await generateText({
   model,
-  prompt:
-    'Explain in two concise sentences why a typed Foundry adapter is useful for regulated AI workflows.',
+  prompt: 'Explain in two sentences what Palantir Foundry is and why enterprises use it.',
 });
 
 console.log(`provider: ${provider}`);

@@ -19,144 +19,73 @@ Supported provider arguments are `openai`, `anthropic`, and `google`.
 - `examples/advanced/basic-text.ts`
 - `examples/advanced/streaming.ts`
 - `examples/advanced/structured-output.ts`
-- `examples/advanced/tool-calling-exa.ts`
-- `examples/advanced/tool-calling-exa-parallel.ts`
-
-For the fastest advanced-tool example, use:
-
-```bash
-bun run example:exa
-```
-
-That defaults to the OpenAI path. Pass `anthropic` or `google` when you want another provider:
-
-```bash
-bun run example:exa anthropic
-```
-
-For the multi-company parallel-search variant, use:
-
-```bash
-bun run example:exa:parallel
-```
+- `examples/advanced/tool-calling-exa-devtools.ts`
+- `examples/advanced/tool-calling-exa-parallel-devtools.ts`
 
 ## Required Env
 
 - `FOUNDRY_URL`
 - `FOUNDRY_TOKEN`
-- `FOUNDRY_ATTRIBUTION_RID` is optional
-- `EXA_API_KEY` is only required for the optional `tool-calling-exa.ts`
+- `FOUNDRY_ATTRIBUTION_RID` — optional
+- `EXA_API_KEY` — required for the `tool-calling-exa-*-devtools` examples
 
-## Safe Runner
+## Running Examples
 
-Use the root runner when you want a fresh package build first:
-
-```bash
-# OpenAI
-pnpm run example basic-text openai
-pnpm run example streaming openai
-pnpm run example structured-output openai
-pnpm run example tool-calling openai
-pnpm run example tool-calling-streaming openai
-pnpm run example tool-calling-exa openai
-pnpm run example tool-calling-exa-parallel openai
-
-# Anthropic
-pnpm run example basic-text anthropic
-pnpm run example streaming anthropic
-pnpm run example structured-output anthropic
-pnpm run example tool-calling anthropic
-pnpm run example tool-calling-streaming anthropic
-pnpm run example tool-calling-exa anthropic
-pnpm run example tool-calling-exa-parallel anthropic
-
-# Google
-pnpm run example basic-text google
-pnpm run example streaming google
-pnpm run example structured-output google
-pnpm run example tool-calling google
-pnpm run example tool-calling-streaming google
-pnpm run example tool-calling-exa google
-pnpm run example tool-calling-exa-parallel google
-
-# Registry composition
-pnpm run example provider-registry
-```
-
-The safe runner still accepts short names like `tool-calling` and `basic-text`; it resolves them through `examples/base/` first and then `examples/advanced/`.
-
-`bun x` is not wired for the Exa example. That would require publishing a dedicated binary for a repo-only example, which is unnecessary overhead here.
-
-## Bun
-
-Use Bun directly when you do not need the rebuild step:
+The pattern is the same for every example:
 
 ```bash
-# OpenAI
-bun examples/advanced/basic-text.ts openai
-bun examples/advanced/streaming.ts openai
-bun examples/advanced/structured-output.ts openai
-bun examples/base/tool-calling.ts openai
-bun examples/base/tool-calling-streaming.ts openai
-bun examples/advanced/tool-calling-exa.ts openai
-bun examples/advanced/tool-calling-exa-parallel.ts openai
+# Safe runner (builds first)
+pnpm run example <name> [provider] [model]
 
-# Anthropic
-bun examples/advanced/basic-text.ts anthropic
-bun examples/advanced/streaming.ts anthropic
-bun examples/advanced/structured-output.ts anthropic
-bun examples/base/tool-calling.ts anthropic
-bun examples/base/tool-calling-streaming.ts anthropic
-bun examples/advanced/tool-calling-exa.ts anthropic
-bun examples/advanced/tool-calling-exa-parallel.ts anthropic
-
-# Google
-bun examples/advanced/basic-text.ts google
-bun examples/advanced/streaming.ts google
-bun examples/advanced/structured-output.ts google
-bun examples/base/tool-calling.ts google
-bun examples/base/tool-calling-streaming.ts google
-bun examples/advanced/tool-calling-exa.ts google
-bun examples/advanced/tool-calling-exa-parallel.ts google
-
-# Registry composition
-bun examples/base/provider-registry.ts
+# Bun direct (skips rebuild)
+bun examples/<base|advanced>/<name>.ts [provider] [model]
 ```
 
-## Model Override
+Provider defaults to `openai`. Pass `anthropic` or `google` as the second argument.
 
-Pass a third argument when you want to force a specific model:
+### Available examples
+
+| Name | Path | Notes |
+|---|---|---|
+| `basic-text` | `advanced/basic-text.ts` | Blocking `generateText` |
+| `streaming` | `advanced/streaming.ts` | `streamText` with provider options |
+| `structured-output` | `advanced/structured-output.ts` | Zod schema output |
+| `tool-calling` | `base/tool-calling.ts` | Blocking tool loop (published skill) |
+| `tool-calling-streaming` | `base/tool-calling-streaming.ts` | Streaming tool loop (published skill) |
+| `tool-calling-exa-devtools` | `advanced/tool-calling-exa-devtools.ts` | Exa web search + DevTools |
+| `tool-calling-exa-parallel-devtools` | `advanced/tool-calling-exa-parallel-devtools.ts` | Parallel Exa search + DevTools |
+| `provider-registry` | `base/provider-registry.ts` | Single registry, multiple providers via `provider:model` strings |
+
+### Quick shortcuts
 
 ```bash
-bun examples/advanced/streaming.ts anthropic claude-sonnet-4.6
+bun run example:exa                    # single Exa search (OpenAI)
+bun run example:exa anthropic          # same, Anthropic
+bun run example:exa:parallel           # parallel multi-company search
 ```
 
-```bash
-bun examples/base/tool-calling.ts anthropic claude-sonnet-4.6
-```
+### Model override
 
-```bash
-bun examples/base/tool-calling-streaming.ts anthropic claude-sonnet-4.6
-```
-
-```bash
-bun examples/advanced/tool-calling-exa.ts anthropic claude-sonnet-4.6
-```
-
-```bash
-pnpm run example tool-calling-exa-parallel anthropic claude-sonnet-4.6
-```
+Pass a third argument to force a specific model:
 
 ```bash
 pnpm run example streaming anthropic claude-sonnet-4.6
+bun examples/advanced/tool-calling-exa-devtools.ts anthropic claude-sonnet-4.6
 ```
+
+## DevTools
+
+The `*-devtools` examples capture every `streamText` call to `.devtools/generations.json`. Start the viewer in a separate terminal:
+
+```bash
+npx @ai-sdk/devtools
+```
+
+Then open `http://localhost:4983` (or set `AI_SDK_DEVTOOLS_PORT` to use a different port).
 
 ## Notes
 
-- `examples/advanced/streaming.ts` prints the exact provider options it sends and then logs `fullStream` events with Bun/Node inspect-style object output.
-- `examples/base/tool-calling.ts` is the tight blocking tool-call example that ships inside the published skill.
-- `examples/base/tool-calling-streaming.ts` is the tight streaming tool-call example that ships inside the published skill.
-- `examples/advanced/tool-calling-exa.ts` does the same for the full tool loop, including tool calls, tool results, and final text.
-- `examples/advanced/tool-calling-exa-parallel.ts` is the parallel-search variant. It pushes one Exa search per company, prints a compact step summary, and then emits a tight multi-company landscape snapshot.
-- The richer Anthropic reasoning/tool example path defaults to `claude-sonnet-4.6` because that is the model we verified live with `thinking`, `sendReasoning`, `effort`, `toolStreaming`, and `disableParallelToolUse`.
-- The Google examples can use friendly aliases because the package now maps the verified Gemini aliases to Foundry RIDs.
+- `base/tool-calling.ts` and `base/tool-calling-streaming.ts` ship inside the published skill.
+- The Anthropic reasoning/tool path defaults to `claude-sonnet-4.6` — the model verified live with `thinking`, `sendReasoning`, `effort`, `toolStreaming`, and `disableParallelToolUse`.
+- Google examples use friendly aliases because the package maps verified Gemini aliases to Foundry RIDs.
+- The safe runner resolves short names through `examples/base/` first, then `examples/advanced/`.

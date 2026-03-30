@@ -1,9 +1,25 @@
+import process from 'node:process';
 import type { AnthropicLanguageModelOptions } from '@ai-sdk/anthropic';
+import { devToolsMiddleware } from '@ai-sdk/devtools';
 import type { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai';
-import type { streamText } from 'ai';
-import type { ExampleProvider } from '../base/shared.js';
+import { type LanguageModel, type streamText, wrapLanguageModel } from 'ai';
+import type { ExampleProvider } from '../base/example-config.js';
 
+type WrappableModel = Parameters<typeof wrapLanguageModel>[0]['model'];
 type ExampleProviderOptions = NonNullable<Parameters<typeof streamText>[0]['providerOptions']>;
+
+export function wrapWithDevTools(model: LanguageModel): WrappableModel {
+  return wrapLanguageModel({
+    model: model as WrappableModel,
+    middleware: devToolsMiddleware(),
+  });
+}
+
+export function logDevToolsHint() {
+  const port = process.env.AI_SDK_DEVTOOLS_PORT ?? '4983';
+  console.log(`\n  devtools: capturing to .devtools/generations.json`);
+  console.log(`  viewer:   npx @ai-sdk/devtools → http://localhost:${port}\n`);
+}
 
 export function createExaProviderOptions(
   provider: ExampleProvider,

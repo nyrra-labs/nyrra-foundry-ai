@@ -10,11 +10,10 @@ const registry = createProviderRegistry({
   google: createFoundryGoogle(config),
   openai: createFoundryOpenAI(config),
 });
-const prompt =
-  'In one sentence, explain why teams compose Foundry provider routing in application code.';
+const prompt = 'In one sentence, what is your model name and who made you?';
 
 for (const modelId of [
-  'openai:gpt-5-mini',
+  'openai:gpt-5.4-nano',
   'anthropic:claude-sonnet-4.6',
   'google:gemini-3.1-flash-lite',
 ] as const) {

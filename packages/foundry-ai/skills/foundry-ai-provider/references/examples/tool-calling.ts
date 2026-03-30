@@ -1,18 +1,18 @@
 import { generateText, stepCountIs } from 'ai';
+import { logExampleValue } from './example-logger.js';
+import { createExampleLanguageModel } from './example-model.js';
 import {
-  createExampleLanguageModel,
-  createFoundryUsageTools,
-  logExampleValue,
-  prepareFoundryUsageStep,
   TOOL_CALLING_PROMPT,
-} from './shared.js';
+  createExampleToolSet,
+  prepareExampleToolStep,
+} from './example-tools.js';
 
 const { model, modelId, provider } = createExampleLanguageModel();
-const tools = createFoundryUsageTools();
+const tools = createExampleToolSet();
 const result = await generateText({
   model,
   prompt: TOOL_CALLING_PROMPT,
-  prepareStep: prepareFoundryUsageStep,
+  prepareStep: prepareExampleToolStep,
   stopWhen: stepCountIs(2),
   toolChoice: 'required',
   tools,
