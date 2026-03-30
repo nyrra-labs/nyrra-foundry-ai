@@ -76,48 +76,70 @@ jobs:
           RELEASE_TYPE: ${{ inputs.release_type }}
           PREID: ${{ inputs.preid }}
           FIRST_RELEASE: ${{ inputs.first_release }}
-          DRY_RUN: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
 
           if [ "${RELEASE_TYPE}" = "prerelease" ]; then
-            next_version=$(node scripts/resolve-next-prerelease-version.mjs)
+            next_version=$(node scripts/resolve-next-prerelease-version.mjs "${PREID}")
             node scripts/set-package-version.mjs packages/foundry-ai/package.json "${next_version}"
             echo "version=${next_version}" >> "$GITHUB_OUTPUT"
             echo "dist_tag=next" >> "$GITHUB_OUTPUT"
             echo "Prepared prerelease version ${next_version}."
-            exit 0
+          else
+            # Stable release: let Nx write files, but keep git commit/tag/push
+            # in this workflow so the release branch is the only place those
+            # side effects happen.
+            first_release="false"
+            if ! git tag --list '@nyrra/foundry-ai@*' | grep -q .; then
+              first_release="true"
+            fi
+            if [ "${FIRST_RELEASE}" = "true" ]; then
+              first_release="true"
+            fi
+
+            version_args=(
+              release
+              version
+              --group
+              npm-packages
+              --git-commit=false
+              --git-tag=false
+              --git-push=false
+              --stage-changes=false
+            )
+            changelog_args=(
+              release
+              changelog
+              --group
+              npm-packages
+              --git-commit=false
+              --git-tag=false
+              --git-push=false
+              --stage-changes=false
+            )
+            if [ "$first_release" = "true" ]; then
+              version_args+=(--first-release)
+              changelog_args+=(--first-release)
+            fi
+
+            pnpm exec nx "${version_args[@]}"
+            next_version=$(node -p "require('./packages/foundry-ai/package.json').version")
+            pnpm exec nx "${changelog_args[@]}" "${next_version}"
+
+            echo "version=${next_version}" >> "$GITHUB_OUTPUT"
+            echo "dist_tag=latest" >> "$GITHUB_OUTPUT"
+            echo "Prepared stable version ${next_version}."
           fi
 
-          # Stable release: use nx release version + changelog to write files
-          # without any git operations (commit/tag are handled below).
-          first_release="false"
-          if ! git tag --list '@nyrra/foundry-ai@*' | grep -q .; then
-            first_release="true"
+          if git diff --quiet; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "No release changes detected."
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
           fi
-          if [ "${FIRST_RELEASE}" = "true" ]; then
-            first_release="true"
-          fi
-
-          # Always let nx write files so we can read the computed version.
-          # The dry_run flag only gates PR creation (the workspace is ephemeral).
-          version_args=(release version --group npm-packages)
-          changelog_args=(release changelog --group npm-packages)
-          if [ "$first_release" = "true" ]; then
-            version_args+=(--first-release)
-            changelog_args+=(--first-release)
-          fi
-
-          pnpm exec nx "${version_args[@]}"
-          next_version=$(node -p "require('./packages/foundry-ai/package.json').version")
-          pnpm exec nx "${changelog_args[@]}" "${next_version}"
-
-          echo "version=${next_version}" >> "$GITHUB_OUTPUT"
-          echo "dist_tag=latest" >> "$GITHUB_OUTPUT"
-          echo "Prepared stable version ${next_version}."
 
       - name: Create release branch and PR
-        if: inputs.dry_run != true
+        if: inputs.dry_run != true && steps.version.outputs.has_changes == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
@@ -164,8 +186,14 @@ jobs:
               --head "${branch}"
           fi
 
+      - name: No-op summary
+        if: steps.version.outputs.has_changes != 'true'
+        run: |
+          echo "## Release Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "- No release changes were detected, so no PR was created." >> "$GITHUB_STEP_SUMMARY"
+
       - name: Dry run summary
-        if: inputs.dry_run == true
+        if: inputs.dry_run == true && steps.version.outputs.has_changes == 'true'
         env:
           VERSION: ${{ steps.version.outputs.version }}
           DIST_TAG: ${{ steps.version.outputs.dist_tag }}

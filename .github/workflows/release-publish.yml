@@ -6,6 +6,7 @@ on:
       - closed
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -18,8 +19,11 @@ concurrency:
 jobs:
   publish:
     if: >-
-      github.event.pull_request.merged == true &&
-      startsWith(github.event.pull_request.head.ref, 'release/')
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.pull_request.merged == true &&
+        startsWith(github.event.pull_request.head.ref, 'release/')
+      )
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -40,7 +44,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: pnpm exec nx run-many -t build --projects=foundry-ai --outputStyle=static
+      - run: pnpm exec nx run-many -t build package-audit --projects=foundry-ai --outputStyle=static
 
       - name: Resolve package metadata
         id: meta
@@ -66,13 +70,24 @@ jobs:
         env:
           PKG_NAME: ${{ steps.meta.outputs.name }}
           PKG_VERSION: ${{ steps.meta.outputs.version }}
+          DIST_TAG: ${{ steps.meta.outputs.dist_tag }}
         run: |
+          set -euo pipefail
+
           if npm view "${PKG_NAME}@${PKG_VERSION}" version --registry=https://registry.npmjs.org >/dev/null 2>&1; then
-            echo "already_published=true" >> "$GITHUB_OUTPUT"
-            echo "${PKG_NAME}@${PKG_VERSION} is already on npm — skipping publish."
-          else
-            echo "already_published=false" >> "$GITHUB_OUTPUT"
+            current_tag_version=$(npm view "${PKG_NAME}" "dist-tags.${DIST_TAG}" --json --registry=https://registry.npmjs.org 2>/dev/null | tr -d '"')
+
+            if [ "${current_tag_version}" = "${PKG_VERSION}" ]; then
+              echo "already_published=true" >> "$GITHUB_OUTPUT"
+              echo "${PKG_NAME}@${PKG_VERSION} is already published with dist-tag ${DIST_TAG}; skipping publish."
+              exit 0
+            fi
+
+            echo "::error::${PKG_NAME}@${PKG_VERSION} already exists, but dist-tag ${DIST_TAG} points to ${current_tag_version:-<unset>}. Retagging is intentionally not handled by this workflow."
+            exit 1
           fi
+
+          echo "already_published=false" >> "$GITHUB_OUTPUT"
 
       - name: Publish to npm
         if: steps.check.outputs.already_published != 'true'
@@ -80,6 +95,7 @@ jobs:
           DIST_TAG: ${{ steps.meta.outputs.dist_tag }}
         run: |
           cd packages/foundry-ai
+          # Clear any ambient token so npm uses GitHub OIDC trusted publishing.
           NODE_AUTH_TOKEN="" npm publish --access public --tag "${DIST_TAG}"
 
       - name: Tag release
@@ -93,5 +109,10 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           tag="${PKG_NAME}@${PKG_VERSION}"
+          if git ls-remote --tags origin "refs/tags/${tag}" | grep -q .; then
+            echo "${tag} already exists on origin — skipping tag push."
+            exit 0
+          fi
+
           git tag -a "${tag}" -m "Release ${tag}"
           git push origin "${tag}"
