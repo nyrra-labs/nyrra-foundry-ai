@@ -2,7 +2,7 @@
   "name": "@nyrra/foundry-ai",
   "version": "0.0.2",
   "description": "Thin Palantir Foundry provider adapters and model catalog for the Vercel AI SDK.",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nyrra-labs/nyrra-foundry-ai.git"
@@ -51,6 +51,7 @@
     "docs",
     "skills",
     "LICENSE",
+    "NOTICE",
     "README.md"
   ],
   "publishConfig": {

@@ -11,7 +11,7 @@ Thin Palantir Foundry provider adapters and model catalog for the Vercel AI SDK.
 [![CI](https://github.com/nyrra-labs/nyrra-foundry-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/nyrra-labs/nyrra-foundry-ai/actions/workflows/ci.yml)
 [![Semgrep](https://github.com/nyrra-labs/nyrra-foundry-ai/actions/workflows/semgrep.yml/badge.svg)](https://github.com/nyrra-labs/nyrra-foundry-ai/actions/workflows/semgrep.yml)
 [![DeepWiki](https://img.shields.io/badge/DeepWiki-nyrra--labs%2Fnyrra--foundry--ai-blue.svg)](https://deepwiki.com/nyrra-labs/nyrra-foundry-ai)
-[![License](https://img.shields.io/badge/license-MIT-0f172a)](./LICENSE)
+[![License](https://img.shields.io/badge/license-Apache--2.0-0f172a)](./LICENSE)
 
 ## What It Does
 

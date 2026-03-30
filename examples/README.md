@@ -21,6 +21,18 @@ Supported provider arguments are `openai`, `anthropic`, and `google`.
 - `examples/advanced/structured-output.ts`
 - `examples/advanced/tool-calling-exa.ts`
 
+For the fastest advanced-tool example, use:
+
+```bash
+bun run example:exa
+```
+
+That defaults to the OpenAI path. Pass `anthropic` or `google` when you want another provider:
+
+```bash
+bun run example:exa anthropic
+```
+
 ## Required Env
 
 - `FOUNDRY_URL`
@@ -62,6 +74,8 @@ pnpm run example provider-registry
 ```
 
 The safe runner still accepts short names like `tool-calling` and `basic-text`; it resolves them through `examples/base/` first and then `examples/advanced/`.
+
+`bun x` is not wired for the Exa example. That would require publishing a dedicated binary for a repo-only example, which is unnecessary overhead here.
 
 ## Bun
 

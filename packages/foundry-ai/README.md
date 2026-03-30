@@ -104,4 +104,4 @@ CI runs lint, unit tests, typecheck, build, TanStack Intent skill validation, an
 
 ## License
 
-MIT
+Apache-2.0

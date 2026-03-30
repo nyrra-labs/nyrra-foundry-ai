@@ -5,6 +5,7 @@ const packageRoot = resolve('packages/foundry-ai');
 const requiredFiles = [
   'README.md',
   'LICENSE',
+  'NOTICE',
   'docs/ai-sdk-community-provider.mdx',
   'docs/dependency-strategy.md',
   'docs/harness-capability-results.md',
