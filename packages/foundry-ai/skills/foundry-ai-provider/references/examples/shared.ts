@@ -6,7 +6,7 @@ import { loadFoundryConfig } from '@nyrra/foundry-ai';
 import { createFoundryAnthropic } from '@nyrra/foundry-ai/anthropic';
 import { createFoundryGoogle } from '@nyrra/foundry-ai/google';
 import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
-import { type LanguageModel, tool } from 'ai';
+import { type LanguageModel, type ToolSet, tool } from 'ai';
 import { z } from 'zod';
 
 export type ExampleProvider = 'openai' | 'anthropic' | 'google';
@@ -116,7 +116,7 @@ export function createExampleLanguageModel(
   };
 }
 
-export function createFoundryUsageTools() {
+export function createFoundryUsageTools(): ToolSet {
   return {
     getFoundryUsageNotes: tool({
       description: 'Returns concise setup guardrails for @nyrra/foundry-ai.',

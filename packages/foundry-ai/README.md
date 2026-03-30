@@ -1,11 +1,19 @@
+<p align="center">
+  <img src="https://www.nyrra.ai/nyrra-logo-5-colors.svg" alt="Nyrra" width="220" />
+</p>
+
 # @nyrra/foundry-ai
 
 Thin Palantir Foundry provider adapters and model catalog for the Vercel AI SDK.
 
+[![AI%20SDK](https://img.shields.io/badge/AI%20SDK-6.0.140-000000?logo=vercel&logoColor=white)](https://ai-sdk.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.0.2-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![License](https://img.shields.io/badge/license-Apache--2.0-0f172a)](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/LICENSE)
+
 ## What It Does
 
 - Routes AI SDK language-model calls through Foundry's provider-compatible proxy endpoints.
-- Maps friendly model aliases such as `gpt-5-mini` and `claude-sonnet-4.6` to Foundry RIDs.
+- Maps friendly model aliases such as `gpt-5-mini`, `claude-sonnet-4.6`, and `gemini-3.1-flash-lite` to Foundry RIDs.
 - Keeps installs lean by exposing provider-specific subpaths and optional peer dependencies.
 - Ships a TanStack Intent skill for provider-specific setup and troubleshooting.
 
@@ -29,9 +37,9 @@ If you use more than one provider, install both peers. For the rationale and bun
 
 ## Verified Use Case
 
-Use this package when you want local development and deployed server workloads to call secure/private Foundry proxy endpoints instead of public provider endpoints directly.
+Use this package when you want local development and deployed server workloads to call secure or private Foundry proxy endpoints instead of public provider endpoints directly.
 
-The verified path today is env-based server usage with `FOUNDRY_URL` and `FOUNDRY_TOKEN`. Palantir documents the same proxy family for OSDK and other Foundry-native runtimes, but this package has not yet been validated end to end in Palantir TSv1/TSv2 standalone functions or `PlatformClient`-driven fetch flows.
+The verified path today is env-based server usage with `FOUNDRY_URL` and `FOUNDRY_TOKEN`. Palantir documents the same proxy family for OSDK and other Foundry-native runtimes, but this package has not yet been validated end to end in Palantir TSv1 or TSv2 standalone functions or `PlatformClient`-driven fetch flows.
 
 ## Quick Start
 
@@ -102,6 +110,8 @@ console.log(result.text);
 
 CI runs lint, unit tests, typecheck, build, TanStack Intent skill validation, and a package-content audit. The harness matrix remains manual through `pnpm test:live`.
 
-## License
+## Copyright And License
 
-Apache-2.0
+Copyright 2026 NYRRA Inc.
+
+Licensed under Apache-2.0. See the [license](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/LICENSE) and [notice](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/NOTICE).
