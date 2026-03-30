@@ -86,11 +86,10 @@ jobs:
 
       - name: Publish prerelease to npm
         if: steps.check.outputs.already_published != 'true'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           cd packages/foundry-ai
-          npm publish --access public --tag next
+          # Clear ambient token so npm falls through to GitHub OIDC trusted publishing.
+          NODE_AUTH_TOKEN="" npm publish --access public --tag next --provenance
 
   publish-stable:
     if: >-
@@ -160,11 +159,10 @@ jobs:
 
       - name: Publish stable to npm
         if: steps.check.outputs.already_published != 'true'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           cd packages/foundry-ai
-          npm publish --access public --tag latest
+          # Clear ambient token so npm falls through to GitHub OIDC trusted publishing.
+          NODE_AUTH_TOKEN="" npm publish --access public --tag latest --provenance
 
       - name: Tag stable release
         env:
