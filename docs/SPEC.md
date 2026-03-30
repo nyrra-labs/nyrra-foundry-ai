@@ -28,7 +28,7 @@ The package does not try to invent a separate request API. Callers should contin
 - `resolveModelProvider()`
 - `resolveModelRid()`
 - `resolveModelTarget()`
-- type exports for `FoundryConfig`, `OpenAIModelId`, `AnthropicModelId`, `GoogleModelId`, `KnownOpenAIModelId`, `KnownAnthropicModelId`, `KnownGoogleModelId`, `KnownModelId`, `ModelMetadata`, `ModelProvider`, `ModelLifecycle`, and `ResolvedModelTarget`
+- type exports for `FoundryConfig`, `OpenAIModelId`, `AnthropicModelId`, `GoogleModelId`, `KnownOpenAIModelId`, `KnownAnthropicModelId`, `KnownGoogleModelId`, `KnownModelId`, `ModelDefinition`, `ModelMetadata`, `ModelInputType`, `ModelPerformance`, `ModelCost`, `ModelClass`, `ModelSpeed`, `ModelProvider`, `ModelLifecycle`, and `ResolvedModelTarget`
 
 ### Provider entrypoints
 
@@ -77,7 +77,6 @@ Current Google alias-to-RID mappings:
 - `gemini-2.5-pro` -> `ri.language-model-service..language-model.gemini-2-5-pro`
 - `gemini-2.5-flash` -> `ri.language-model-service..language-model.gemini-2-5-flash`
 - `gemini-2.5-flash-lite` -> `ri.language-model-service..language-model.gemini-2-5-flash-lite`
-- `gemini-3-pro` -> `ri.language-model-service..language-model.gemini-3-pro`
 - `gemini-3-flash` -> `ri.language-model-service..language-model.gemini-3-flash`
 - `gemini-3.1-pro` -> `ri.language-model-service..language-model.gemini-3-1-pro`
 - `gemini-3.1-flash-lite` -> `ri.language-model-service..language-model.gemini-3-1-flash-lite`
@@ -92,19 +91,28 @@ Current Google alias-to-RID mappings:
 
 ## Catalog Design
 
-The public catalog contains only stable cross-provider metadata:
+The public catalog is code-defined and normalized in separate provider files, but each provider file now uses one shared typed schema. We do not pipe raw Foundry JSON through the public API.
+
+The normalized public metadata contains:
 
 - `rid`
 - `provider`
+- `modelIdentifier`
 - `displayName`
-- `supportsVision`
-- `supportsResponses`
+- `inputTypes`
+- `trainingCutoffDate`
+- `performance`
+- `externalUrl`
+- derived `supportsVision`
+- derived `supportsResponses`
 - `lifecycle`
 
-Behavior-driving compatibility flags are kept out of the public metadata contract unless they can be represented accurately and maintained reliably.
+Derived flags come from the normalized `inputTypes` list instead of hand-maintained booleans. OpenAI reasoning handling is also derived from `OPEN_AI_REASONING` rather than a manually curated model-ID set.
 
-Google is now included in the shared catalog using verified enrollment RIDs. xAI remains intentionally excluded until the beta proxy contract is stable enough to document and verify consistently.
-Enrolled models are not added automatically. The public catalog should include only aliases the current adapter surface can actually serve. That is why the catalog can lag enrollment for cases such as `o1`, where the active Foundry enrollment does not currently expose the responses-capable shape this package depends on.
+Behavior-driving compatibility flags still stay out of the public metadata contract unless they can be represented accurately and maintained reliably across providers.
+
+Google is included in the shared catalog using verified enrollment RIDs. xAI remains intentionally excluded until the beta proxy contract is stable enough to document and verify consistently.
+Enrolled models are not added automatically. The public catalog should include only current aliases the adapter surface can actually serve. Sunset and deprecated models are excluded entirely from the public catalog to avoid publishing typed aliases we do not want callers to adopt. That is why the catalog can lag enrollment for cases such as `o1`, where the active Foundry enrollment does not currently expose the responses-capable shape this package depends on.
 
 ## Example Registry Composition
 
@@ -133,16 +141,16 @@ const registry = createProviderRegistry({
 - live verification for direct OpenAI, Anthropic, and Google calls, plus registry composition via AI SDK
 - targeted beta probing for xAI endpoint behavior and current failure modes on the active enrollment
 
-## Live Capability Matrix
+## Harness Capability Results
 
-The live suite in `packages/foundry-ai/src/__tests__/foundry.live.test.ts` is the canonical verification surface for proxy-sensitive behavior.
+The live suite in `packages/foundry-ai/src/__tests__/foundry.live.test.ts` is the canonical verification harness for proxy-sensitive behavior.
 
 - The default per-provider models are the hard gate:
   - OpenAI: `gpt-5-mini`
   - Anthropic: `claude-sonnet-4.6`
   - Google: `gemini-3.1-flash-lite`
 - The rest of the catalog is survey coverage. Those rows remain visible in the matrix and docs, but non-pass results do not fail the suite by default.
-- Survey coverage excludes models whose catalog lifecycle is `sunset` or `deprecated`.
+- Survey coverage runs the current public catalog only.
 - The suite records local artifacts under `.memory/capability-runs/<run-id>/`:
   - `results.json`
   - `summary.md`
@@ -177,26 +185,14 @@ Explicitly unsupported or out-of-scope capabilities should stay visible in the m
 
 - The committed verification docs should eventually use provider-specific support tables in the style of the AI SDK provider pages: one table per provider, models as rows, capabilities as columns.
 - Newer models should appear at the top of each provider table.
-- The live capability matrix remains the source artifact, but the published docs should present that artifact in a model-first view for faster review.
+- The harness results artifact remains the source record, but the published docs should present that artifact in a model-first view for faster review.
 
-## Current Investigation Backlog
+## Investigation Notes
 
-The matrix should separate real provider/proxy issues from harness mistakes. Latest full catalog run: `.memory/capability-runs/2026-03-28T08-29-30.093Z-32e0e4`.
+Use [packages/foundry-ai/docs/harness-capability-results.md](../packages/foundry-ai/docs/harness-capability-results.md) and the matching `.memory/capability-runs/<run-id>/` artifact as the source of truth for current investigation status.
 
-Harness items that are now considered fixed:
+The stable takeaways worth keeping in the spec are:
 
-- OpenAI `o3` message-history handling was a probe wording issue, not a provider failure.
-- OpenAI `gpt-5.1-codex-mini` baseline, message-history, and structured tool-composition rows needed larger output budgets; they now pass in the matrix.
-- Google `gemini-2.5-pro` structured rows and `gemini-2.5-flash-lite` structured-plus-tools were probe-quality issues, not confirmed provider incompatibilities.
-- Reasoning visibility and structured-plus-tools probes now run serially so the survey reflects capability semantics instead of concurrent-load noise.
-
-Current real investigation items from the latest run:
-
-- Anthropic:
-  - `claude-sonnet-4.5`, `claude-haiku-4.5`, `claude-sonnet-4`, `claude-opus-4`, and `claude-opus-4.1` still intermittently produce no visible output on `reasoning.visibility` even after the probe was serialized.
-  - `claude-opus-4` and `claude-opus-4.1` hit repeated `429` rate limits on multi-step/tool-heavy rows (`agent.tool_loop`, `structured.plus.tools`, `vision.image_input`) on the active stack.
-  - `claude-opus-4` and `claude-opus-4.1` also still fail `tool.loop.deterministic` with `No output generated`, which now looks like a provider or stack-level limitation rather than a harness mistake.
-- Google:
-  - `gemini-2.5-pro` still fails `structured.output.object` in the latest run.
-- OpenAI:
-  - `gpt-5-codex` still fails the current `text.generate` probe wording by refusing the provider-name echo prompt. This looks like a probe-design issue, not a proxy-contract issue.
+- Anthropic still shows the most stack-sensitive behavior on reasoning and multi-step/tool-heavy rows.
+- OpenAI reasoning visibility is asserted only where the adapter can represent that behavior reliably.
+- Survey coverage is intentionally broader than the must-pass default-model gate, so non-pass rows in the matrix do not automatically imply a package regression.

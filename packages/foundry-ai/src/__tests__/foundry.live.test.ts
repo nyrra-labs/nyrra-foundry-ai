@@ -44,6 +44,7 @@ import {
   signalSchema,
   structuredToolSchema,
 } from './helpers/live-capability-helpers.js';
+import { wrapLiveModelWithDevTools } from './helpers/live-devtools.js';
 import { loadLiveFoundryConfig } from './helpers/live-foundry.js';
 
 const config = loadLiveFoundryConfig();
@@ -502,20 +503,20 @@ describe('live Foundry capability matrix', () => {
       },
       async (telemetry) => {
         const openAiResult = await generateText({
-          model: registry.languageModel(`openai:${models.openai}`),
+          model: getRegistryModel('openai', models.openai),
           prompt: 'Reply with exactly "OPENAI: registry routing is active."',
           maxOutputTokens: 420,
           providerOptions: getProviderOptions('openai', 'baseline'),
           experimental_telemetry: telemetry,
         });
         const anthropicResult = await generateText({
-          model: registry.languageModel(`anthropic:${models.anthropic}`),
+          model: getRegistryModel('anthropic', models.anthropic),
           prompt: 'Reply with ANTHROPIC and one short clause.',
           maxOutputTokens: 120,
           experimental_telemetry: telemetry,
         });
         const googleResult = await generateText({
-          model: registry.languageModel(`google:${models.google}`),
+          model: getRegistryModel('google', models.google),
           prompt: 'Reply with GOOGLE and one short clause.',
           maxOutputTokens: 120,
           experimental_telemetry: telemetry,
@@ -626,12 +627,32 @@ describe('live Foundry capability matrix', () => {
 
 function getFoundryModel(provider: LiveProvider, modelId: string) {
   if (provider === 'openai') {
-    return openai(modelId);
+    return wrapLiveModelWithDevTools({
+      model: openai(modelId),
+      modelId,
+      providerId: 'foundry-openai',
+    });
   }
 
   if (provider === 'anthropic') {
-    return anthropic(modelId);
+    return wrapLiveModelWithDevTools({
+      model: anthropic(modelId),
+      modelId,
+      providerId: 'foundry-anthropic',
+    });
   }
 
-  return google(modelId);
+  return wrapLiveModelWithDevTools({
+    model: google(modelId),
+    modelId,
+    providerId: 'foundry-google',
+  });
+}
+
+function getRegistryModel(provider: LiveProvider, modelId: string) {
+  return wrapLiveModelWithDevTools({
+    model: registry.languageModel(`${provider}:${modelId}`),
+    modelId: `${provider}:${modelId}`,
+    providerId: `foundry-${provider}`,
+  });
 }

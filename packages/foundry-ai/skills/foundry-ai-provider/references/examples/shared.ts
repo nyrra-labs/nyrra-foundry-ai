@@ -6,15 +6,13 @@ import { loadFoundryConfig } from '@nyrra/foundry-ai';
 import { createFoundryAnthropic } from '@nyrra/foundry-ai/anthropic';
 import { createFoundryGoogle } from '@nyrra/foundry-ai/google';
 import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
-import type { LanguageModel } from 'ai';
+import { type LanguageModel, type ToolSet, tool } from 'ai';
+import { z } from 'zod';
 
 export type ExampleProvider = 'openai' | 'anthropic' | 'google';
 
 const LOCAL_ENV_FILE = resolve(process.cwd(), '.env.local');
-
 const DEFAULT_OPENAI_MODEL: OpenAIModelId = 'gpt-5-mini';
-// Sonnet is the default Anthropic example target because it accepts the
-// reasoning/tool options we verify in the live tool-calling path.
 const DEFAULT_ANTHROPIC_MODEL: AnthropicModelId = 'claude-sonnet-4.6';
 const DEFAULT_GOOGLE_MODEL: GoogleModelId = 'gemini-3.1-flash-lite';
 const EXAMPLE_INSPECT_OPTIONS = {
@@ -23,6 +21,32 @@ const EXAMPLE_INSPECT_OPTIONS = {
   compact: false,
   depth: null,
 } as const;
+const FOUNDRY_USAGE_NOTES = {
+  compatibility: {
+    topic: 'compatibility',
+    guardrails: [
+      'Stay on the verified surface: OpenAI, Anthropic, and Google language-model adapters.',
+      'Do not claim TSv1, TSv2, or PlatformClient runtime support without a dedicated validation pass.',
+    ],
+  },
+  routing: {
+    topic: 'routing',
+    guardrails: [
+      'Compose multi-provider routing in application code with createProviderRegistry.',
+      'Install and import only the provider peers you actually use.',
+    ],
+  },
+  security: {
+    topic: 'security',
+    guardrails: [
+      'Keep FOUNDRY_TOKEN on the server and out of browser bundles.',
+      'Use Foundry proxy endpoints when local dev and deployed workloads should stay on governed private traffic.',
+    ],
+  },
+} as const;
+
+export const TOOL_CALLING_PROMPT =
+  'First call getFoundryUsageNotes, then answer in two concise bullets for a server-side @nyrra/foundry-ai integration.';
 
 maybeLoadLocalEnvFile();
 
@@ -89,6 +113,28 @@ export function createExampleLanguageModel(
     provider,
     modelId,
     model: anthropic(modelId),
+  };
+}
+
+export function createFoundryUsageTools(): ToolSet {
+  return {
+    getFoundryUsageNotes: tool({
+      description: 'Returns concise setup guardrails for @nyrra/foundry-ai.',
+      inputSchema: z.object({
+        topic: z.enum(['security', 'routing', 'compatibility']),
+      }),
+      execute: async ({ topic }) => FOUNDRY_USAGE_NOTES[topic],
+    }),
+  };
+}
+
+export function prepareFoundryUsageStep({ stepNumber }: { stepNumber: number }) {
+  if (stepNumber !== 1) {
+    return undefined;
+  }
+
+  return {
+    toolChoice: 'auto' as const,
   };
 }
 

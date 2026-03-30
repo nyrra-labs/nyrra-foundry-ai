@@ -4,8 +4,8 @@ import { NoSuchModelError } from 'ai';
 import { resolveFoundryConfig } from '../config.js';
 import { wrapFoundryLanguageModel } from '../middleware.js';
 import { resolveModelTarget } from '../models/catalog.js';
-import { isKnownOpenAIReasoningTarget } from '../models/openai-models.js';
-import type { FoundryConfig, OpenAIModelId } from '../types.js';
+import { isKnownOpenAIReasoningTarget, type OpenAIModelId } from '../models/openai-models.js';
+import type { FoundryConfig } from '../types.js';
 
 type FoundryLanguageModel = Parameters<typeof wrapLanguageModel>[0]['model'];
 type FoundryCallOptions = Parameters<FoundryLanguageModel['doGenerate']>[0];

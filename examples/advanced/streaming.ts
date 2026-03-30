@@ -1,7 +1,7 @@
 import type { AnthropicLanguageModelOptions } from '@ai-sdk/anthropic';
 import type { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai';
 import { streamText } from 'ai';
-import { createExampleLanguageModel, logExampleError, logExampleValue } from './shared.js';
+import { createExampleLanguageModel, logExampleError, logExampleValue } from '../base/shared.js';
 
 const { model, modelId, provider } = createExampleLanguageModel();
 const prompt =

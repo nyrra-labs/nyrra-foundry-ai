@@ -11,6 +11,9 @@ importers:
       '@ai-sdk/anthropic':
         specifier: 3.0.64
         version: 3.0.64(zod@4.3.6)
+      '@ai-sdk/devtools':
+        specifier: 0.0.15
+        version: 0.0.15
       '@ai-sdk/google':
         specifier: 3.0.53
         version: 3.0.53(zod@4.3.6)
@@ -35,6 +38,9 @@ importers:
       '@swc/helpers':
         specifier: ~0.5.20
         version: 0.5.20
+      '@tanstack/intent':
+        specifier: 0.0.27
+        version: 0.0.27
       '@types/node':
         specifier: 25.5.0
         version: 25.5.0
@@ -63,6 +69,12 @@ importers:
         specifier: 4.3.6
         version: 4.3.6
 
+  .memory/intent-smoke/consumer:
+    dependencies:
+      '@nyrra/foundry-ai':
+        specifier: file:../nyrra-foundry-ai-0.0.2.tgz
+        version: file:.memory/intent-smoke/nyrra-foundry-ai-0.0.2.tgz(@ai-sdk/anthropic@3.0.64(zod@4.3.6))(@ai-sdk/google@3.0.53(zod@4.3.6))(@ai-sdk/openai@3.0.48(zod@4.3.6))(ai@6.0.140(zod@4.3.6))
+
   packages/foundry-ai:
     dependencies:
       '@ai-sdk/anthropic':
@@ -77,6 +89,10 @@ importers:
       ai:
         specifier: ^6.0.138
         version: 6.0.138(zod@4.3.6)
+    devDependencies:
+      '@tanstack/intent':
+        specifier: 0.0.27
+        version: 0.0.27
 
 packages:
 
@@ -85,6 +101,10 @@ packages:
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
+
+  '@ai-sdk/devtools@0.0.15':
+    resolution: {integrity: sha512-zRF+ClRh0fcmvoKclOcmy2hmTDN48ZfHD3y1fC3Lx0vIYaX55uywssiyaA18WlV2mD+N9H4fgPxq+9JeGfMGlQ==}
+    hasBin: true
 
   '@ai-sdk/gateway@3.0.80':
     resolution: {integrity: sha512-uM7kpZB5l977lW7+2X1+klBUxIZQ78+1a9jHlaHFEzcOcmmslTl3sdP0QqfuuBcO0YBM2gwOiqVdp8i4TRQYcw==}
@@ -1040,6 +1060,12 @@ packages:
     peerDependencies:
       ai: ^6.0.0
 
+  '@hono/node-server@1.19.11':
+    resolution: {integrity: sha512-dr8/3zEaB+p0D2n/IUrlPF1HZm586qgJNXK1a9fhg/PzdtkK7Ksd5l312tJX2yBuALqDYBlG20QEbayqPyxn+g==}
+    engines: {node: '>=18.14.1'}
+    peerDependencies:
+      hono: ^4
+
   '@jest/diff-sequences@30.3.0':
     resolution: {integrity: sha512-cG51MVnLq1ecVUaQ3fr6YuuAOitHK1S4WUJHnsPFE/quQr33ADUx1FfrTCpMCRxvy0Yr9BThKpDjSlcTi91tMA==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
@@ -1142,6 +1168,22 @@ packages:
 
   '@nx/workspace@22.6.2':
     resolution: {integrity: sha512-G5Ft3eb7ZrvNN0D3j1tyIyT6BuRwMNbjgvNWfEnZ1fKHRTIwqsXvx5S5fK4aJhCgpxTlPzQZpIr0XUTS0t6sjQ==}
+
+  '@nyrra/foundry-ai@file:.memory/intent-smoke/nyrra-foundry-ai-0.0.2.tgz':
+    resolution: {integrity: sha512-O2Cp6R5IRM66c02YdG3Dy5Kvt6X6b/y8siTTpY5XElcQWmm9CLfnMmDUD1JMf08EG/6w6tRm8hEfyHOr3T/l7g==, tarball: file:.memory/intent-smoke/nyrra-foundry-ai-0.0.2.tgz}
+    version: 0.0.2
+    peerDependencies:
+      '@ai-sdk/anthropic': ^3.0.64
+      '@ai-sdk/google': ^3.0.53
+      '@ai-sdk/openai': ^3.0.48
+      ai: ^6.0.138
+    peerDependenciesMeta:
+      '@ai-sdk/anthropic':
+        optional: true
+      '@ai-sdk/google':
+        optional: true
+      '@ai-sdk/openai':
+        optional: true
 
   '@opentelemetry/api@1.9.0':
     resolution: {integrity: sha512-3giAOQvZiH5F9bMlMiv8+GSPMeqg0dbaeo58/0SlA9sxSqZhnUtxzX9/2FzyhS9sWQf5S0GJE0AKBrFqjpeYcg==}
@@ -1494,6 +1536,10 @@ packages:
   '@szmarczak/http-timer@4.0.6':
     resolution: {integrity: sha512-4BAffykYOgO+5nzBWYwE3W90sBgLJoUPRWWcL8wlyiM8IB8ipJz3UMJ9KXQd1RKQXpKp8Tutn80HZtWsu2u76w==}
     engines: {node: '>=10'}
+
+  '@tanstack/intent@0.0.27':
+    resolution: {integrity: sha512-R8U4uadLrp9uosW5G1J5s4RQtT7F0S2oqIfWX6OD7uObuM6vJLO0jZzw+Et7H3PFMnue3snjdzJYX5BmNV1RXA==}
+    hasBin: true
 
   '@tybys/wasm-util@0.10.1':
     resolution: {integrity: sha512-9tTaPJLSiejZKx+Bmog4uSubteqTvFrVrURwkmHixBo0G4seD0zUxp98E1DzUBJxLQ3NPwXrGKDiVjwx/DpPsg==}
@@ -2354,6 +2400,10 @@ packages:
   hasown@2.0.2:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
     engines: {node: '>= 0.4'}
+
+  hono@4.12.9:
+    resolution: {integrity: sha512-wy3T8Zm2bsEvxKZM5w21VdHDDcwVS1yUFFY6i8UobSsKfFceT7TOwhbhfKsDyx7tYQlmRM5FLpIuYvNFyjctiA==}
+    engines: {node: '>=16.9.0'}
 
   http-cache-semantics@4.2.0:
     resolution: {integrity: sha512-dTxcvPXqPvXBQpq5dUr6mEMJX4oIEFv6bwom3FDwKRDsuIjjJGANqhBuoAn9c1RQJIdAKav33ED65E2ys+87QQ==}
@@ -3501,6 +3551,12 @@ snapshots:
       '@ai-sdk/provider-utils': 4.0.21(zod@4.3.6)
       zod: 4.3.6
 
+  '@ai-sdk/devtools@0.0.15':
+    dependencies:
+      '@ai-sdk/provider': 3.0.8
+      '@hono/node-server': 1.19.11(hono@4.12.9)
+      hono: 4.12.9
+
   '@ai-sdk/gateway@3.0.80(zod@4.3.6)':
     dependencies:
       '@ai-sdk/provider': 3.0.8
@@ -4481,6 +4537,10 @@ snapshots:
       ai: 6.0.140(zod@4.3.6)
       zod: 3.25.76
 
+  '@hono/node-server@1.19.11(hono@4.12.9)':
+    dependencies:
+      hono: 4.12.9
+
   '@jest/diff-sequences@30.3.0': {}
 
   '@jest/get-type@30.1.0': {}
@@ -4617,6 +4677,14 @@ snapshots:
       - '@swc-node/register'
       - '@swc/core'
       - debug
+
+  '@nyrra/foundry-ai@file:.memory/intent-smoke/nyrra-foundry-ai-0.0.2.tgz(@ai-sdk/anthropic@3.0.64(zod@4.3.6))(@ai-sdk/google@3.0.53(zod@4.3.6))(@ai-sdk/openai@3.0.48(zod@4.3.6))(ai@6.0.140(zod@4.3.6))':
+    dependencies:
+      ai: 6.0.140(zod@4.3.6)
+    optionalDependencies:
+      '@ai-sdk/anthropic': 3.0.64(zod@4.3.6)
+      '@ai-sdk/google': 3.0.53(zod@4.3.6)
+      '@ai-sdk/openai': 3.0.48(zod@4.3.6)
 
   '@opentelemetry/api@1.9.0': {}
 
@@ -4861,6 +4929,11 @@ snapshots:
     dependencies:
       defer-to-connect: 2.0.1
     optional: true
+
+  '@tanstack/intent@0.0.27':
+    dependencies:
+      cac: 6.7.14
+      yaml: 2.8.3
 
   '@tybys/wasm-util@0.10.1':
     dependencies:
@@ -5965,6 +6038,8 @@ snapshots:
   hasown@2.0.2:
     dependencies:
       function-bind: 1.1.2
+
+  hono@4.12.9: {}
 
   http-cache-semantics@4.2.0:
     optional: true

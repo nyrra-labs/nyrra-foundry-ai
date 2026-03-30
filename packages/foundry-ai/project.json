@@ -41,13 +41,36 @@
       },
       "cache": false
     },
-    "docs-live-matrix": {
+    "test-live-devtools": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node scripts/update-live-matrix-docs.mjs",
+        "command": "LIVE_USE_DEVTOOLS=1 node scripts/run-live-capability-suite.mjs",
         "cwd": "{workspaceRoot}"
       },
       "cache": false
+    },
+    "docs-harness-results": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/update-harness-results-docs.mjs",
+        "cwd": "{workspaceRoot}"
+      },
+      "cache": false
+    },
+    "skills-validate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm exec intent validate packages/foundry-ai/skills",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "package-audit": {
+      "dependsOn": ["build"],
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/check-package-contents.mjs",
+        "cwd": "{workspaceRoot}"
+      }
     },
     "typecheck": {
       "executor": "nx:run-commands",

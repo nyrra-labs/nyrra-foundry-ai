@@ -7,11 +7,8 @@ import { fileURLToPath } from 'node:url';
 
 const workspaceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const artifactRoot = resolve(workspaceRoot, '.memory', 'capability-runs');
-const packageReadmePath = resolve(workspaceRoot, 'packages/foundry-ai/README.md');
 const packageDocsDir = resolve(workspaceRoot, 'packages/foundry-ai/docs');
-const packageMatrixDocPath = resolve(packageDocsDir, 'live-capability-matrix.md');
-const readmeMarkerStart = '<!-- live-matrix:start -->';
-const readmeMarkerEnd = '<!-- live-matrix:end -->';
+const packageResultsDocPath = resolve(packageDocsDir, 'harness-capability-results.md');
 const providerOrder = ['openai', 'anthropic', 'google'];
 const modelCapabilityColumns = [
   ['text.generate', 'Text'],
@@ -32,15 +29,13 @@ const record = JSON.parse(readFileSync(resultsPath, 'utf8'));
 
 const providerSummaries = summarizeProviders(record.cases);
 const statusCounts = summarizeStatuses(record.cases);
-const matrixDoc = createMatrixDoc(record, artifactDir, providerSummaries, statusCounts);
-const readmeSummary = createReadmeSummary(record, providerSummaries, statusCounts);
+const resultsDoc = createResultsDoc(record, artifactDir, providerSummaries, statusCounts);
 
 mkdirSync(packageDocsDir, { recursive: true });
-writeFileSync(packageMatrixDocPath, matrixDoc, 'utf8');
-writeFileSync(packageReadmePath, replaceReadmeBlock(packageReadmePath, readmeSummary), 'utf8');
+writeFileSync(packageResultsDocPath, resultsDoc, 'utf8');
 
 process.stdout.write(
-  `Updated ${relativeToWorkspace(packageMatrixDocPath)} from ${relativeToWorkspace(artifactDir)}.\n`,
+  `Updated ${relativeToWorkspace(packageResultsDocPath)} from ${relativeToWorkspace(artifactDir)}.\n`,
 );
 
 function resolveArtifactDir(args) {
@@ -103,11 +98,11 @@ function summarizeProviders(cases) {
     .map((provider) => [provider, summaries.get(provider)]);
 }
 
-function createMatrixDoc(record, artifactDir, providerSummaries, statusCounts) {
+function createResultsDoc(record, artifactDir, providerSummaries, statusCounts) {
   const lines = [
-    '# Live Capability Matrix',
+    '# Harness Capability Results',
     '',
-    'Generated from the latest local live verification artifact.',
+    'Generated from the latest local live verification harness artifact.',
     '',
     `- Run ID: \`${record.runId}\``,
     `- Git SHA: \`${record.gitSha}\``,
@@ -119,7 +114,7 @@ function createMatrixDoc(record, artifactDir, providerSummaries, statusCounts) {
     `- Model Scope: \`${record.modelScope ?? 'canonical'}\``,
     `- Status Counts: ${statusCounts.map(([status, count]) => `\`${status}\`: ${count}`).join(', ')}`,
     '',
-    'The live suite is the canonical verification surface for proxy-sensitive behavior. The default per-provider models are the hard gate; the rest of the catalog rows are investigation coverage and are allowed to surface non-pass results without failing the suite. Survey coverage excludes lifecycle `sunset` and `deprecated` models. Rows marked `skipped` are intentionally out of scope for the current stack or package surface. Rows marked `proxy-rejected` are real proxy or request-shape failures that need investigation.',
+    'The live suite is the canonical verification surface for proxy-sensitive behavior. The default per-provider models are the hard gate; the rest of the catalog rows are investigation coverage and are allowed to surface non-pass results without failing the suite. Survey coverage runs the current public catalog only. Rows marked `skipped` are intentionally out of scope for the current stack or package surface. Rows marked `proxy-rejected` are real proxy or request-shape failures that need investigation.',
     '',
     '## Provider Summary',
     '',
@@ -182,63 +177,6 @@ function createMatrixDoc(record, artifactDir, providerSummaries, statusCounts) {
   }
 
   return `${lines.join('\n')}\n`;
-}
-
-function createReadmeSummary(record, providerSummaries, statusCounts) {
-  const lines = [
-    readmeMarkerStart,
-    '## Live Capability Matrix',
-    '',
-    'Generated from the latest local live verification artifact checked into this branch.',
-    '',
-    `Latest snapshot: \`${record.runId}\``,
-    '',
-    `- Default Models: openai=\`${record.models.openai}\`, anthropic=\`${record.models.anthropic}\`, google=\`${record.models.google}\``,
-    `- Model Scope: \`${record.modelScope ?? 'canonical'}\``,
-    `- Status Counts: ${statusCounts.map(([status, count]) => `\`${status}\`: ${count}`).join(', ')}`,
-    '',
-    'The default per-provider models are the hard gate. Additional catalog rows are investigation coverage, exclude lifecycle `sunset` and `deprecated` models, and may surface non-pass results without failing the suite.',
-    '',
-    '| Provider | Pass | Skipped | Proxy Rejected | Unsupported | Fail |',
-    '|---|---:|---:|---:|---:|---:|',
-  ];
-
-  for (const [provider, summary] of providerSummaries) {
-    lines.push(
-      `| ${provider} | ${summary.pass} | ${summary.skipped} | ${summary['proxy-rejected']} | ${summary.unsupported} | ${summary.fail} |`,
-    );
-  }
-
-  lines.push('', '### Provider Tables', '');
-
-  for (const provider of providerOrder) {
-    const table = createProviderCapabilityTable(record, provider);
-
-    if (!table) {
-      continue;
-    }
-
-    lines.push(`#### ${provider}`, '', ...table, '');
-  }
-
-  lines.push(
-    'See [docs/live-capability-matrix.md](./docs/live-capability-matrix.md) for the full row-by-row matrix and non-pass details.',
-    readmeMarkerEnd,
-  );
-
-  return lines.join('\n');
-}
-
-function replaceReadmeBlock(readmePath, replacement) {
-  const source = readFileSync(readmePath, 'utf8');
-  const startIndex = source.indexOf(readmeMarkerStart);
-  const endIndex = source.indexOf(readmeMarkerEnd);
-
-  if (startIndex === -1 || endIndex === -1) {
-    throw new Error(`README markers not found in ${readmePath}.`);
-  }
-
-  return `${source.slice(0, startIndex)}${replacement}${source.slice(endIndex + readmeMarkerEnd.length)}`;
 }
 
 function getCaseNote(testCase) {

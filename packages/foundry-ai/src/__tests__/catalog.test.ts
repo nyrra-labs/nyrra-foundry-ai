@@ -1,24 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import { loadFoundryConfig } from '../config.js';
 import { FoundryModelNotFoundError } from '../errors.js';
+import type { AnthropicModelId, KnownAnthropicModelId } from '../models/anthropic-models.js';
 import {
   getModelMetadata,
   hasKnownModel,
+  type KnownModelId,
   MODEL_CATALOG_BY_RID,
   resolveKnownModelMetadata,
   resolveModelProvider,
   resolveModelRid,
   resolveModelTarget,
 } from '../models/catalog.js';
-import type {
-  AnthropicModelId,
-  GoogleModelId,
-  KnownAnthropicModelId,
-  KnownGoogleModelId,
-  KnownModelId,
-  KnownOpenAIModelId,
-  OpenAIModelId,
-} from '../types.js';
+import type { GoogleModelId, KnownGoogleModelId } from '../models/google-models.js';
+import type { KnownOpenAIModelId, OpenAIModelId } from '../models/openai-models.js';
 
 describe('model catalog', () => {
   it('resolves metadata for known OpenAI models', () => {
@@ -30,16 +25,25 @@ describe('model catalog', () => {
     );
     expect(resolveModelProvider('gpt-5-mini')).toBe('openai');
     expect(getModelMetadata('gpt-5-mini')).toMatchObject({
-      displayName: 'GPT-5 Mini',
+      displayName: 'GPT-5 mini',
       lifecycle: 'ga',
+      modelIdentifier: 'GPT_5_MINI',
       provider: 'openai',
       supportsResponses: true,
       supportsVision: true,
+      trainingCutoffDate: '2024-05-30T00:00:00Z',
+      inputTypes: expect.arrayContaining(['OPEN_AI_REASONING', 'OPEN_AI_RESPONSES']),
+      performance: {
+        cost: 'LOW',
+        modelClass: 'LIGHTWEIGHT',
+        speed: 'MEDIUM',
+      },
     });
-    expect(getModelMetadata('gpt-4o-mini')).toMatchObject({
-      displayName: 'GPT-4o Mini',
-      lifecycle: 'sunset',
+    expect(getModelMetadata('gpt-5-codex')).toMatchObject({
+      displayName: 'GPT-5 Codex',
       provider: 'openai',
+      supportsResponses: true,
+      supportsVision: true,
     });
   });
 
@@ -58,7 +62,14 @@ describe('model catalog', () => {
     expect(getModelMetadata('gemini-3.1-flash-lite')).toMatchObject({
       displayName: 'Gemini 3.1 Flash Lite (Preview)',
       lifecycle: 'experimental',
+      modelIdentifier: 'GEMINI_3_1_FLASH_LITE',
       provider: 'google',
+      inputTypes: expect.arrayContaining(['GEMINI_CHAT', 'GENERIC_VISION_COMPLETION']),
+      performance: {
+        cost: 'LOW',
+        modelClass: 'LIGHTWEIGHT',
+        speed: 'HIGH',
+      },
       supportsResponses: false,
       supportsVision: true,
     });
@@ -68,7 +79,7 @@ describe('model catalog', () => {
     expect(
       MODEL_CATALOG_BY_RID['ri.language-model-service..language-model.gpt-5-mini'],
     ).toMatchObject({
-      displayName: 'GPT-5 Mini',
+      displayName: 'GPT-5 mini',
       provider: 'openai',
     });
     expect(
@@ -82,14 +93,22 @@ describe('model catalog', () => {
   it('preserves raw RID passthrough while enriching known RIDs with metadata', () => {
     const rawRid = 'ri.language-model-service..language-model.gpt-5-2';
 
-    expect(resolveModelTarget(rawRid)).toEqual({
+    expect(resolveModelTarget(rawRid)).toMatchObject({
       rid: rawRid,
       metadata: {
         rid: rawRid,
         provider: 'openai',
+        modelIdentifier: 'GPT_5_2',
         displayName: 'GPT-5.2',
-        supportsVision: true,
+        inputTypes: expect.arrayContaining(['OPEN_AI_REASONING', 'OPEN_AI_RESPONSES']),
+        performance: {
+          cost: 'MEDIUM',
+          modelClass: 'HEAVYWEIGHT',
+          speed: 'MEDIUM',
+        },
         supportsResponses: true,
+        supportsVision: true,
+        trainingCutoffDate: '2025-08-31T00:00:00Z',
         lifecycle: 'experimental',
       },
     });
@@ -102,6 +121,11 @@ describe('model catalog', () => {
       rid: rawRid,
       metadata: undefined,
     });
+  });
+
+  it('does not publish sunset aliases as known models', () => {
+    expect(getModelMetadata('gpt-4o-mini')).toBeUndefined();
+    expect(getModelMetadata('gemini-3-pro')).toBeUndefined();
   });
 
   it('throws a clear validation error for unknown aliases', () => {

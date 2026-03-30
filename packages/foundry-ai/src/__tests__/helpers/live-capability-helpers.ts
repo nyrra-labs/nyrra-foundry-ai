@@ -268,7 +268,6 @@ function requiresMediumOpenAITextVerbosity(modelId?: string) {
     'gpt-4.1-mini',
     'gpt-4.1-nano',
     'gpt-4o',
-    'gpt-4o-mini',
     'gpt-5-codex',
     'gpt-5.1-codex',
     'gpt-5.1-codex-mini',

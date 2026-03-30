@@ -1,5 +1,3 @@
-import type { AnthropicLanguageModelOptions } from '@ai-sdk/anthropic';
-import type { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai';
 import { webSearch } from '@exalabs/ai-sdk';
 import { stepCountIs, streamText } from 'ai';
 import {
@@ -7,7 +5,8 @@ import {
   logExampleError,
   logExampleValue,
   requireEnv,
-} from './shared.js';
+} from '../base/shared.js';
+import { createExaProviderOptions } from './exa-shared.js';
 
 requireEnv('EXA_API_KEY');
 
@@ -38,28 +37,9 @@ const tools = {
 };
 type ExampleProviderOptions = NonNullable<Parameters<typeof streamText>[0]['providerOptions']>;
 
-const providerOptions: ExampleProviderOptions =
-  provider === 'openai'
-    ? {
-        openai: {
-          reasoningEffort: 'low',
-          textVerbosity: 'low',
-        } satisfies OpenAILanguageModelResponsesOptions,
-      }
-    : provider === 'anthropic'
-      ? {
-          anthropic: {
-            effort: 'low',
-            thinking: {
-              type: 'enabled',
-              budgetTokens: 1024,
-            },
-            sendReasoning: true,
-            toolStreaming: true,
-            disableParallelToolUse: true,
-          } satisfies AnthropicLanguageModelOptions,
-        }
-      : {};
+const providerOptions: ExampleProviderOptions = createExaProviderOptions(provider, {
+  parallelToolUse: false,
+});
 
 const result = streamText({
   model,

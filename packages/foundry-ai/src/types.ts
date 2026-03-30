@@ -4,74 +4,43 @@ export interface FoundryConfig {
   attributionRid?: string;
 }
 
-export const OPENAI_MODEL_IDS = [
-  'gpt-4.1',
-  'gpt-4.1-mini',
-  'gpt-4.1-nano',
-  'gpt-4o',
-  'gpt-4o-mini',
-  'gpt-5',
-  'gpt-5-codex',
-  'gpt-5-mini',
-  'gpt-5-nano',
-  'gpt-5.1',
-  'gpt-5.1-codex',
-  'gpt-5.1-codex-mini',
-  'gpt-5.2',
-  'gpt-5.4',
-  'gpt-5.4-mini',
-  'gpt-5.4-nano',
-  'o3',
-  'o4-mini',
-] as const;
-
-export type KnownOpenAIModelId = (typeof OPENAI_MODEL_IDS)[number];
-
-export type OpenAIModelId = KnownOpenAIModelId | (string & {});
-
-export const ANTHROPIC_MODEL_IDS = [
-  'claude-3.5-haiku',
-  'claude-3.7-sonnet',
-  'claude-haiku-4.5',
-  'claude-opus-4',
-  'claude-opus-4.1',
-  'claude-opus-4.5',
-  'claude-opus-4.6',
-  'claude-sonnet-4',
-  'claude-sonnet-4.5',
-  'claude-sonnet-4.6',
-] as const;
-
-export type KnownAnthropicModelId = (typeof ANTHROPIC_MODEL_IDS)[number];
-
-export type AnthropicModelId = KnownAnthropicModelId | (string & {});
-
-export const GOOGLE_MODEL_IDS = [
-  'gemini-2.5-pro',
-  'gemini-2.5-flash',
-  'gemini-2.5-flash-lite',
-  'gemini-3-pro',
-  'gemini-3-flash',
-  'gemini-3.1-pro',
-  'gemini-3.1-flash-lite',
-] as const;
-
-export type KnownGoogleModelId = (typeof GOOGLE_MODEL_IDS)[number];
-
-export type GoogleModelId = KnownGoogleModelId | (string & {});
-
-export type KnownModelId = KnownOpenAIModelId | KnownAnthropicModelId | KnownGoogleModelId;
-
 export type ModelProvider = 'openai' | 'anthropic' | 'google';
-export type ModelLifecycle = 'ga' | 'experimental' | 'sunset' | 'deprecated';
+export type ModelLifecycle = 'ga' | 'experimental';
+export type ModelInputType =
+  | 'CLAUDE_CHAT'
+  | 'GEMINI_CHAT'
+  | 'GENERIC_CHAT_COMPLETION'
+  | 'GENERIC_COMPLETION'
+  | 'GENERIC_VISION_COMPLETION'
+  | 'GPT_CHAT_COMPLETION'
+  | 'GPT_WITH_VISION_COMPLETION'
+  | 'OPEN_AI_REASONING'
+  | 'OPEN_AI_RESPONSES';
+export type ModelCost = 'LOW' | 'MEDIUM' | 'HIGH';
+export type ModelClass = 'HEAVYWEIGHT' | 'LIGHTWEIGHT' | 'REASONING';
+export type ModelSpeed = 'LOW' | 'MEDIUM' | 'HIGH';
 
-export interface ModelMetadata {
+export interface ModelPerformance {
+  cost: ModelCost;
+  modelClass: ModelClass;
+  speed: ModelSpeed;
+}
+
+export interface ModelDefinition {
   rid: string;
-  provider: ModelProvider;
+  modelIdentifier: string;
   displayName: string;
+  lifecycle: ModelLifecycle;
+  inputTypes: readonly ModelInputType[];
+  trainingCutoffDate: string;
+  performance: ModelPerformance;
+  externalUrl: string;
+}
+
+export interface ModelMetadata extends ModelDefinition {
+  provider: ModelProvider;
   supportsVision: boolean;
   supportsResponses: boolean;
-  lifecycle: ModelLifecycle;
 }
 
 export interface ResolvedModelTarget {

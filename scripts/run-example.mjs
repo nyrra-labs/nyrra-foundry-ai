@@ -9,11 +9,7 @@ if (!exampleName) {
   fail('Usage: pnpm run example <example-name> [provider] [model-id]');
 }
 
-const examplePath = resolve(
-  workspaceRoot,
-  'examples',
-  exampleName.endsWith('.ts') ? exampleName : `${exampleName}.ts`,
-);
+const examplePath = resolveExamplePath(exampleName);
 
 if (!existsSync(examplePath)) {
   fail(`Unknown example: ${exampleName}`);
@@ -40,6 +36,25 @@ function run(command, args) {
   if (result.status !== 0) {
     process.exit(result.status ?? 1);
   }
+}
+
+function resolveExamplePath(name) {
+  const normalizedName = name.endsWith('.ts') ? name : `${name}.ts`;
+  const candidates = normalizedName.includes('/')
+    ? [resolve(workspaceRoot, 'examples', normalizedName)]
+    : [
+        resolve(workspaceRoot, 'examples', normalizedName),
+        resolve(workspaceRoot, 'examples', 'base', normalizedName),
+        resolve(workspaceRoot, 'examples', 'advanced', normalizedName),
+      ];
+
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  fail(`Unknown example: ${name}`);
 }
 
 function fail(message) {
