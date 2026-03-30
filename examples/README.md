@@ -20,6 +20,7 @@ Supported provider arguments are `openai`, `anthropic`, and `google`.
 - `examples/advanced/streaming.ts`
 - `examples/advanced/structured-output.ts`
 - `examples/advanced/tool-calling-exa.ts`
+- `examples/advanced/tool-calling-exa-parallel.ts`
 
 For the fastest advanced-tool example, use:
 
@@ -31,6 +32,12 @@ That defaults to the OpenAI path. Pass `anthropic` or `google` when you want ano
 
 ```bash
 bun run example:exa anthropic
+```
+
+For the multi-company parallel-search variant, use:
+
+```bash
+bun run example:exa:parallel
 ```
 
 ## Required Env
@@ -52,6 +59,7 @@ pnpm run example structured-output openai
 pnpm run example tool-calling openai
 pnpm run example tool-calling-streaming openai
 pnpm run example tool-calling-exa openai
+pnpm run example tool-calling-exa-parallel openai
 
 # Anthropic
 pnpm run example basic-text anthropic
@@ -60,6 +68,7 @@ pnpm run example structured-output anthropic
 pnpm run example tool-calling anthropic
 pnpm run example tool-calling-streaming anthropic
 pnpm run example tool-calling-exa anthropic
+pnpm run example tool-calling-exa-parallel anthropic
 
 # Google
 pnpm run example basic-text google
@@ -68,6 +77,7 @@ pnpm run example structured-output google
 pnpm run example tool-calling google
 pnpm run example tool-calling-streaming google
 pnpm run example tool-calling-exa google
+pnpm run example tool-calling-exa-parallel google
 
 # Registry composition
 pnpm run example provider-registry
@@ -89,6 +99,7 @@ bun examples/advanced/structured-output.ts openai
 bun examples/base/tool-calling.ts openai
 bun examples/base/tool-calling-streaming.ts openai
 bun examples/advanced/tool-calling-exa.ts openai
+bun examples/advanced/tool-calling-exa-parallel.ts openai
 
 # Anthropic
 bun examples/advanced/basic-text.ts anthropic
@@ -97,6 +108,7 @@ bun examples/advanced/structured-output.ts anthropic
 bun examples/base/tool-calling.ts anthropic
 bun examples/base/tool-calling-streaming.ts anthropic
 bun examples/advanced/tool-calling-exa.ts anthropic
+bun examples/advanced/tool-calling-exa-parallel.ts anthropic
 
 # Google
 bun examples/advanced/basic-text.ts google
@@ -105,6 +117,7 @@ bun examples/advanced/structured-output.ts google
 bun examples/base/tool-calling.ts google
 bun examples/base/tool-calling-streaming.ts google
 bun examples/advanced/tool-calling-exa.ts google
+bun examples/advanced/tool-calling-exa-parallel.ts google
 
 # Registry composition
 bun examples/base/provider-registry.ts
@@ -131,6 +144,10 @@ bun examples/advanced/tool-calling-exa.ts anthropic claude-sonnet-4.6
 ```
 
 ```bash
+pnpm run example tool-calling-exa-parallel anthropic claude-sonnet-4.6
+```
+
+```bash
 pnpm run example streaming anthropic claude-sonnet-4.6
 ```
 
@@ -140,5 +157,6 @@ pnpm run example streaming anthropic claude-sonnet-4.6
 - `examples/base/tool-calling.ts` is the tight blocking tool-call example that ships inside the published skill.
 - `examples/base/tool-calling-streaming.ts` is the tight streaming tool-call example that ships inside the published skill.
 - `examples/advanced/tool-calling-exa.ts` does the same for the full tool loop, including tool calls, tool results, and final text.
+- `examples/advanced/tool-calling-exa-parallel.ts` is the parallel-search variant. It pushes one Exa search per company, prints a compact step summary, and then emits a tight multi-company landscape snapshot.
 - The richer Anthropic reasoning/tool example path defaults to `claude-sonnet-4.6` because that is the model we verified live with `thinking`, `sendReasoning`, `effort`, `toolStreaming`, and `disableParallelToolUse`.
 - The Google examples can use friendly aliases because the package now maps the verified Gemini aliases to Foundry RIDs.

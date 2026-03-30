@@ -8,6 +8,7 @@
     "clean": "pnpm exec nx run foundry-ai:clean --outputStyle=static",
     "example": "node scripts/run-example.mjs",
     "example:exa": "node scripts/run-example.mjs tool-calling-exa",
+    "example:exa:parallel": "node scripts/run-example.mjs tool-calling-exa-parallel",
     "format": "pnpm exec biome check --write .",
     "lint": "pnpm exec nx run foundry-ai:lint --outputStyle=static",
     "test": "pnpm exec nx run foundry-ai:test --outputStyle=static",
