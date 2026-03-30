@@ -6,7 +6,6 @@ on:
       - closed
     branches:
       - main
-  workflow_dispatch:
 
 permissions:
   contents: write
@@ -17,13 +16,80 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  publish:
+  publish-prerelease:
     if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (
-        github.event.pull_request.merged == true &&
-        startsWith(github.event.pull_request.head.ref, 'release/')
-      )
+      github.event.pull_request.merged == true &&
+      !startsWith(github.event.pull_request.head.ref, 'release/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v5
+        name: Install pnpm
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Prepare prerelease version
+        id: meta
+        run: |
+          set -euo pipefail
+          package_root="packages/foundry-ai"
+          name=$(node -p "require('./${package_root}/package.json').name")
+          version=$(node scripts/resolve-next-prerelease-version.mjs rc)
+
+          node scripts/set-package-version.mjs "${package_root}/package.json" "${version}"
+
+          echo "name=${name}" >> "$GITHUB_OUTPUT"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - run: pnpm exec nx run-many -t build package-audit --projects=foundry-ai --outputStyle=static
+
+      - name: Check if already published
+        id: check
+        env:
+          PKG_NAME: ${{ steps.meta.outputs.name }}
+          PKG_VERSION: ${{ steps.meta.outputs.version }}
+          DIST_TAG: next
+        run: |
+          set -euo pipefail
+
+          if npm view "${PKG_NAME}@${PKG_VERSION}" version --registry=https://registry.npmjs.org >/dev/null 2>&1; then
+            current_tag_version=$(npm view "${PKG_NAME}" "dist-tags.${DIST_TAG}" --json --registry=https://registry.npmjs.org 2>/dev/null | tr -d '"')
+
+            if [ "${current_tag_version}" = "${PKG_VERSION}" ]; then
+              echo "already_published=true" >> "$GITHUB_OUTPUT"
+              echo "${PKG_NAME}@${PKG_VERSION} is already published with dist-tag ${DIST_TAG}; skipping publish."
+              exit 0
+            fi
+
+            echo "::error::${PKG_NAME}@${PKG_VERSION} already exists, but dist-tag ${DIST_TAG} points to ${current_tag_version:-<unset>}. Retagging is intentionally not handled by this workflow."
+            exit 1
+          fi
+
+          echo "already_published=false" >> "$GITHUB_OUTPUT"
+
+      - name: Publish prerelease to npm
+        if: steps.check.outputs.already_published != 'true'
+        run: |
+          cd packages/foundry-ai
+          # Clear any ambient token so npm uses GitHub OIDC trusted publishing.
+          NODE_AUTH_TOKEN="" npm publish --access public --tag next
+
+  publish-stable:
+    if: >-
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'release/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -55,22 +121,19 @@ jobs:
           version=$(node -p "require('./${package_root}/package.json').version")
 
           if echo "${version}" | grep -qE '\-'; then
-            dist_tag="next"
-          else
-            dist_tag="latest"
+            echo "::error::Expected a stable version on main after merging a release PR, but found ${version}."
+            exit 1
           fi
 
           echo "name=${name}" >> "$GITHUB_OUTPUT"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
-          echo "dist_tag=${dist_tag}" >> "$GITHUB_OUTPUT"
-          echo "is_stable=$([ "${dist_tag}" = "latest" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
       - name: Check if already published
         id: check
         env:
           PKG_NAME: ${{ steps.meta.outputs.name }}
           PKG_VERSION: ${{ steps.meta.outputs.version }}
-          DIST_TAG: ${{ steps.meta.outputs.dist_tag }}
+          DIST_TAG: latest
         run: |
           set -euo pipefail
 
@@ -89,17 +152,14 @@ jobs:
 
           echo "already_published=false" >> "$GITHUB_OUTPUT"
 
-      - name: Publish to npm
+      - name: Publish stable to npm
         if: steps.check.outputs.already_published != 'true'
-        env:
-          DIST_TAG: ${{ steps.meta.outputs.dist_tag }}
         run: |
           cd packages/foundry-ai
           # Clear any ambient token so npm uses GitHub OIDC trusted publishing.
-          NODE_AUTH_TOKEN="" npm publish --access public --tag "${DIST_TAG}"
+          NODE_AUTH_TOKEN="" npm publish --access public --tag latest
 
-      - name: Tag release
-        if: steps.meta.outputs.is_stable == 'true'
+      - name: Tag stable release
         env:
           PKG_NAME: ${{ steps.meta.outputs.name }}
           PKG_VERSION: ${{ steps.meta.outputs.version }}
