@@ -41,6 +41,7 @@ Thumbs.db
 .claude/worktrees
 .claude/settings.local.json
 .memory/
+.devtools/
 .env.local
 .dev.vars
 .wrangler

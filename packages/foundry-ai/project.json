@@ -41,6 +41,14 @@
       },
       "cache": false
     },
+    "test-live-devtools": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "LIVE_USE_DEVTOOLS=1 node scripts/run-live-capability-suite.mjs",
+        "cwd": "{workspaceRoot}"
+      },
+      "cache": false
+    },
     "docs-harness-results": {
       "executor": "nx:run-commands",
       "options": {

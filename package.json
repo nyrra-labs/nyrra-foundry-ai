@@ -11,10 +11,12 @@
     "lint": "pnpm exec nx run foundry-ai:lint --outputStyle=static",
     "test": "pnpm exec nx run foundry-ai:test --outputStyle=static",
     "test:live": "pnpm exec nx run foundry-ai:test-live --outputStyle=static",
+    "test:live:devtools": "pnpm exec nx run foundry-ai:test-live-devtools --outputStyle=static",
     "typecheck": "pnpm exec nx run foundry-ai:typecheck --outputStyle=static",
     "release": "pnpm exec nx release"
   },
   "devDependencies": {
+    "@ai-sdk/devtools": "0.0.15",
     "@ai-sdk/anthropic": "3.0.64",
     "@ai-sdk/google": "3.0.53",
     "@ai-sdk/openai": "3.0.48",
