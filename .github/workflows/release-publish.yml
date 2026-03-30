@@ -6,6 +6,11 @@ on:
       - closed
     branches:
       - main
+    paths:
+      - 'nx.json'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'packages/foundry-ai/**'
 
 permissions:
   contents: write
