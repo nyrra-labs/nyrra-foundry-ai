@@ -3,9 +3,9 @@ import { stepCountIs, streamText } from 'ai';
 import { logExampleError, logExampleValue } from './example-logger.js';
 import { createExampleLanguageModel } from './example-model.js';
 import {
-  TOOL_CALLING_PROMPT,
   createExampleToolSet,
   prepareExampleToolStep,
+  TOOL_CALLING_PROMPT,
 } from './example-tools.js';
 
 const { model, modelId, provider } = createExampleLanguageModel();

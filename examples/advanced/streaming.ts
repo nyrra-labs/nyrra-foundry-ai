@@ -12,21 +12,21 @@ type ExampleProviderOptions = NonNullable<Parameters<typeof streamText>[0]['prov
 const providerOptions: ExampleProviderOptions =
   provider === 'openai'
     ? {
-      openai: {
-        reasoningEffort: 'low',
-        textVerbosity: 'low',
-      } satisfies OpenAILanguageModelResponsesOptions,
-    }
+        openai: {
+          reasoningEffort: 'low',
+          textVerbosity: 'low',
+        } satisfies OpenAILanguageModelResponsesOptions,
+      }
     : provider === 'anthropic'
       ? {
-        anthropic: {
-          thinking: {
-            type: 'enabled',
-            budgetTokens: 1024,
-          },
-          sendReasoning: true,
-        } satisfies AnthropicLanguageModelOptions,
-      }
+          anthropic: {
+            thinking: {
+              type: 'enabled',
+              budgetTokens: 1024,
+            },
+            sendReasoning: true,
+          } satisfies AnthropicLanguageModelOptions,
+        }
       : {};
 
 const result = streamText({

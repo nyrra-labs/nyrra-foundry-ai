@@ -1,5 +1,6 @@
 import { webSearch } from '@exalabs/ai-sdk';
-import { stepCountIs, streamText } from 'ai';
+import { stepCountIs, streamText, tool } from 'ai';
+import { z } from 'zod';
 import { logExampleError, logExampleValue } from '../base/example-logger.js';
 import { createExampleLanguageModel, requireEnv } from '../base/example-model.js';
 import { createExaProviderOptions, logDevToolsHint, wrapWithDevTools } from './exa-shared.js';
@@ -17,25 +18,24 @@ const {
   model: baseModel,
   modelId,
   provider,
+  // Agentic multi-step tool use with unconstrained search requires mid-tier+ models.
+  // Nano/lite models get stuck in tool-call loops without generating text.
 } = createExampleLanguageModel(undefined, {
   anthropicModel: 'claude-sonnet-4.6',
-  googleModel: 'gemini-3.1-flash-lite',
-  openaiModel: 'gpt-5.4-nano',
+  googleModel: 'gemini-3-flash',
+  openaiModel: 'gpt-5.4-mini',
 });
 const model = wrapWithDevTools(baseModel);
 const prompt = `
-Build a fast drug landscape snapshot for these five companies:
+Research these five companies and build a drug landscape snapshot:
 ${DEFAULT_COMPANIES.map((company) => `- ${company}`).join('\n')}
 
-Rules:
-- Use one separate webSearch tool call per company.
-- Make the company searches in parallel when the model supports it.
-- Keep the first-pass search query focused on approved drugs and late-stage pipeline. Do not put "Palantir" in the search query unless you need a follow-up search.
-- For each company, list 1-3 approved or marketed drugs.
-- For each company, list 1-3 unreleased assets that are late-stage, pivotal, filed, or otherwise the most important disclosed pipeline programs.
-- If a company has no approved drugs, say "none found".
-- Note whether the sources in this run mention a Palantir relationship. If not, say "not cited in this run".
-- Keep the final answer tight and use one markdown subsection per company.
+For each company, find:
+- 1-3 approved or marketed drugs (say "none found" if unclear)
+- 1-3 late-stage pipeline assets worth watching
+- Whether the sources mention a Palantir data/AI partnership (say "not cited" if not)
+
+Search for as many companies as you can at once. If initial results are thin for any company, do a follow-up search. If you spot something surprising or strategically notable, flag it for review. Keep the final answer tight with one markdown subsection per company.
 `.trim();
 const tools = {
   webSearch: webSearch({
@@ -44,11 +44,24 @@ const tools = {
     },
     numResults: 4,
   }),
+  flagForReview: tool({
+    description:
+      'Flag a notable finding that deserves deeper analysis — unexpected partnerships, regulatory signals, or strategic pivots.',
+    inputSchema: z.object({
+      company: z.string(),
+      finding: z.string(),
+      reason: z.string().describe('Why this is worth flagging'),
+    }),
+    execute: async (flag) => {
+      logExampleValue({ type: 'flagged', ...flag });
+      return { acknowledged: true };
+    },
+  }),
 };
 const result = streamText({
   model,
   prompt,
-  stopWhen: stepCountIs(4),
+  stopWhen: stepCountIs(6),
   providerOptions: createExaProviderOptions(provider, {
     parallelToolUse: true,
   }),

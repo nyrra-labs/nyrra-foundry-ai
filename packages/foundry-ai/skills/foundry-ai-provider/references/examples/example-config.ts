@@ -22,7 +22,7 @@ export function resolveCliProvider(defaultProvider: ExampleProvider = 'openai'):
   }
 
   throw new Error(
-    `Unsupported provider "${provider}". Expected "openai", "anthropic", or "google".`
+    `Unsupported provider "${provider}". Expected "openai", "anthropic", or "google".`,
   );
 }
 
