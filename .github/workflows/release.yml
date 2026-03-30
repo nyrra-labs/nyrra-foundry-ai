@@ -88,8 +88,8 @@ jobs:
         if: steps.check.outputs.already_published != 'true'
         run: |
           cd packages/foundry-ai
-          # Clear any ambient token so npm uses GitHub OIDC trusted publishing.
-          NODE_AUTH_TOKEN="" npm publish --access public --tag next
+          # Clear ambient token so npm falls through to GitHub OIDC trusted publishing.
+          NODE_AUTH_TOKEN="" npm publish --access public --tag next --provenance
 
   publish-stable:
     if: >-
@@ -161,8 +161,8 @@ jobs:
         if: steps.check.outputs.already_published != 'true'
         run: |
           cd packages/foundry-ai
-          # Clear any ambient token so npm uses GitHub OIDC trusted publishing.
-          NODE_AUTH_TOKEN="" npm publish --access public --tag latest
+          # Clear ambient token so npm falls through to GitHub OIDC trusted publishing.
+          NODE_AUTH_TOKEN="" npm publish --access public --tag latest --provenance
 
       - name: Tag stable release
         env:
