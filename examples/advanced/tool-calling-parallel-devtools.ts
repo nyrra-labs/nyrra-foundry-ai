@@ -3,7 +3,7 @@ import { webSearch } from '@exalabs/ai-sdk';
 import type { AnthropicModelId } from '@nyrra/foundry-ai';
 import { loadFoundryConfig } from '@nyrra/foundry-ai';
 import { createFoundryAnthropic } from '@nyrra/foundry-ai/anthropic';
-import { stepCountIs, streamText, tool } from 'ai';
+import { type LanguageModelUsage, stepCountIs, ToolLoopAgent, tool } from 'ai';
 import { z } from 'zod';
 import { requireEnv } from '../base/config.js';
 import { logError, logValue } from '../base/logger.js';
@@ -11,7 +11,40 @@ import { logDevToolsHint, wrapWithDevTools } from './devtools-instrumentation.js
 
 requireEnv('EXA_API_KEY');
 
-type ProviderOptions = NonNullable<Parameters<typeof streamText>[0]['providerOptions']>;
+type ProviderOptions = NonNullable<
+  ConstructorParameters<typeof ToolLoopAgent>[0]['providerOptions']
+>;
+type ToolSummary = {
+  input: unknown;
+  outputPreview?: string;
+  toolName: string;
+};
+type UsageSummary = {
+  cachedInputTokens: number | undefined;
+  inputTokens: number | undefined;
+  outputTokens: number | undefined;
+  reasoningTokens: number | undefined;
+  totalTokens: number | undefined;
+};
+type StepSummary = {
+  finishReason: string;
+  reasoningPreview?: string;
+  sourceCount: number;
+  stepNumber: number;
+  textPreview?: string;
+  toolCalls: ToolSummary[];
+  toolResults: ToolSummary[];
+  usage: UsageSummary;
+};
+type FinishSummary = {
+  finishReason: string;
+  reasoningPreview?: string;
+  stepCount: number;
+  toolCalls: ToolSummary[];
+  toolResults: ToolSummary[];
+  totalUsage: UsageSummary;
+  type: 'finish';
+};
 
 const DEFAULT_COMPANIES = [
   'Merck KGaA, Darmstadt, Germany',
@@ -68,18 +101,61 @@ const providerOptions: ProviderOptions = {
     toolStreaming: true,
   } satisfies AnthropicLanguageModelOptions,
 };
-const result = streamText({
+const stepSummaries: StepSummary[] = [];
+let finishSummary: FinishSummary | undefined;
+
+const agent = new ToolLoopAgent({
   model,
-  prompt,
-  stopWhen: stepCountIs(6),
+  instructions:
+    'Search broadly, batch company lookups when useful, and keep working until you can deliver a tight markdown snapshot with one subsection per company. Use flagForReview sparingly, and stop searching once you have enough evidence to write the final snapshot.',
+  stopWhen: stepCountIs(8),
   providerOptions,
   tools,
-  onFinish({ text, toolCalls, toolResults, finishReason }) {
-    logValue({ type: 'finish', finishReason, toolCalls, toolResults });
-    logValue({ type: 'final-text', text });
+  prepareStep({ stepNumber }) {
+    // Leave the final steps for synthesis instead of spending the full loop budget on follow-up searches.
+    if (stepNumber >= 6) {
+      return { activeTools: [] };
+    }
+
+    return undefined;
   },
-  onError({ error }) {
-    logError({ type: 'error', error });
+  onStepFinish(step) {
+    stepSummaries.push({
+      finishReason: step.finishReason,
+      reasoningPreview: compactText(step.reasoningText),
+      sourceCount: step.sources.length,
+      stepNumber: step.stepNumber,
+      textPreview: compactText(step.text),
+      toolCalls: step.toolCalls.map((toolCall) => summarizeTool(toolCall.toolName, toolCall.input)),
+      toolResults: step.toolResults.map((toolResult) =>
+        summarizeTool(toolResult.toolName, toolResult.input, toolResult.output),
+      ),
+      usage: summarizeUsage(step.usage),
+    });
+  },
+  onFinish(event) {
+    const allToolCalls = event.steps.flatMap((step) =>
+      step.toolCalls.map((toolCall) => summarizeTool(toolCall.toolName, toolCall.input)),
+    );
+    const allToolResults = event.steps.flatMap((step) =>
+      step.toolResults.map((toolResult) =>
+        summarizeTool(toolResult.toolName, toolResult.input, toolResult.output),
+      ),
+    );
+
+    finishSummary = {
+      finishReason: event.finishReason,
+      reasoningPreview: compactText(
+        event.steps
+          .map((step) => step.reasoningText)
+          .findLast((reasoningText) => reasoningText != null && reasoningText.trim().length > 0),
+      ),
+      stepCount: event.steps.length,
+      toolCalls: allToolCalls,
+      toolResults: allToolResults,
+      totalUsage: summarizeUsage(event.totalUsage),
+      type: 'finish',
+    };
   },
 });
 
@@ -88,7 +164,75 @@ console.log(`model: ${modelId}`);
 console.log(`companies: ${DEFAULT_COMPANIES.join(', ')}`);
 logDevToolsHint();
 
-// Stream text to stdout
-for await (const chunk of result.textStream) {
-  process.stdout.write(chunk);
+try {
+  const result = await agent.stream({ prompt });
+
+  for await (const chunk of result.textStream) {
+    process.stdout.write(chunk);
+  }
+
+  process.stdout.write('\n\n');
+  logValue({ type: 'step-summaries', steps: stepSummaries });
+  logValue(
+    finishSummary ?? {
+      finishReason: await result.finishReason,
+      reasoningPreview: stepSummaries
+        .map((step) => step.reasoningPreview)
+        .findLast((reasoningText) => reasoningText != null),
+      stepCount: stepSummaries.length,
+      toolCalls: stepSummaries.flatMap((step) => step.toolCalls),
+      toolResults: stepSummaries.flatMap((step) => step.toolResults),
+      totalUsage: summarizeUsage(await result.usage),
+      type: 'finish',
+    },
+  );
+} catch (error) {
+  logError({ type: 'error', error });
+  process.exitCode = 1;
+}
+
+function compactText(text: string | undefined, maxLength = 280) {
+  const normalized = text?.replace(/\s+/g, ' ').trim();
+
+  if (!normalized) {
+    return undefined;
+  }
+
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, maxLength - 1)}…`;
+}
+
+function summarizeTool(toolName: string, input: unknown, output?: unknown): ToolSummary {
+  return {
+    input,
+    outputPreview: output == null ? undefined : previewValue(output),
+    toolName,
+  };
+}
+
+function summarizeUsage(usage: LanguageModelUsage): UsageSummary {
+  return {
+    cachedInputTokens: usage.inputTokenDetails.cacheReadTokens ?? usage.cachedInputTokens,
+    inputTokens: usage.inputTokens,
+    outputTokens: usage.outputTokens,
+    reasoningTokens: usage.outputTokenDetails.reasoningTokens ?? usage.reasoningTokens,
+    totalTokens: usage.totalTokens,
+  };
+}
+
+function previewValue(value: unknown, maxLength = 240) {
+  const serialized = JSON.stringify(value);
+
+  if (serialized == null) {
+    return undefined;
+  }
+
+  if (serialized.length <= maxLength) {
+    return serialized;
+  }
+
+  return `${serialized.slice(0, maxLength - 1)}…`;
 }

@@ -53,7 +53,7 @@ Supported provider arguments are `openai`, `anthropic`, and `google`.
 | `tool-calling` | `base/tool-calling.ts` | Blocking tool loop (published skill) |
 | `tool-calling-streaming` | `base/tool-calling-streaming.ts` | Streaming tool loop (published skill) |
 | `tool-calling-devtools` | `advanced/tool-calling-devtools.ts` | DevTools instrumentation with Exa web search and a fixed Anthropic model |
-| `tool-calling-parallel-devtools` | `advanced/tool-calling-parallel-devtools.ts` | Parallel DevTools instrumentation with Exa web search and a fixed Anthropic model |
+| `tool-calling-parallel-devtools` | `advanced/tool-calling-parallel-devtools.ts` | `ToolLoopAgent` with parallel Exa research, step summaries, and DevTools capture |
 | `provider-registry` | `base/provider-registry.ts` | Single registry, multiple providers via `provider:model` strings |
 
 ### Quick shortcuts
@@ -74,7 +74,7 @@ bun examples/advanced/structured-output.ts google gemini-3.1-flash-lite
 
 ## DevTools
 
-The `*-devtools` examples capture every `streamText` call to `.devtools/generations.json`. Start the viewer in a separate terminal:
+The `*-devtools` examples capture every SDK generation to `.devtools/generations.json`. Start the viewer in a separate terminal:
 
 ```bash
 npx @ai-sdk/devtools
