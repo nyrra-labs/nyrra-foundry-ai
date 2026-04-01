@@ -1,18 +1,14 @@
 import { generateText, stepCountIs } from 'ai';
-import { logExampleValue } from './example-logger.js';
-import { createExampleLanguageModel } from './example-model.js';
-import {
-  createExampleToolSet,
-  prepareExampleToolStep,
-  TOOL_CALLING_PROMPT,
-} from './example-tools.js';
+import { logValue } from './logger.js';
+import { createLanguageModel } from './model.js';
+import { createToolSet, prepareToolStep, TOOL_CALLING_PROMPT } from './tools.js';
 
-const { model, modelId, provider } = createExampleLanguageModel();
-const tools = createExampleToolSet();
+const { model, modelId, provider } = createLanguageModel();
+const tools = createToolSet();
 const result = await generateText({
   model,
   prompt: TOOL_CALLING_PROMPT,
-  prepareStep: prepareExampleToolStep,
+  prepareStep: prepareToolStep,
   stopWhen: stepCountIs(2),
   toolChoice: 'required',
   tools,
@@ -22,7 +18,7 @@ const toolResults = result.steps.flatMap((step) => step.toolResults);
 
 console.log(`provider: ${provider}`);
 console.log(`model: ${modelId}`);
-logExampleValue({ type: 'tool-calls', toolCalls });
-logExampleValue({ type: 'tool-results', toolResults });
-logExampleValue({ type: 'steps', steps: result.steps.length });
-logExampleValue({ type: 'final-text', text: result.text });
+logValue({ type: 'tool-calls', toolCalls });
+logValue({ type: 'tool-results', toolResults });
+logValue({ type: 'steps', steps: result.steps.length });
+logValue({ type: 'final-text', text: result.text });

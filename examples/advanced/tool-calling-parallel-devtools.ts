@@ -1,11 +1,17 @@
+import type { AnthropicLanguageModelOptions } from '@ai-sdk/anthropic';
 import { webSearch } from '@exalabs/ai-sdk';
+import type { AnthropicModelId } from '@nyrra/foundry-ai';
+import { loadFoundryConfig } from '@nyrra/foundry-ai';
+import { createFoundryAnthropic } from '@nyrra/foundry-ai/anthropic';
 import { stepCountIs, streamText, tool } from 'ai';
 import { z } from 'zod';
-import { logExampleError, logExampleValue } from '../base/example-logger.js';
-import { createExampleLanguageModel, requireEnv } from '../base/example-model.js';
-import { createExaProviderOptions, logDevToolsHint, wrapWithDevTools } from './exa-shared.js';
+import { requireEnv } from '../base/config.js';
+import { logError, logValue } from '../base/logger.js';
+import { logDevToolsHint, wrapWithDevTools } from './devtools-instrumentation.js';
 
 requireEnv('EXA_API_KEY');
+
+type ProviderOptions = NonNullable<Parameters<typeof streamText>[0]['providerOptions']>;
 
 const DEFAULT_COMPANIES = [
   'Merck KGaA, Darmstadt, Germany',
@@ -14,18 +20,12 @@ const DEFAULT_COMPANIES = [
   'Roivant Sciences',
   'BioNTech',
 ] as const;
-const {
-  model: baseModel,
-  modelId,
-  provider,
-  // Agentic multi-step tool use with unconstrained search requires mid-tier+ models.
-  // Nano/lite models get stuck in tool-call loops without generating text.
-} = createExampleLanguageModel(undefined, {
-  anthropicModel: 'claude-sonnet-4.6',
-  googleModel: 'gemini-3-flash',
-  openaiModel: 'gpt-5.4-mini',
-});
-const model = wrapWithDevTools(baseModel);
+const config = loadFoundryConfig();
+const provider = 'anthropic';
+// Agentic multi-step tool use with unconstrained search requires mid-tier+ models.
+// Nano/lite models get stuck in tool-call loops without generating text.
+const modelId: AnthropicModelId = 'claude-sonnet-4.6';
+const model = wrapWithDevTools(createFoundryAnthropic(config)(modelId));
 const prompt = `
 Research these five companies and build a drug landscape snapshot:
 ${DEFAULT_COMPANIES.map((company) => `- ${company}`).join('\n')}
@@ -53,25 +53,33 @@ const tools = {
       reason: z.string().describe('Why this is worth flagging'),
     }),
     execute: async (flag) => {
-      logExampleValue({ type: 'flagged', ...flag });
+      logValue({ type: 'flagged', ...flag });
       return { acknowledged: true };
     },
   }),
+};
+const providerOptions: ProviderOptions = {
+  anthropic: {
+    thinking: {
+      type: 'enabled',
+      budgetTokens: 1024,
+    },
+    sendReasoning: true,
+    toolStreaming: true,
+  } satisfies AnthropicLanguageModelOptions,
 };
 const result = streamText({
   model,
   prompt,
   stopWhen: stepCountIs(6),
-  providerOptions: createExaProviderOptions(provider, {
-    parallelToolUse: true,
-  }),
+  providerOptions,
   tools,
   onFinish({ text, toolCalls, toolResults, finishReason }) {
-    logExampleValue({ type: 'finish', finishReason, toolCalls, toolResults });
-    logExampleValue({ type: 'final-text', text });
+    logValue({ type: 'finish', finishReason, toolCalls, toolResults });
+    logValue({ type: 'final-text', text });
   },
   onError({ error }) {
-    logExampleError({ type: 'error', error });
+    logError({ type: 'error', error });
   },
 });
 

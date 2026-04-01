@@ -94,10 +94,10 @@ CI runs lint, unit tests, typecheck, build, TanStack Intent validation, and a pa
 
 ## Developer Tooling
 
-- AI SDK DevTools is wired into the live harness and the advanced Exa examples. The middleware captures every `streamText` call — tool invocations, results, token usage, and full request/response payloads — into `.devtools/generations.json`. Start the viewer in a separate terminal with `npx @ai-sdk/devtools` and open `http://localhost:4983`. For the live harness: `pnpm test:live:devtools -- --no-update-docs -t "openai:gpt-5-mini"`. For the Exa examples: `pnpm run example:exa` or `pnpm run example:exa:parallel`.
+- AI SDK DevTools is wired into the live harness and the advanced DevTools instrumentation examples. The middleware captures every `streamText` call — tool invocations, results, token usage, and full request/response payloads — into `.devtools/generations.json`. Start the viewer in a separate terminal with `npx @ai-sdk/devtools` and open `http://localhost:4983`. For the live harness: `pnpm test:live:devtools -- --no-update-docs -t "openai:gpt-5-mini"`. For the advanced examples: `pnpm run example:devtools` or `pnpm run example:devtools:parallel`.
 - TanStack Intent validates the published skill surface with `pnpm exec intent validate packages/foundry-ai/skills`.
 - In consumer repos, TanStack Intent discovers the installed package from `node_modules`. After adding `@nyrra/foundry-ai` to the app, run `npx @tanstack/intent@latest list` and map `node_modules/@nyrra/foundry-ai/skills/foundry-ai-provider/SKILL.md` in your agent config.
-- The safe example runner builds first and then executes with Bun when available. Start with `pnpm run example tool-calling openai`, `bun run example:exa`, or `bun run example:exa:parallel`.
+- The safe example runner builds first and then executes with Bun when available. Start with `pnpm run example tool-calling openai`, `bun run example:devtools`, or `bun run example:devtools:parallel`.
 
 ## Docs And Examples
 

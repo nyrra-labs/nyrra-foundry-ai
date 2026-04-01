@@ -3,6 +3,7 @@
   "compilerOptions": {
     "declaration": true,
     "emitDeclarationOnly": false,
+    "ignoreDeprecations": "6.0",
     "noEmit": false,
     "outDir": "../../out-tsc/packages/foundry-ai/lib",
     "tsBuildInfoFile": "../../out-tsc/packages/foundry-ai/tsconfig.lib.tsbuildinfo"

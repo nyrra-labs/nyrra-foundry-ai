@@ -1,28 +1,24 @@
 import process from 'node:process';
 import { stepCountIs, streamText } from 'ai';
-import { logExampleError, logExampleValue } from './example-logger.js';
-import { createExampleLanguageModel } from './example-model.js';
-import {
-  createExampleToolSet,
-  prepareExampleToolStep,
-  TOOL_CALLING_PROMPT,
-} from './example-tools.js';
+import { logError, logValue } from './logger.js';
+import { createLanguageModel } from './model.js';
+import { createToolSet, prepareToolStep, TOOL_CALLING_PROMPT } from './tools.js';
 
-const { model, modelId, provider } = createExampleLanguageModel();
-const tools = createExampleToolSet();
+const { model, modelId, provider } = createLanguageModel();
+const tools = createToolSet();
 const result = streamText({
   model,
   prompt: TOOL_CALLING_PROMPT,
-  prepareStep: prepareExampleToolStep,
+  prepareStep: prepareToolStep,
   stopWhen: stepCountIs(2),
   toolChoice: 'required',
   tools,
   onFinish({ text, toolCalls, toolResults, finishReason }) {
-    logExampleValue({ type: 'finish', finishReason, toolCalls, toolResults });
-    logExampleValue({ type: 'final-text', text });
+    logValue({ type: 'finish', finishReason, toolCalls, toolResults });
+    logValue({ type: 'final-text', text });
   },
   onError({ error }) {
-    logExampleError({ type: 'error', error });
+    logError({ type: 'error', error });
   },
 });
 

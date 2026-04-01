@@ -6,7 +6,7 @@ const workspaceRoot = process.cwd();
 const [exampleName, ...exampleArgs] = process.argv.slice(2);
 
 if (!exampleName) {
-  fail('Usage: pnpm run example <example-name> [provider] [model-id]');
+  fail('Usage: pnpm run example <example-name> [args...]');
 }
 
 const examplePath = resolveExamplePath(exampleName);
@@ -39,7 +39,7 @@ function run(command, args) {
 }
 
 function resolveExamplePath(name) {
-  const normalizedName = name.endsWith('.ts') ? name : `${name}.ts`;
+  const normalizedName = resolveExampleAlias(name.endsWith('.ts') ? name : `${name}.ts`);
   const candidates = normalizedName.includes('/')
     ? [resolve(workspaceRoot, 'examples', normalizedName)]
     : [
@@ -55,6 +55,26 @@ function resolveExamplePath(name) {
   }
 
   fail(`Unknown example: ${name}`);
+}
+
+function resolveExampleAlias(name) {
+  if (name === 'tool-calling-exa-devtools.ts') {
+    return 'tool-calling-devtools.ts';
+  }
+
+  if (name === 'tool-calling-exa-parallel-devtools.ts') {
+    return 'tool-calling-parallel-devtools.ts';
+  }
+
+  if (name === 'exa-tool-calling-devtools.ts') {
+    return 'tool-calling-devtools.ts';
+  }
+
+  if (name === 'exa-tool-calling-parallel-devtools.ts') {
+    return 'tool-calling-parallel-devtools.ts';
+  }
+
+  return name;
 }
 
 function fail(message) {

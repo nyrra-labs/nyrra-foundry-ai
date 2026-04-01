@@ -4,14 +4,29 @@ import { getLiveCapabilityModelMatrix } from './helpers/live-capabilities.js';
 const originalEnv = {
   FOUNDRY_TOKEN: process.env.FOUNDRY_TOKEN,
   FOUNDRY_URL: process.env.FOUNDRY_URL,
+  LIVE_MODEL_FILTER: process.env.LIVE_MODEL_FILTER,
   LIVE_MODEL_SCOPE: process.env.LIVE_MODEL_SCOPE,
+  LIVE_PROVIDER_FILTER: process.env.LIVE_PROVIDER_FILTER,
 };
 
 describe('live capability model matrix', () => {
   afterEach(() => {
     restoreEnv('FOUNDRY_TOKEN', originalEnv.FOUNDRY_TOKEN);
     restoreEnv('FOUNDRY_URL', originalEnv.FOUNDRY_URL);
+    restoreEnv('LIVE_MODEL_FILTER', originalEnv.LIVE_MODEL_FILTER);
     restoreEnv('LIVE_MODEL_SCOPE', originalEnv.LIVE_MODEL_SCOPE);
+    restoreEnv('LIVE_PROVIDER_FILTER', originalEnv.LIVE_PROVIDER_FILTER);
+  });
+
+  it('defaults to the fast canonical model set', () => {
+    process.env.FOUNDRY_URL = 'https://example.palantirfoundry.com';
+    process.env.FOUNDRY_TOKEN = 'token-123';
+
+    const matrix = getLiveCapabilityModelMatrix();
+
+    expect(matrix.anthropic).toEqual(['claude-haiku-4.5']);
+    expect(matrix.google).toEqual(['gemini-3.1-flash-lite']);
+    expect(matrix.openai).toEqual(['gpt-5-nano']);
   });
 
   it('only surveys current public catalog aliases', () => {
@@ -26,10 +41,47 @@ describe('live capability model matrix', () => {
     expect(matrix.openai).not.toContain('gpt-4o-mini');
     expect(matrix.google).not.toContain('gemini-3-pro');
   });
+
+  it('keeps catalog coverage in descending model order after the preferred model', () => {
+    process.env.FOUNDRY_URL = 'https://example.palantirfoundry.com';
+    process.env.FOUNDRY_TOKEN = 'token-123';
+    process.env.LIVE_MODEL_SCOPE = 'catalog';
+
+    const matrix = getLiveCapabilityModelMatrix();
+
+    expect(matrix.openai[0]).toBe('gpt-5-nano');
+    expect(matrix.anthropic[0]).toBe('claude-haiku-4.5');
+    expect(matrix.openai.indexOf('gpt-5.4')).toBeLessThan(matrix.openai.indexOf('gpt-4.1'));
+    expect(matrix.anthropic.indexOf('claude-sonnet-4.6')).toBeLessThan(
+      matrix.anthropic.indexOf('claude-3.5-haiku'),
+    );
+    expect(matrix.google.indexOf('gemini-3.1-pro')).toBeLessThan(
+      matrix.google.indexOf('gemini-2.5-pro'),
+    );
+  });
+
+  it('filters the matrix to a selected provider and model', () => {
+    process.env.FOUNDRY_URL = 'https://example.palantirfoundry.com';
+    process.env.FOUNDRY_TOKEN = 'token-123';
+    process.env.LIVE_MODEL_SCOPE = 'catalog';
+    process.env.LIVE_PROVIDER_FILTER = 'openai';
+    process.env.LIVE_MODEL_FILTER = 'gpt-4.1-mini';
+
+    const matrix = getLiveCapabilityModelMatrix();
+
+    expect(matrix.openai).toEqual(['gpt-4.1-mini']);
+    expect(matrix.anthropic).toEqual([]);
+    expect(matrix.google).toEqual([]);
+  });
 });
 
 function restoreEnv(
-  key: 'FOUNDRY_TOKEN' | 'FOUNDRY_URL' | 'LIVE_MODEL_SCOPE',
+  key:
+    | 'FOUNDRY_TOKEN'
+    | 'FOUNDRY_URL'
+    | 'LIVE_MODEL_FILTER'
+    | 'LIVE_MODEL_SCOPE'
+    | 'LIVE_PROVIDER_FILTER',
   value: string | undefined,
 ) {
   if (value == null) {
