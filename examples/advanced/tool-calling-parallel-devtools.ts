@@ -146,9 +146,7 @@ const agent = new ToolLoopAgent({
     finishSummary = {
       finishReason: event.finishReason,
       reasoningPreview: compactText(
-        event.steps
-          .map((step) => step.reasoningText)
-          .findLast((reasoningText) => reasoningText != null && reasoningText.trim().length > 0),
+        getLastNonEmptyValue(event.steps.map((step) => step.reasoningText)),
       ),
       stepCount: event.steps.length,
       toolCalls: allToolCalls,
@@ -176,9 +174,7 @@ try {
   logValue(
     finishSummary ?? {
       finishReason: await result.finishReason,
-      reasoningPreview: stepSummaries
-        .map((step) => step.reasoningPreview)
-        .findLast((reasoningText) => reasoningText != null),
+      reasoningPreview: getLastNonEmptyValue(stepSummaries.map((step) => step.reasoningPreview)),
       stepCount: stepSummaries.length,
       toolCalls: stepSummaries.flatMap((step) => step.toolCalls),
       toolResults: stepSummaries.flatMap((step) => step.toolResults),
@@ -203,6 +199,18 @@ function compactText(text: string | undefined, maxLength = 280) {
   }
 
   return `${normalized.slice(0, maxLength - 1)}…`;
+}
+
+function getLastNonEmptyValue(values: Array<string | undefined>) {
+  for (let index = values.length - 1; index >= 0; index -= 1) {
+    const value = values[index]?.trim();
+
+    if (value) {
+      return value;
+    }
+  }
+
+  return undefined;
 }
 
 function summarizeTool(toolName: string, input: unknown, output?: unknown): ToolSummary {
