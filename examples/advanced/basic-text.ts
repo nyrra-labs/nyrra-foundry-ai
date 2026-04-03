@@ -1,7 +1,12 @@
+import type { OpenAIModelId } from '@nyrra/foundry-ai';
+import { loadFoundryConfig } from '@nyrra/foundry-ai';
+import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
 import { generateText } from 'ai';
-import { createExampleLanguageModel } from '../base/example-model.js';
 
-const { model, modelId, provider } = createExampleLanguageModel();
+const config = loadFoundryConfig();
+const provider = 'openai';
+const modelId: OpenAIModelId = 'gpt-5.4-nano';
+const model = createFoundryOpenAI(config)(modelId);
 
 const result = await generateText({
   model,

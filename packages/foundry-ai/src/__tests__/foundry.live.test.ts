@@ -9,21 +9,23 @@ import {
   streamText,
   ToolLoopAgent,
 } from 'ai';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, type TestContext } from 'vitest';
 import { createFoundryAnthropic } from '../providers/anthropic.js';
 import { createFoundryGoogle } from '../providers/google.js';
 import { createFoundryOpenAI } from '../providers/openai.js';
 import {
   assertModelClaimsVision,
-  CapabilitySkippedError,
+  type CapabilityCaseSpec,
   createVisionMessages,
   getEmbeddingProbeModelIds,
+  getLiveCapabilityFilters,
   getLiveCapabilityModelMatrix,
   getLiveCapabilityModels,
   getVisionProbeImageBytes,
   getVisionProbeModelIds,
   LiveCapabilityRecorder,
   type LiveProvider,
+  shouldIncludeLiveCapabilityCase,
 } from './helpers/live-capabilities.js';
 import {
   collectStreamSummary,
@@ -48,6 +50,7 @@ import { wrapLiveModelWithDevTools } from './helpers/live-devtools.js';
 import { loadLiveFoundryConfig } from './helpers/live-foundry.js';
 
 const config = loadLiveFoundryConfig();
+const liveFilters = getLiveCapabilityFilters();
 const models = getLiveCapabilityModels();
 const modelMatrix = getLiveCapabilityModelMatrix();
 const openai = createFoundryOpenAI(config);
@@ -62,6 +65,20 @@ const recorder = new LiveCapabilityRecorder();
 const embeddingModels = getEmbeddingProbeModelIds();
 const visionProbeImageBytes = getVisionProbeImageBytes();
 const visionModels = getVisionProbeModelIds();
+
+function skipCapabilityCase(
+  ctx: TestContext,
+  spec: CapabilityCaseSpec,
+  message: string,
+  details?: Record<string, unknown>,
+) {
+  recorder.recordSkippedCase(spec, message, details);
+  ctx.skip(message);
+}
+
+function shouldIncludeSharedProviderProbe(provider: LiveProvider) {
+  return liveFilters.modelId == null && shouldIncludeLiveCapabilityCase(provider);
+}
 
 const directOpenAI = createOpenAI({
   apiKey: config.token,
@@ -397,70 +414,71 @@ describe('live Foundry capability matrix', () => {
       });
 
       // Keep reasoning probes serial so the survey reflects provider behavior instead of load-sensitive stream failures.
-      it(`${provider}:${modelId}: reasoning visibility or options`, async () => {
-        await recorder.runCase(
-          {
-            capability: 'reasoning.visibility',
-            expectation: getReasoningExpectation(provider, modelId, models[provider]),
-            modelId,
-            provider,
-          },
-          async (telemetry) => {
-            if (provider === 'google') {
-              throw new CapabilitySkippedError(
-                'Google reasoning visibility is not currently asserted in this matrix.',
-                {
-                  provider,
-                },
-              );
-            }
+      it(`${provider}:${modelId}: reasoning visibility or options`, async (ctx) => {
+        const spec: CapabilityCaseSpec = {
+          capability: 'reasoning.visibility',
+          expectation: getReasoningExpectation(provider, modelId, models[provider]),
+          modelId,
+          provider,
+        };
 
-            if (provider === 'openai' && !shouldAssertOpenAIReasoning(modelId)) {
-              throw new CapabilitySkippedError(
-                `OpenAI reasoning visibility is not asserted for ${modelId}.`,
-                {
-                  modelId,
-                  provider,
-                },
-              );
-            }
+        if (provider === 'google') {
+          skipCapabilityCase(
+            ctx,
+            spec,
+            'Google reasoning visibility is not currently asserted in this matrix.',
+            {
+              provider,
+            },
+          );
+        }
 
-            const result = streamText({
-              model: getFoundryModel(provider, modelId),
-              prompt: 'Reply with READY and one short clause about reasoning visibility.',
-              maxOutputTokens: 220,
-              providerOptions: getProviderOptions(provider, 'reasoning', modelId),
-              experimental_telemetry: telemetry,
-            });
-            const summary = await collectStreamSummary(result);
+        if (provider === 'openai' && !shouldAssertOpenAIReasoning(modelId)) {
+          skipCapabilityCase(
+            ctx,
+            spec,
+            `OpenAI reasoning visibility is not asserted for ${modelId}.`,
+            {
+              modelId,
+              provider,
+            },
+          );
+        }
 
-            if (provider === 'anthropic') {
-              expect(summary.reasoningText.trim().length).toBeGreaterThan(0);
-            } else {
-              const reasoningEventCount =
-                (summary.eventCounts['reasoning-start'] ?? 0) +
-                (summary.eventCounts['reasoning-delta'] ?? 0) +
-                (summary.eventCounts['reasoning-end'] ?? 0);
-              const reasoningTokenCount =
-                typeof summary.usage === 'object' &&
-                summary.usage !== null &&
-                'reasoningTokens' in summary.usage &&
-                typeof summary.usage.reasoningTokens === 'number'
-                  ? summary.usage.reasoningTokens
-                  : 0;
+        await recorder.runCase(spec, async (telemetry) => {
+          const result = streamText({
+            model: getFoundryModel(provider, modelId),
+            prompt: 'Reply with READY and one short clause about reasoning visibility.',
+            maxOutputTokens: 220,
+            providerOptions: getProviderOptions(provider, 'reasoning', modelId),
+            experimental_telemetry: telemetry,
+          });
+          const summary = await collectStreamSummary(result);
 
-              expect(
-                reasoningEventCount > 0 ||
-                  reasoningTokenCount > 0 ||
-                  /reasoning/i.test(summary.text),
-              ).toBe(true);
-            }
+          if (provider === 'anthropic') {
+            expect(summary.reasoningText.trim().length).toBeGreaterThan(0);
+          } else {
+            const reasoningEventCount =
+              (summary.eventCounts['reasoning-start'] ?? 0) +
+              (summary.eventCounts['reasoning-delta'] ?? 0) +
+              (summary.eventCounts['reasoning-end'] ?? 0);
+            const reasoningTokenCount =
+              typeof summary.usage === 'object' &&
+              summary.usage !== null &&
+              'reasoningTokens' in summary.usage &&
+              typeof summary.usage.reasoningTokens === 'number'
+                ? summary.usage.reasoningTokens
+                : 0;
 
-            expect(summary.text).toMatch(/ready/i);
+            expect(
+              reasoningEventCount > 0 || reasoningTokenCount > 0 || /reasoning/i.test(summary.text),
+            ).toBe(true);
+          }
 
-            return summary;
-          },
-        );
+          expect(summary.text).toMatch(/ready/i);
+
+          return summary;
+        });
       });
 
       for (const unsupportedCapability of [
@@ -470,22 +488,19 @@ describe('live Foundry capability matrix', () => {
         'modality.video',
         'modality.rerank',
       ] as const) {
-        modelCase(`${provider}:${modelId}: ${unsupportedCapability}`, async () => {
-          await recorder.runCase(
+        modelCase(`${provider}:${modelId}: ${unsupportedCapability}`, async (ctx) => {
+          skipCapabilityCase(
+            ctx,
             {
               capability: unsupportedCapability,
               expectation: 'investigate',
               modelId,
               provider,
             },
-            async () => {
-              throw new CapabilitySkippedError(
-                `${provider}.${unsupportedCapability} is not supported by the package yet.`,
-                {
-                  capability: unsupportedCapability,
-                  provider,
-                },
-              );
+            `${provider}.${unsupportedCapability} is not supported by the package yet.`,
+            {
+              capability: unsupportedCapability,
+              provider,
             },
           );
         });
@@ -493,67 +508,72 @@ describe('live Foundry capability matrix', () => {
     }
   }
 
-  it('registry routing across all configured providers', async () => {
-    await recorder.runCase(
-      {
-        capability: 'registry.routing',
-        expectation: 'must-pass',
-        modelId: `${models.openai},${models.anthropic},${models.google}`,
-        provider: 'openai',
-      },
-      async (telemetry) => {
-        const openAiResult = await generateText({
-          model: getRegistryModel('openai', models.openai),
-          prompt: 'Reply with exactly "OPENAI: registry routing is active."',
-          maxOutputTokens: 420,
-          providerOptions: getProviderOptions('openai', 'baseline'),
-          experimental_telemetry: telemetry,
-        });
-        const anthropicResult = await generateText({
-          model: getRegistryModel('anthropic', models.anthropic),
-          prompt: 'Reply with ANTHROPIC and one short clause.',
-          maxOutputTokens: 120,
-          experimental_telemetry: telemetry,
-        });
-        const googleResult = await generateText({
-          model: getRegistryModel('google', models.google),
-          prompt: 'Reply with GOOGLE and one short clause.',
-          maxOutputTokens: 120,
-          experimental_telemetry: telemetry,
-        });
+  if (liveFilters.provider == null && liveFilters.modelId == null) {
+    it('registry routing across all configured providers', async () => {
+      await recorder.runCase(
+        {
+          capability: 'registry.routing',
+          expectation: 'must-pass',
+          modelId: `${models.openai},${models.anthropic},${models.google}`,
+          provider: 'openai',
+        },
+        async (telemetry) => {
+          const openAiResult = await generateText({
+            model: getRegistryModel('openai', models.openai),
+            prompt: 'Reply with exactly "OPENAI: registry routing is active."',
+            maxOutputTokens: 420,
+            providerOptions: getProviderOptions('openai', 'baseline'),
+            experimental_telemetry: telemetry,
+          });
+          const anthropicResult = await generateText({
+            model: getRegistryModel('anthropic', models.anthropic),
+            prompt: 'Reply with ANTHROPIC and one short clause.',
+            maxOutputTokens: 120,
+            experimental_telemetry: telemetry,
+          });
+          const googleResult = await generateText({
+            model: getRegistryModel('google', models.google),
+            prompt: 'Reply with GOOGLE and one short clause.',
+            maxOutputTokens: 120,
+            experimental_telemetry: telemetry,
+          });
 
-        expect(openAiResult.text).toMatch(/openai/i);
-        expect(anthropicResult.text).toMatch(/anthropic/i);
-        expect(googleResult.text).toMatch(/google/i);
+          expect(openAiResult.text).toMatch(/openai/i);
+          expect(anthropicResult.text).toMatch(/anthropic/i);
+          expect(googleResult.text).toMatch(/google/i);
 
-        return {
-          output: {
-            anthropic: anthropicResult.text,
-            google: googleResult.text,
-            openai: openAiResult.text,
-          },
-        };
-      },
-    );
-  });
+          return {
+            output: {
+              anthropic: anthropicResult.text,
+              google: googleResult.text,
+              openai: openAiResult.text,
+            },
+          };
+        },
+      );
+    });
+  }
 
-  it('OpenAI embedding proxy probe', async () => {
-    await recorder.runCase(
-      {
+  if (shouldIncludeSharedProviderProbe('openai')) {
+    it('OpenAI embedding proxy probe', async (ctx) => {
+      const spec: CapabilityCaseSpec = {
         capability: 'embedding.proxy_probe',
         expectation: 'investigate',
         modelId: embeddingModels.openai ?? 'text-embedding-3-small',
         provider: 'openai',
-      },
-      async (telemetry) => {
-        if (!embeddingModels.openai) {
-          throw new CapabilitySkippedError(
-            'OpenAI embedding probe model is not configured for this stack.',
-          );
-        }
+      };
 
+      if (!embeddingModels.openai) {
+        skipCapabilityCase(
+          ctx,
+          spec,
+          'OpenAI embedding probe model is not configured for this stack.',
+        );
+      }
+
+      await recorder.runCase(spec, async (telemetry) => {
         const result = await embed({
-          model: directOpenAI.embeddingModel(embeddingModels.openai),
+          model: directOpenAI.embeddingModel(embeddingModels.openai as string),
           value: 'Foundry capability matrix embedding probe',
           experimental_telemetry: telemetry,
         });
@@ -567,46 +587,48 @@ describe('live Foundry capability matrix', () => {
           usage: result.usage,
           warnings: result.warnings,
         };
-      },
-    );
-  });
+      });
+    });
+  }
 
-  it('Anthropic embedding proxy probe', async () => {
-    await recorder.runCase(
-      {
-        capability: 'embedding.proxy_probe',
-        expectation: 'investigate',
-        modelId: embeddingModels.anthropic ?? models.anthropic,
-        provider: 'anthropic',
-      },
-      async () => {
-        throw new CapabilitySkippedError(
-          'Anthropic embeddings are not configured as a supported matrix target yet.',
-          {
-            provider: 'anthropic',
-          },
-        );
-      },
-    );
-  });
+  if (shouldIncludeSharedProviderProbe('anthropic')) {
+    it('Anthropic embedding proxy probe', async (ctx) => {
+      skipCapabilityCase(
+        ctx,
+        {
+          capability: 'embedding.proxy_probe',
+          expectation: 'investigate',
+          modelId: embeddingModels.anthropic ?? models.anthropic,
+          provider: 'anthropic',
+        },
+        'Anthropic embeddings are not configured as a supported matrix target yet.',
+        {
+          provider: 'anthropic',
+        },
+      );
+    });
+  }
 
-  it('Google embedding proxy probe', async () => {
-    await recorder.runCase(
-      {
+  if (shouldIncludeSharedProviderProbe('google')) {
+    it('Google embedding proxy probe', async (ctx) => {
+      const spec: CapabilityCaseSpec = {
         capability: 'embedding.proxy_probe',
         expectation: 'investigate',
         modelId: embeddingModels.google ?? models.google,
         provider: 'google',
-      },
-      async (telemetry) => {
-        if (!embeddingModels.google) {
-          throw new CapabilitySkippedError(
-            'Google embedding probe model is not configured for this stack.',
-          );
-        }
+      };
 
+      if (!embeddingModels.google) {
+        skipCapabilityCase(
+          ctx,
+          spec,
+          'Google embedding probe model is not configured for this stack.',
+        );
+      }
+
+      await recorder.runCase(spec, async (telemetry) => {
         const result = await embed({
-          model: directGoogle.embeddingModel(embeddingModels.google),
+          model: directGoogle.embeddingModel(embeddingModels.google as string),
           value: 'Foundry capability matrix embedding probe',
           experimental_telemetry: telemetry,
         });
@@ -620,9 +642,9 @@ describe('live Foundry capability matrix', () => {
           usage: result.usage,
           warnings: result.warnings,
         };
-      },
-    );
-  });
+      });
+    });
+  }
 });
 
 function getFoundryModel(provider: LiveProvider, modelId: string) {

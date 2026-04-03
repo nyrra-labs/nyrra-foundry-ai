@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 import process from 'node:process';
 import type { AnthropicModelId, GoogleModelId, OpenAIModelId } from '@nyrra/foundry-ai';
 
-export type ExampleProvider = 'openai' | 'anthropic' | 'google';
+export type ProviderName = 'openai' | 'anthropic' | 'google';
 
 const LOCAL_ENV_FILE = resolve(process.cwd(), '.env.local');
 
@@ -10,7 +10,7 @@ export const DEFAULT_OPENAI_MODEL: OpenAIModelId = 'gpt-5.4-nano';
 export const DEFAULT_ANTHROPIC_MODEL: AnthropicModelId = 'claude-sonnet-4.6';
 export const DEFAULT_GOOGLE_MODEL: GoogleModelId = 'gemini-3.1-flash-lite';
 
-export function resolveCliProvider(defaultProvider: ExampleProvider = 'openai'): ExampleProvider {
+export function resolveCliProvider(defaultProvider: ProviderName = 'openai'): ProviderName {
   const provider = process.argv[2];
 
   if (provider == null) {

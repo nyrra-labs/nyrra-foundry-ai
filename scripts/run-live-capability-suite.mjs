@@ -5,6 +5,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+import { parseArgs } from './run-live-capability-suite-lib.mjs';
 
 const workspaceRoot = process.cwd();
 const artifactRoot = resolve(
@@ -14,7 +15,10 @@ const artifactRoot = resolve(
   'capability-runs',
 );
 const runId = createRunId();
-const { extraVitestArgs, shouldUpdateDocs } = parseArgs(process.argv.slice(2));
+const artifactPath = `.memory/capability-runs/${runId}`;
+const artifactSummaryPath = `${artifactPath}/harness-capability-results.md`;
+const artifactResultsPath = join(workspaceRoot, artifactPath, 'results.json');
+const { extraEnv, extraVitestArgs, shouldUpdateDocs } = parseArgs(process.argv.slice(2));
 
 const testExitCode = await runCommandWithProgress(
   'pnpm',
@@ -26,14 +30,36 @@ const testExitCode = await runCommandWithProgress(
     'packages/foundry-ai/vitest.live.config.ts',
     ...extraVitestArgs,
   ],
-  { LIVE_CAPABILITY_RUN_ID: runId },
+  { LIVE_CAPABILITY_RUN_ID: runId, ...extraEnv },
 );
 
-if (shouldUpdateDocs) {
+let exitCode = testExitCode;
+const hasResultsArtifact = existsSync(artifactResultsPath);
+
+if (hasResultsArtifact) {
+  const artifactSummaryExitCode = await runCommand('node', [
+    'scripts/update-harness-results-docs.mjs',
+    '--artifact',
+    artifactPath,
+    '--output',
+    artifactSummaryPath,
+  ]);
+
+  if (artifactSummaryExitCode !== 0 && exitCode === 0) {
+    exitCode = artifactSummaryExitCode;
+  }
+} else if (exitCode === 0) {
+  process.stderr.write(
+    `Expected a live capability artifact at ${artifactResultsPath}, but no results were written.\n`,
+  );
+  exitCode = 1;
+}
+
+if (shouldUpdateDocs && hasResultsArtifact) {
   const docsExitCode = await runCommand('node', [
     'scripts/update-harness-results-docs.mjs',
     '--artifact',
-    `.memory/capability-runs/${runId}`,
+    artifactPath,
   ]);
 
   if (docsExitCode !== 0) {
@@ -41,7 +67,7 @@ if (shouldUpdateDocs) {
   }
 }
 
-process.exit(testExitCode);
+process.exit(exitCode);
 
 function runCommand(command, args) {
   return new Promise((resolve) => {
@@ -143,28 +169,4 @@ function summarizeStatuses(cases) {
 function createRunId() {
   const timestamp = new Date().toISOString().replaceAll(':', '-');
   return `${timestamp}-${Math.random().toString(16).slice(2, 8)}`;
-}
-
-function parseArgs(args) {
-  const passthroughArgs = [];
-  let shouldUpdateDocs = args.length === 0;
-
-  for (const arg of args) {
-    if (arg === '--update-docs') {
-      shouldUpdateDocs = true;
-      continue;
-    }
-
-    if (arg === '--no-update-docs') {
-      shouldUpdateDocs = false;
-      continue;
-    }
-
-    passthroughArgs.push(arg);
-  }
-
-  return {
-    extraVitestArgs: passthroughArgs,
-    shouldUpdateDocs,
-  };
 }

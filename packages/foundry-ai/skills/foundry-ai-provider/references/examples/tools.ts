@@ -1,7 +1,7 @@
 import { type ToolSet, tool } from 'ai';
 import { z } from 'zod';
 
-const EXAMPLE_TOOL_DATA = {
+const TOOL_DATA = {
   compatibility: {
     topic: 'compatibility',
     guardrails: [
@@ -26,21 +26,21 @@ const EXAMPLE_TOOL_DATA = {
 } as const;
 
 export const TOOL_CALLING_PROMPT =
-  'First call getExampleToolData, then answer in two concise bullets for a server-side @nyrra/foundry-ai integration.';
+  'First call getToolData, then answer in two concise bullets for a server-side @nyrra/foundry-ai integration.';
 
-export function createExampleToolSet(): ToolSet {
+export function createToolSet(): ToolSet {
   return {
-    getExampleToolData: tool({
+    getToolData: tool({
       description: 'Returns static demo data for tool-calling examples.',
       inputSchema: z.object({
         topic: z.enum(['security', 'routing', 'compatibility']),
       }),
-      execute: async ({ topic }) => EXAMPLE_TOOL_DATA[topic],
+      execute: async ({ topic }) => TOOL_DATA[topic],
     }),
   };
 }
 
-export function prepareExampleToolStep({ stepNumber }: { stepNumber: number }) {
+export function prepareToolStep({ stepNumber }: { stepNumber: number }) {
   if (stepNumber !== 1) {
     return undefined;
   }

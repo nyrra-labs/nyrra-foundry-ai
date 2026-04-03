@@ -146,11 +146,12 @@ const registry = createProviderRegistry({
 The live suite in `packages/foundry-ai/src/__tests__/foundry.live.test.ts` is the canonical verification harness for proxy-sensitive behavior.
 
 - The default per-provider models are the hard gate:
-  - OpenAI: `gpt-5-mini`
-  - Anthropic: `claude-sonnet-4.6`
+  - OpenAI: `gpt-5-nano`
+  - Anthropic: `claude-haiku-4.5`
   - Google: `gemini-3.1-flash-lite`
 - The rest of the catalog is survey coverage. Those rows remain visible in the matrix and docs, but non-pass results do not fail the suite by default.
 - Survey coverage runs the current public catalog only.
+- `--model <model>` widens the live suite to catalog scope unless the caller explicitly pins `--canonical` or `--catalog`, so targeted non-default model runs do not silently collapse to zero cases.
 - The suite records local artifacts under `.memory/capability-runs/<run-id>/`:
   - `results.json`
   - `summary.md`

@@ -1,7 +1,7 @@
 import { generateText, Output } from 'ai';
 import { z } from 'zod';
-import { logExampleValue } from '../base/example-logger.js';
-import { createExampleLanguageModel } from '../base/example-model.js';
+import { logValue } from '../base/logger.js';
+import { createLanguageModel } from '../base/model.js';
 
 const signalSchema = z.object({
   indication: z.string(),
@@ -10,7 +10,7 @@ const signalSchema = z.object({
   rationale: z.string(),
 });
 
-const { model, modelId, provider } = createExampleLanguageModel();
+const { model, modelId, provider } = createLanguageModel();
 
 const { output } = await generateText({
   model,
@@ -25,4 +25,4 @@ const { output } = await generateText({
 
 console.log(`provider: ${provider}`);
 console.log(`model: ${modelId}`);
-logExampleValue({ type: 'structured-output', output });
+logValue({ type: 'structured-output', output });

@@ -23,7 +23,9 @@ const modelCapabilityColumns = [
   ['reasoning.visibility', 'Reasoning'],
 ];
 
-const artifactDir = resolveArtifactDir(process.argv.slice(2));
+const rawArgs = process.argv.slice(2);
+const artifactDir = resolveArtifactDir(rawArgs);
+const outputTarget = resolveOutputTarget(rawArgs);
 const resultsPath = join(artifactDir, 'results.json');
 const record = JSON.parse(readFileSync(resultsPath, 'utf8'));
 
@@ -31,12 +33,15 @@ const providerSummaries = summarizeProviders(record.cases);
 const statusCounts = summarizeStatuses(record.cases);
 const resultsDoc = createResultsDoc(record, artifactDir, providerSummaries, statusCounts);
 
-mkdirSync(packageDocsDir, { recursive: true });
-writeFileSync(packageResultsDocPath, resultsDoc, 'utf8');
-
-process.stdout.write(
-  `Updated ${relativeToWorkspace(packageResultsDocPath)} from ${relativeToWorkspace(artifactDir)}.\n`,
-);
+if (outputTarget === 'stdout') {
+  process.stdout.write(resultsDoc);
+} else {
+  mkdirSync(dirname(outputTarget), { recursive: true });
+  writeFileSync(outputTarget, resultsDoc, 'utf8');
+  process.stdout.write(
+    `${outputTarget === packageResultsDocPath ? 'Updated' : 'Wrote'} ${relativeToWorkspace(outputTarget)} from ${relativeToWorkspace(artifactDir)}.\n`,
+  );
+}
 
 function resolveArtifactDir(args) {
   const artifactFlagIndex = args.indexOf('--artifact');
@@ -64,6 +69,31 @@ function resolveArtifactDir(args) {
   }
 
   return latest;
+}
+
+function resolveOutputTarget(args) {
+  const outputFlagIndex = args.indexOf('--output');
+  const shouldWriteToStdout = args.includes('--stdout');
+
+  if (outputFlagIndex !== -1 && shouldWriteToStdout) {
+    throw new Error('Choose either --output or --stdout, not both.');
+  }
+
+  if (shouldWriteToStdout) {
+    return 'stdout';
+  }
+
+  if (outputFlagIndex !== -1) {
+    const outputPath = args[outputFlagIndex + 1];
+
+    if (!outputPath) {
+      throw new Error('Expected a path after --output.');
+    }
+
+    return resolve(workspaceRoot, outputPath);
+  }
+
+  return packageResultsDocPath;
 }
 
 function summarizeStatuses(cases) {
@@ -111,6 +141,7 @@ function createResultsDoc(record, artifactDir, providerSummaries, statusCounts) 
     `- Started: ${record.startedAt}`,
     `- Finished: ${record.finishedAt ?? 'in-progress'}`,
     `- Default Models: openai=\`${record.models.openai}\`, anthropic=\`${record.models.anthropic}\`, google=\`${record.models.google}\``,
+    `- Filters: ${formatFilters(record.filters)}`,
     `- Model Scope: \`${record.modelScope ?? 'canonical'}\``,
     `- Status Counts: ${statusCounts.map(([status, count]) => `\`${status}\`: ${count}`).join(', ')}`,
     '',
@@ -189,6 +220,19 @@ function getCaseNote(testCase) {
   }
 
   return 'none';
+}
+
+function formatFilters(filters) {
+  if (!filters || (filters.provider == null && filters.modelId == null)) {
+    return 'none';
+  }
+
+  return [
+    filters.provider ? `provider=\`${filters.provider}\`` : undefined,
+    filters.modelId ? `model=\`${filters.modelId}\`` : undefined,
+  ]
+    .filter((value) => value != null)
+    .join(', ');
 }
 
 function escapeTable(value) {

@@ -1,10 +1,10 @@
 import type { AnthropicLanguageModelOptions } from '@ai-sdk/anthropic';
 import type { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai';
 import { streamText } from 'ai';
-import { logExampleError, logExampleValue } from '../base/example-logger.js';
-import { createExampleLanguageModel } from '../base/example-model.js';
+import { logError, logValue } from '../base/logger.js';
+import { createLanguageModel } from '../base/model.js';
 
-const { model, modelId, provider } = createExampleLanguageModel();
+const { model, modelId, provider } = createLanguageModel();
 const prompt =
   'Compare the tradeoffs of routing LLM calls through a corporate proxy versus calling provider APIs directly. Keep it to three bullet points.';
 type ExampleProviderOptions = NonNullable<Parameters<typeof streamText>[0]['providerOptions']>;
@@ -34,17 +34,17 @@ const result = streamText({
   prompt,
   providerOptions,
   onFinish({ text, finishReason, usage }) {
-    logExampleValue({ type: 'finish', finishReason, usage });
-    logExampleValue({ type: 'final-text', text });
+    logValue({ type: 'finish', finishReason, usage });
+    logValue({ type: 'final-text', text });
   },
   onError({ error }) {
-    logExampleError({ type: 'error', error });
+    logError({ type: 'error', error });
   },
 });
 
 console.log(`provider: ${provider}`);
 console.log(`model: ${modelId}`);
-logExampleValue({ type: 'provider-options', providerOptions });
+logValue({ type: 'provider-options', providerOptions });
 
 // Stream text to stdout
 for await (const chunk of result.textStream) {

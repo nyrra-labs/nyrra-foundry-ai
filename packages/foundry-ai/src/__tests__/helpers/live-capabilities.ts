@@ -34,6 +34,18 @@ export interface CapabilityResult {
   };
 }
 
+export interface CapabilityCaseSpec {
+  capability: string;
+  expectation: CapabilityExpectation;
+  modelId: string;
+  provider: LiveProvider;
+}
+
+export interface LiveCapabilityFilters {
+  modelId?: string;
+  provider?: LiveProvider;
+}
+
 interface CapabilityRunRecord {
   version: 1;
   runId: string;
@@ -45,6 +57,7 @@ interface CapabilityRunRecord {
   models: Record<LiveProvider, string>;
   matrixModels: Record<LiveProvider, string[]>;
   modelOverrides: Partial<Record<LiveProvider, string>>;
+  filters: LiveCapabilityFilters;
   modelScope: 'canonical' | 'catalog';
   telemetry: {
     mode: 'local-file-tracer';
@@ -88,13 +101,15 @@ interface LiveSpan {
 }
 
 const DEFAULT_MODELS = {
-  anthropic: 'claude-sonnet-4.6',
+  anthropic: 'claude-haiku-4.5',
   google: 'gemini-3.1-flash-lite',
-  openai: 'gpt-5-mini',
+  openai: 'gpt-5-nano',
 } as const satisfies Record<LiveProvider, string>;
 
 const LIVE_ARTIFACT_ROOT_ENV = 'LIVE_CAPABILITY_ARTIFACT_DIR';
+const LIVE_MODEL_FILTER_ENV = 'LIVE_MODEL_FILTER';
 const LIVE_RUN_ID_ENV = 'LIVE_CAPABILITY_RUN_ID';
+const LIVE_PROVIDER_FILTER_ENV = 'LIVE_PROVIDER_FILTER';
 const LIVE_MODEL_SCOPE_ENV = 'LIVE_MODEL_SCOPE';
 const LIVE_MODELS_ENV = {
   anthropic: 'LIVE_ANTHROPIC_MODEL',
@@ -139,32 +154,63 @@ export function getLiveCapabilityModels(): Record<LiveProvider, string> {
   };
 }
 
+export function getLiveCapabilityFilters(): LiveCapabilityFilters {
+  const providerValue = process.env[LIVE_PROVIDER_FILTER_ENV]?.trim().toLowerCase();
+  const modelId = process.env[LIVE_MODEL_FILTER_ENV]?.trim() || undefined;
+
+  if (!providerValue) {
+    return modelId ? { modelId } : {};
+  }
+
+  if (!isLiveProvider(providerValue)) {
+    throw new Error(
+      `Expected ${LIVE_PROVIDER_FILTER_ENV} to be one of openai, anthropic, google. Received "${providerValue}".`,
+    );
+  }
+
+  return modelId ? { modelId, provider: providerValue } : { provider: providerValue };
+}
+
+export function shouldIncludeLiveCapabilityCase(provider: LiveProvider, modelId?: string): boolean {
+  const filters = getLiveCapabilityFilters();
+
+  if (filters.provider && filters.provider !== provider) {
+    return false;
+  }
+
+  if (filters.modelId) {
+    return modelId != null && filters.modelId === modelId;
+  }
+
+  return true;
+}
+
 export function getLiveCapabilityModelScope(): 'canonical' | 'catalog' {
   const value = process.env[LIVE_MODEL_SCOPE_ENV]?.trim().toLowerCase();
 
-  if (value === 'canonical') {
-    return 'canonical';
+  if (value === 'catalog') {
+    return 'catalog';
   }
 
-  return 'catalog';
+  return 'canonical';
 }
 
 export function getLiveCapabilityModelMatrix(): Record<LiveProvider, string[]> {
   const models = getLiveCapabilityModels();
 
   if (getLiveCapabilityModelScope() === 'canonical') {
-    return {
+    return filterLiveCapabilityModelMatrix({
       anthropic: [models.anthropic],
       google: [models.google],
       openai: [models.openai],
-    };
+    });
   }
 
-  return {
+  return filterLiveCapabilityModelMatrix({
     anthropic: mergePreferredModelId(models.anthropic, getKnownProviderModelIds('anthropic')),
     google: mergePreferredModelId(models.google, getKnownProviderModelIds('google')),
     openai: mergePreferredModelId(models.openai, getKnownProviderModelIds('openai')),
-  };
+  });
 }
 
 export function getLiveCapabilityRid(provider: LiveProvider): string {
@@ -252,6 +298,7 @@ export class LiveCapabilityRecorder {
   private snapshotWrite = Promise.resolve();
 
   constructor() {
+    const filters = getLiveCapabilityFilters();
     const models = getLiveCapabilityModels();
     const matrixModels = getLiveCapabilityModelMatrix();
     const runId = process.env[LIVE_RUN_ID_ENV]?.trim() || createRunId();
@@ -270,6 +317,7 @@ export class LiveCapabilityRecorder {
       models,
       matrixModels,
       modelOverrides: getModelOverrides(),
+      filters,
       modelScope: getLiveCapabilityModelScope(),
       telemetry: {
         mode: 'local-file-tracer',
@@ -280,7 +328,12 @@ export class LiveCapabilityRecorder {
     };
   }
 
-  createTelemetry(caseKey: string, capability: string, provider: LiveProvider, modelId: string) {
+  createTelemetry(
+    caseKey: string,
+    capability: string,
+    provider: LiveProvider,
+    modelId: string,
+  ): TelemetrySettings {
     const integration = {
       onStart: (event: unknown) => this.recordEvent(caseKey, 'onStart', event),
       onStepStart: (event: unknown) => this.recordEvent(caseKey, 'onStepStart', event),
@@ -312,12 +365,7 @@ export class LiveCapabilityRecorder {
   }
 
   async runCase<T>(
-    spec: {
-      capability: string;
-      expectation: CapabilityExpectation;
-      modelId: string;
-      provider: LiveProvider;
-    },
+    spec: CapabilityCaseSpec,
     fn: (telemetry: TelemetrySettings, caseKey: string) => Promise<T>,
   ): Promise<T | undefined> {
     const startedAt = Date.now();
@@ -367,6 +415,14 @@ export class LiveCapabilityRecorder {
     return output;
   }
 
+  recordSkippedCase(spec: CapabilityCaseSpec, message: string, details?: Record<string, unknown>) {
+    const result = this.createResult(spec, Date.now(), 'skipped', {
+      error: sanitizeForArtifact(new CapabilitySkippedError(message, details)),
+    });
+
+    this.recordCaseResult(result);
+  }
+
   async flush() {
     this.record.finishedAt = new Date().toISOString();
     await this.queueSnapshotWrite();
@@ -379,12 +435,7 @@ export class LiveCapabilityRecorder {
   }
 
   private createResult(
-    spec: {
-      capability: string;
-      expectation: CapabilityExpectation;
-      modelId: string;
-      provider: LiveProvider;
-    },
+    spec: CapabilityCaseSpec,
     startedAtMs: number,
     status: CapabilityStatus,
     extras: {
@@ -431,9 +482,11 @@ export class LiveCapabilityRecorder {
       .filter((status) => (counts[status] ?? 0) > 0)
       .map((status) => `${status}=${counts[status]}`)
       .join(' ');
+    const countsSuffix = countsLabel.length > 0 ? ` (${countsLabel})` : '';
+    const durationLabel = result.status === 'skipped' ? '' : ` ${result.durationMs}ms`;
 
     console.log(
-      `[live:${result.status}] ${result.provider}:${result.modelId}:${result.capability} ${result.durationMs}ms (${countsLabel})`,
+      `[live:${result.status}] ${formatCapabilityStatusLabel(result.status)} ${result.provider}:${result.modelId}:${result.capability}${durationLabel}${countsSuffix}`,
     );
   }
 
@@ -740,6 +793,7 @@ function createMarkdownSummary(record: CapabilityRunRecord) {
     `- Finished: ${record.finishedAt ?? 'in-progress'}`,
     `- Models: openai=\`${record.models.openai}\`, anthropic=\`${record.models.anthropic}\`, google=\`${record.models.google}\``,
     `- Model Overrides: ${formatOverrides(record.modelOverrides)}`,
+    `- Filters: ${formatFilters(record.filters)}`,
     `- Status Counts: ${statusCounts.length > 0 ? statusCounts.join(', ') : 'none'}`,
     '',
     '| Provider | Capability | Status | Duration ms | Model |',
@@ -769,6 +823,21 @@ function createMarkdownSummary(record: CapabilityRunRecord) {
   }
 
   return `${lines.join('\n')}\n`;
+}
+
+function formatCapabilityStatusLabel(status: CapabilityStatus) {
+  switch (status) {
+    case 'pass':
+      return 'PASS';
+    case 'skipped':
+      return 'SKIP';
+    case 'unsupported':
+      return 'UNSUPPORTED';
+    case 'proxy-rejected':
+      return 'PROXY-REJECTED';
+    case 'fail':
+      return 'FAIL';
+  }
 }
 
 function summarizeCaseStatuses(cases: CapabilityResult[]) {
@@ -841,19 +910,40 @@ function formatOverrides(overrides: Partial<Record<LiveProvider, string>>) {
   return entries.map(([provider, modelId]) => `${provider}=\`${modelId}\``).join(', ');
 }
 
-function dedupeModelIds(modelIds: string[]) {
-  return [...new Set(modelIds)];
-}
+function formatFilters(filters: LiveCapabilityFilters) {
+  const entries = [
+    filters.provider ? `provider=\`${filters.provider}\`` : undefined,
+    filters.modelId ? `model=\`${filters.modelId}\`` : undefined,
+  ].filter((value) => value != null);
 
-function mergePreferredModelId(preferredModelId: string, modelIds: string[]) {
-  if (modelIds.includes(preferredModelId)) {
-    return modelIds;
+  if (entries.length === 0) {
+    return 'none';
   }
 
-  return dedupeModelIds([preferredModelId, ...modelIds]);
+  return entries.join(', ');
 }
 
-function getKnownProviderModelIds(provider: LiveProvider) {
+function mergePreferredModelId(preferredModelId: string, modelIds: readonly string[]) {
+  return Array.from(new Set([preferredModelId, ...modelIds]));
+}
+
+function filterLiveCapabilityModelMatrix(
+  matrix: Record<LiveProvider, string[]>,
+): Record<LiveProvider, string[]> {
+  return {
+    anthropic: matrix.anthropic.filter((modelId) =>
+      shouldIncludeLiveCapabilityCase('anthropic', modelId),
+    ),
+    google: matrix.google.filter((modelId) => shouldIncludeLiveCapabilityCase('google', modelId)),
+    openai: matrix.openai.filter((modelId) => shouldIncludeLiveCapabilityCase('openai', modelId)),
+  };
+}
+
+function isLiveProvider(value: string): value is LiveProvider {
+  return value === 'openai' || value === 'anthropic' || value === 'google';
+}
+
+function getKnownProviderModelIds(provider: LiveProvider): readonly string[] {
   return Object.entries(MODEL_CATALOG)
     .filter(([, metadata]) => metadata.provider === provider)
     .sort((left, right) => compareModelIds(right[0], left[0]))

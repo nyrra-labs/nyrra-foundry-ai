@@ -129,7 +129,6 @@ export function getProviderOptions(
     if (mode === 'reasoning') {
       return {
         anthropic: {
-          effort: 'low',
           thinking: {
             type: 'enabled',
             budgetTokens: 1024,

@@ -8,15 +8,15 @@ import {
   DEFAULT_ANTHROPIC_MODEL,
   DEFAULT_GOOGLE_MODEL,
   DEFAULT_OPENAI_MODEL,
-  type ExampleProvider,
+  type ProviderName,
   requireEnv,
   resolveCliModelId,
   resolveCliProvider,
-} from './example-config.js';
+} from './config.js';
 
 export { requireEnv };
 
-export function createExampleLanguageModel(
+export function createLanguageModel(
   provider = resolveCliProvider(),
   overrides?: {
     anthropicModel?: AnthropicModelId;
@@ -26,7 +26,7 @@ export function createExampleLanguageModel(
 ): {
   model: LanguageModel;
   modelId: string;
-  provider: ExampleProvider;
+  provider: ProviderName;
 } {
   const config = loadFoundryConfig();
 

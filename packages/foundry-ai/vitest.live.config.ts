@@ -7,6 +7,7 @@ export default defineConfig({
     globals: true,
     include: ['src/**/*.live.test.ts'],
     maxConcurrency: Number(process.env.LIVE_CAPABILITY_MAX_CONCURRENCY ?? 3),
+    reporters: ['verbose'],
     testTimeout: 120_000,
     hookTimeout: 120_000,
     watch: false,
