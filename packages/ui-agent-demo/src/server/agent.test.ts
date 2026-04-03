@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { createSeedKnowledgeGraph, MutableKnowledgeGraph } from '../shared/knowledge-graph.js';
-import { seedGraphFromStructuredDiscoveries, shouldUseDeterministicDrugData } from './agent.js';
+import {
+  seedGraphFromStructuredDiscoveries,
+  shouldRequireLiveSearch,
+  shouldUseDeterministicDrugData,
+} from './agent.js';
 
 describe('seedGraphFromStructuredDiscoveries', () => {
   it('materializes linked category, manufacturer, and drug nodes without splitting company names', () => {
@@ -83,5 +87,14 @@ describe('shouldUseDeterministicDrugData', () => {
     expect(shouldUseDeterministicDrugData({ UI_AGENT_USE_DETERMINISTIC_DRUG_DATA: 'true' })).toBe(
       true,
     );
+  });
+});
+
+describe('shouldRequireLiveSearch', () => {
+  it('only enables live-only mode when explicitly requested', () => {
+    expect(shouldRequireLiveSearch({})).toBe(false);
+    expect(shouldRequireLiveSearch({ UI_AGENT_REQUIRE_LIVE_SEARCH: '0' })).toBe(false);
+    expect(shouldRequireLiveSearch({ UI_AGENT_REQUIRE_LIVE_SEARCH: '1' })).toBe(true);
+    expect(shouldRequireLiveSearch({ UI_AGENT_REQUIRE_LIVE_SEARCH: 'true' })).toBe(true);
   });
 });

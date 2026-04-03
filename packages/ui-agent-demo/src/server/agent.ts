@@ -24,6 +24,7 @@ const graphModel = wrapUiAgentModelWithDevTools({
   providerId: 'anthropic',
 });
 export const UI_AGENT_USE_DETERMINISTIC_DRUG_DATA_ENV = 'UI_AGENT_USE_DETERMINISTIC_DRUG_DATA';
+export const UI_AGENT_REQUIRE_LIVE_SEARCH_ENV = 'UI_AGENT_REQUIRE_LIVE_SEARCH';
 
 type LandscapeUiAgentOptions = {
   onFinish?: (event: ResearchFinishEvent) => void;
@@ -1140,7 +1141,11 @@ async function maybeExecuteDeterministicDrugSearch(input: {
   query: string;
   toolName: SearchToolName;
 }) {
-  if (!isDrugLandscapePrompt(input.prompt) || !shouldUseDeterministicDrugData(process.env)) {
+  if (
+    shouldRequireLiveSearch(process.env) ||
+    !isDrugLandscapePrompt(input.prompt) ||
+    !shouldUseDeterministicDrugData(process.env)
+  ) {
     return undefined;
   }
 
@@ -1167,12 +1172,18 @@ export function shouldUseDeterministicDrugData(
   return value === '1' || value === 'true' || value === 'on';
 }
 
+export function shouldRequireLiveSearch(env: Record<string, string | undefined> = process.env) {
+  const value = env[UI_AGENT_REQUIRE_LIVE_SEARCH_ENV]?.trim().toLowerCase();
+
+  return value === '1' || value === 'true' || value === 'on';
+}
+
 async function maybeExecuteDrugSearchFallback(
   toolName: SearchToolName,
   query: string,
   error: unknown,
 ) {
-  if (!shouldUseDrugSearchFallback(error)) {
+  if (shouldRequireLiveSearch(process.env) || !shouldUseDrugSearchFallback(error)) {
     return undefined;
   }
 

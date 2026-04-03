@@ -81,6 +81,7 @@ Behavior:
   - AI SDK DevTools capture is enabled by default and writes to the repo-root .devtools/generations.json.
   - Set UI_AGENT_USE_DEVTOOLS=0 to disable capture for a run.
   - Set UI_AGENT_USE_DETERMINISTIC_DRUG_DATA=1 to force the fast deterministic OpenFDA path for drug-landscape prompts.
+  - Set UI_AGENT_REQUIRE_LIVE_SEARCH=1 to disable deterministic and automatic drug-search fallback paths.
   - Live graph artifacts are written to artifacts/live/.
 
 Interactive mode:
