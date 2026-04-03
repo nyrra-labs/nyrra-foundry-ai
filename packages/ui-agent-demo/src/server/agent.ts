@@ -1,4 +1,3 @@
-import { webSearch } from '@exalabs/ai-sdk';
 import type { AnthropicModelId } from '@nyrra/foundry-ai';
 import { loadFoundryConfig } from '@nyrra/foundry-ai';
 import { createFoundryAnthropic } from '@nyrra/foundry-ai/anthropic';
@@ -93,9 +92,6 @@ type ResearchStreamPart =
       finishReason: string;
       type: 'finish';
     };
-type SearchTool = {
-  execute: (input: { query: string }) => Promise<SearchOutput>;
-};
 type SearchToolName =
   | 'categoriesForDrug'
   | 'drugsForManufacturer'
@@ -231,53 +227,6 @@ const DRUG_TAXONOMY_NODE_IDS = {
   manufacturers: 'category-manufacturers',
 } as const;
 
-export const demoTools = {
-  categoriesForDrug: webSearch({
-    contents: {
-      summary: {
-        query:
-          'Identify the therapeutic category, drug class, or subclass for the named drug and mention the manufacturer when the result states it clearly.',
-      },
-      text: { maxCharacters: 1000 },
-    },
-    numResults: 5,
-    type: 'fast',
-  }),
-  drugsForManufacturer: webSearch({
-    contents: {
-      summary: {
-        query:
-          'Identify the marketed or flagship drugs made by the named manufacturer, with emphasis on diabetes and adjacent metabolic disease categories when relevant.',
-      },
-      text: { maxCharacters: 1200 },
-    },
-    numResults: 5,
-    type: 'fast',
-  }),
-  manufacturersForCategory: webSearch({
-    contents: {
-      summary: {
-        query:
-          'Identify the key manufacturers or companies making drugs in the named category or class, and include example drugs when the result states them clearly.',
-      },
-      text: { maxCharacters: 1200 },
-    },
-    numResults: 6,
-    type: 'fast',
-  }),
-  webSearch: webSearch({
-    contents: {
-      summary: {
-        query:
-          'Focus on drug class, manufacturer, and marketed drug relationships only. Exclude efficacy, dosage, side effects, and pricing unless needed to disambiguate a link.',
-      },
-      text: { maxCharacters: 1200 },
-    },
-    numResults: 6,
-    type: 'fast',
-  }),
-};
-
 export function createLandscapeUiAgent(options: LandscapeUiAgentOptions = {}) {
   return {
     async stream(input: { abortSignal?: AbortSignal; prompt: string }) {
@@ -301,6 +250,10 @@ async function* createResearchStream(input: {
 }): AsyncGenerator<ResearchStreamPart> {
   const steps: ResearchStepEvent[] = [];
   const discoveries = createDiscoveryState();
+  const manufacturerSearchCache = new Map<string, SearchOutput>();
+  const manufacturerDrugSearchCache = new Map<string, SearchOutput>();
+  const drugClassificationSearchCache = new Map<string, SearchOutput>();
+  const seedSearchCache = new Map<string, SearchOutput>();
   let totalUsage = createEmptyUsage();
   let toolSequence = 0;
 
@@ -351,7 +304,56 @@ async function* createResearchStream(input: {
     }
 
     try {
-      const output = await getSearchExecutor(toolName).execute(toolInput);
+      if (!isDrugLandscapePrompt(input.prompt)) {
+        throw new Error(
+          'The UI agent demo currently supports live drug classification prompts only.',
+        );
+      }
+
+      let output: SearchOutput;
+
+      switch (toolName) {
+        case 'webSearch': {
+          const cacheKey = discoveryKey(input.prompt);
+
+          output =
+            seedSearchCache.get(cacheKey) ??
+            (await searchSeedCategoriesForPrompt(input.prompt, manufacturerSearchCache));
+          seedSearchCache.set(cacheKey, output);
+          break;
+        }
+        case 'manufacturersForCategory': {
+          const categoryLabel = extractCategoryFromQuery(query);
+          const cacheKey = discoveryKey(categoryLabel);
+
+          output =
+            manufacturerSearchCache.get(cacheKey) ??
+            (await searchManufacturersByCategory(categoryLabel));
+          manufacturerSearchCache.set(cacheKey, output);
+          break;
+        }
+        case 'drugsForManufacturer': {
+          const manufacturerLabel = extractManufacturerFromQuery(query);
+          const categoryLabel = extractCategoryConstraintFromDrugsQuery(query);
+          const cacheKey = `${discoveryKey(manufacturerLabel)}::${discoveryKey(categoryLabel ?? '')}`;
+
+          output =
+            manufacturerDrugSearchCache.get(cacheKey) ??
+            (await searchDrugsByManufacturer(manufacturerLabel, categoryLabel));
+          manufacturerDrugSearchCache.set(cacheKey, output);
+          break;
+        }
+        case 'categoriesForDrug': {
+          const drugLabel = extractDrugFromQuery(query);
+          const cacheKey = discoveryKey(drugLabel);
+
+          output =
+            drugClassificationSearchCache.get(cacheKey) ??
+            (await searchDrugClassification(drugLabel));
+          drugClassificationSearchCache.set(cacheKey, output);
+          break;
+        }
+      }
 
       parts.push({
         input: toolInput,
@@ -649,6 +651,8 @@ async function* createResearchStream(input: {
     usage: backlinkUsage,
   });
 
+  assertGroundedDrugDiscoveries(discoveries);
+
   const finalSummary = buildFinalResearchSummary(discoveries);
 
   yield {
@@ -671,25 +675,31 @@ async function* createResearchStream(input: {
   };
 }
 
-function getSearchExecutor(toolName: SearchToolName): SearchTool {
-  switch (toolName) {
-    case 'categoriesForDrug':
-      return demoTools.categoriesForDrug as unknown as SearchTool;
-    case 'drugsForManufacturer':
-      return demoTools.drugsForManufacturer as unknown as SearchTool;
-    case 'manufacturersForCategory':
-      return demoTools.manufacturersForCategory as unknown as SearchTool;
-    case 'webSearch':
-      return demoTools.webSearch as unknown as SearchTool;
-  }
-}
-
 function createDiscoveryState(): DiscoveryState {
   return {
     categories: new Map(),
     drugs: new Map(),
     manufacturers: new Map(),
   };
+}
+
+export function getDrugSeedCategories(prompt: string) {
+  const normalized = prompt.toLowerCase();
+  const directMatches = DIABETES_CATEGORY_FALLBACKS.filter((categoryLabel) => {
+    const key = discoveryKey(categoryLabel);
+
+    return (
+      normalized.includes(key) ||
+      (key === 'glp-1 receptor agonists' && normalized.includes('glp-1')) ||
+      (key === 'sglt2 inhibitors' && normalized.includes('sglt2')) ||
+      (key === 'dpp-4 inhibitors' && normalized.includes('dpp-4')) ||
+      (key === 'thiazolidinediones' && normalized.includes('thiazolidinedione')) ||
+      (key === 'sulfonylureas' && normalized.includes('sulfonylurea')) ||
+      (key === 'biguanides' && normalized.includes('biguanide'))
+    );
+  });
+
+  return [...new Set([...directMatches, ...DIABETES_CATEGORY_FALLBACKS])];
 }
 
 function buildDiscoverySnapshot(discoveries: DiscoveryState): ResearchDiscoveries {
@@ -1046,6 +1056,42 @@ function buildFinalResearchSummary(discoveries: DiscoveryState) {
   ].join('\n');
 }
 
+export function hasGroundedDrugDiscoveries(discoveries: ResearchDiscoveries | DiscoveryState) {
+  if (!isDiscoveryState(discoveries)) {
+    return (
+      discoveries.categories.length > 0 &&
+      discoveries.manufacturers.length > 0 &&
+      discoveries.drugs.length > 0
+    );
+  }
+
+  return (
+    discoveries.categories.size > 0 &&
+    discoveries.manufacturers.size > 0 &&
+    discoveries.drugs.size > 0
+  );
+}
+
+function isDiscoveryState(
+  discoveries: ResearchDiscoveries | DiscoveryState,
+): discoveries is DiscoveryState {
+  return (
+    discoveries.categories instanceof Map &&
+    discoveries.manufacturers instanceof Map &&
+    discoveries.drugs instanceof Map
+  );
+}
+
+function assertGroundedDrugDiscoveries(discoveries: DiscoveryState) {
+  if (hasGroundedDrugDiscoveries(discoveries)) {
+    return;
+  }
+
+  throw new Error(
+    'Live drug crawl did not ground enough category, manufacturer, and drug entities to produce a usable graph.',
+  );
+}
+
 function cleanLabel(value: string) {
   return value.replace(/\s+/g, ' ').trim();
 }
@@ -1253,11 +1299,56 @@ function buildCategoryFallbackResults(query: string): SearchOutput {
   };
 }
 
+async function searchSeedCategoriesForPrompt(
+  prompt: string,
+  manufacturerSearchCache: Map<string, SearchOutput>,
+): Promise<SearchOutput> {
+  const results: SearchResult[] = [];
+
+  for (const categoryLabel of getDrugSeedCategories(prompt)) {
+    const cacheKey = discoveryKey(categoryLabel);
+    const manufacturerOutput =
+      manufacturerSearchCache.get(cacheKey) ?? (await searchManufacturersByCategory(categoryLabel));
+
+    manufacturerSearchCache.set(cacheKey, manufacturerOutput);
+
+    if ((manufacturerOutput.results?.length ?? 0) === 0) {
+      continue;
+    }
+
+    const manufacturers = manufacturerOutput.results
+      ?.map((result) => extractSummaryField(result.summary, 'manufacturer'))
+      .filter(Boolean)
+      .slice(0, 3) as string[];
+    const summary = compactText(
+      [
+        `${categoryLabel} is grounded by live OpenFDA label results.`,
+        manufacturers.length > 0 ? `Manufacturers: ${manufacturers.join(', ')}.` : undefined,
+      ]
+        .filter(Boolean)
+        .join(' '),
+      180,
+    );
+
+    results.push({
+      summary,
+      text: summary,
+      title: categoryLabel,
+      url: buildOpenFdaSearchUrl(
+        `openfda.pharm_class_epc:"${(DIABETES_CLASS_QUERY_MAP[discoveryKey(categoryLabel)] ?? categoryLabel).replace(/"/g, '\\"')}"`,
+        20,
+      ),
+    });
+  }
+
+  return { results };
+}
+
 async function searchManufacturersByCategory(categoryLabel: string): Promise<SearchOutput> {
   const mappedClass = DIABETES_CLASS_QUERY_MAP[discoveryKey(categoryLabel)] ?? categoryLabel;
   const response = await fetchOpenFda(
     `openfda.pharm_class_epc:"${mappedClass.replace(/"/g, '\\"')}"`,
-    8,
+    20,
   );
 
   return {
@@ -1276,7 +1367,7 @@ async function searchDrugsByManufacturer(
 ): Promise<SearchOutput> {
   const response = await fetchOpenFda(
     `openfda.manufacturer_name:"${manufacturerLabel.replace(/"/g, '\\"')}"`,
-    12,
+    20,
   );
   const relevantResults = response
     .filter(
@@ -1316,12 +1407,8 @@ async function searchDrugClassification(drugLabel: string): Promise<SearchOutput
 }
 
 async function fetchOpenFda(search: string, limit: number) {
-  const url = new URL('https://api.fda.gov/drug/label.json');
-
-  url.searchParams.set('search', search);
-  url.searchParams.set('limit', String(limit));
-
-  const response = await fetch(url.toString());
+  const url = buildOpenFdaSearchUrl(search, limit);
+  const response = await fetch(url);
 
   if (response.status === 404) {
     return [];
@@ -1336,19 +1423,26 @@ async function fetchOpenFda(search: string, limit: number) {
   return payload.results ?? [];
 }
 
+function buildOpenFdaSearchUrl(search: string, limit: number) {
+  const url = new URL('https://api.fda.gov/drug/label.json');
+
+  url.searchParams.set('search', search);
+  url.searchParams.set('limit', String(limit));
+
+  return url.toString();
+}
+
 function buildOpenFdaSummary(result: OpenFdaLabelResult) {
   const brand = firstOf(result.openfda?.brand_name);
   const generic = firstOf(result.openfda?.generic_name);
   const manufacturer = firstOf(result.openfda?.manufacturer_name);
   const drugClass = firstOf(result.openfda?.pharm_class_epc);
-  const indication = compactText(firstOf(result.indications_and_usage), 140);
 
   return [
     brand ? `brand: ${brand}` : undefined,
     generic ? `generic: ${generic}` : undefined,
     manufacturer ? `manufacturer: ${manufacturer}` : undefined,
     drugClass ? `class: ${drugClass}` : undefined,
-    indication ? `indication: ${indication}` : undefined,
   ]
     .filter(Boolean)
     .join(' | ');
@@ -1509,7 +1603,14 @@ async function extractManufacturersFromSearch(input: {
   searchOutput: SearchOutput;
 }) {
   if (isStructuredFallbackOutput(input.searchOutput)) {
-    const manufacturers: ExtractManufacturersResult['manufacturers'] = [];
+    const manufacturers = new Map<
+      string,
+      {
+        exampleDrugs: Set<string>;
+        label: string;
+        summary?: string;
+      }
+    >();
 
     for (const result of input.searchOutput.results ?? []) {
       const manufacturer = extractSummaryField(result.summary, 'manufacturer');
@@ -1519,17 +1620,35 @@ async function extractManufacturersFromSearch(input: {
       }
 
       const drugLabel = extractBrandFromTitle(result.title);
-
-      manufacturers.push({
-        exampleDrugs: drugLabel ? [drugLabel] : [],
+      const key = discoveryKey(manufacturer);
+      const existing = manufacturers.get(key) ?? {
+        exampleDrugs: new Set<string>(),
         label: manufacturer,
         summary: compactText(result.summary, 180),
-      });
+      };
+
+      if (drugLabel) {
+        existing.exampleDrugs.add(drugLabel);
+      }
+
+      existing.summary ??= compactText(result.summary, 180);
+      manufacturers.set(key, existing);
     }
 
     return {
       object: {
-        manufacturers: manufacturers.slice(0, 6),
+        manufacturers: [...manufacturers.values()]
+          .sort(
+            (left, right) =>
+              right.exampleDrugs.size - left.exampleDrugs.size ||
+              left.label.localeCompare(right.label),
+          )
+          .slice(0, 6)
+          .map((manufacturer) => ({
+            exampleDrugs: [...manufacturer.exampleDrugs].slice(0, 5),
+            label: manufacturer.label,
+            summary: manufacturer.summary,
+          })),
       } satisfies ExtractManufacturersResult,
       usage: createEmptyUsage(),
     };
@@ -1551,7 +1670,14 @@ async function extractDrugsFromSearch(input: {
   searchOutput: SearchOutput;
 }) {
   if (isStructuredFallbackOutput(input.searchOutput)) {
-    const drugs: ExtractDrugsResult['drugs'] = [];
+    const drugs = new Map<
+      string,
+      {
+        categoryLabels: Set<string>;
+        label: string;
+        summary?: string;
+      }
+    >();
 
     for (const result of input.searchOutput.results ?? []) {
       const drugLabel = extractBrandFromTitle(result.title);
@@ -1560,18 +1686,37 @@ async function extractDrugsFromSearch(input: {
         continue;
       }
 
-      drugs.push({
-        categoryLabels: [extractSummaryField(result.summary, 'class')]
-          .filter(Boolean)
-          .map((value) => normalizeDrugClassLabel(value ?? '')),
+      const key = discoveryKey(drugLabel);
+      const existing = drugs.get(key) ?? {
+        categoryLabels: new Set<string>(),
         label: drugLabel,
         summary: compactText(result.summary, 180),
-      });
+      };
+
+      for (const categoryLabel of [extractSummaryField(result.summary, 'class')]
+        .filter(Boolean)
+        .map((value) => normalizeDrugClassLabel(value ?? ''))) {
+        existing.categoryLabels.add(categoryLabel);
+      }
+
+      if (input.categoryLabel) {
+        existing.categoryLabels.add(normalizeDrugClassLabel(input.categoryLabel));
+      }
+
+      existing.summary ??= compactText(result.summary, 180);
+      drugs.set(key, existing);
     }
 
     return {
       object: {
-        drugs: drugs.slice(0, 8),
+        drugs: [...drugs.values()]
+          .sort((left, right) => left.label.localeCompare(right.label))
+          .slice(0, 8)
+          .map((drug) => ({
+            categoryLabels: [...drug.categoryLabels],
+            label: drug.label,
+            summary: drug.summary,
+          })),
       } satisfies ExtractDrugsResult,
       usage: createEmptyUsage(),
     };

@@ -48,22 +48,10 @@ ui-agent *args:
   @pnpm exec tsx --tsconfig packages/ui-agent-demo/tsconfig.app.json packages/ui-agent-demo/src/index.tsx "$@"
 
 ui-agent-graph-demo:
-  just ui-agent --prompt "Start with diabetes drugs as the seed area. Identify the major categories first, then the key manufacturers in each category. Whenever a manufacturer is discovered, reuse that manufacturer node and expand it into the drugs it makes. Whenever a drug is discovered, connect it back to its category. Build only category, manufacturer, and drug nodes, and prioritize linked expansions over narrative summaries."
-
-ui-agent-graph-demo-once:
-  just ui-agent --prompt "Start with diabetes drugs as the seed area. Identify the major categories first, then the key manufacturers in each category. Whenever a manufacturer is discovered, reuse that manufacturer node and expand it into the drugs it makes. Whenever a drug is discovered, connect it back to its category. Build only category, manufacturer, and drug nodes, and prioritize linked expansions over narrative summaries." --exit-on-complete
-
-ui-agent-graph-demo-live:
   UI_AGENT_REQUIRE_LIVE_SEARCH=1 just ui-agent --prompt "Start with diabetes drugs as the seed area. Identify the major categories first, then the key manufacturers in each category. Whenever a manufacturer is discovered, reuse that manufacturer node and expand it into the drugs it makes. Whenever a drug is discovered, connect it back to its category. Build only category, manufacturer, and drug nodes, and prioritize linked expansions over narrative summaries."
 
-ui-agent-graph-demo-live-once:
+ui-agent-graph-demo-once:
   UI_AGENT_REQUIRE_LIVE_SEARCH=1 just ui-agent --prompt "Start with diabetes drugs as the seed area. Identify the major categories first, then the key manufacturers in each category. Whenever a manufacturer is discovered, reuse that manufacturer node and expand it into the drugs it makes. Whenever a drug is discovered, connect it back to its category. Build only category, manufacturer, and drug nodes, and prioritize linked expansions over narrative summaries." --exit-on-complete
-
-ui-agent-graph-demo-cached:
-  UI_AGENT_USE_DETERMINISTIC_DRUG_DATA=1 just ui-agent --prompt "Start with diabetes drugs as the seed area. Identify the major categories first, then the key manufacturers in each category. Whenever a manufacturer is discovered, reuse that manufacturer node and expand it into the drugs it makes. Whenever a drug is discovered, connect it back to its category. Build only category, manufacturer, and drug nodes, and prioritize linked expansions over narrative summaries."
-
-ui-agent-graph-demo-cached-once:
-  UI_AGENT_USE_DETERMINISTIC_DRUG_DATA=1 just ui-agent --prompt "Start with diabetes drugs as the seed area. Identify the major categories first, then the key manufacturers in each category. Whenever a manufacturer is discovered, reuse that manufacturer node and expand it into the drugs it makes. Whenever a drug is discovered, connect it back to its category. Build only category, manufacturer, and drug nodes, and prioritize linked expansions over narrative summaries." --exit-on-complete
 
 ui-agent-devtools:
   npx @ai-sdk/devtools

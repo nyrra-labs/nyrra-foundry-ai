@@ -29,6 +29,7 @@ import {
 } from './shared/knowledge-graph.js';
 import {
   clampPreviewOffset,
+  formatArtifactWorkspaceLines,
   type GraphPreviewFrame,
   getAutoPreviewOffset,
   getVisiblePreviewLines,
@@ -456,6 +457,18 @@ export function UiAgentApp({ exitOnComplete, prompt, showReasoning }: Props) {
     }
   });
 
+  const waitForPreviewQueueToSettle = useEffectEvent(async () => {
+    for (let attempt = 0; attempt < 300; attempt += 1) {
+      if (!previewRenderInFlightRef.current && !previewPendingRequestRef.current) {
+        return;
+      }
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50);
+      });
+    }
+  });
+
   const runPrompt = useEffectEvent(async (nextPrompt: string) => {
     const trimmedPrompt = nextPrompt.trim();
 
@@ -696,6 +709,12 @@ export function UiAgentApp({ exitOnComplete, prompt, showReasoning }: Props) {
         return;
       }
 
+      if (!finalGraph || !hasUsableGroundedGraph(finalGraph.graph)) {
+        throw new Error(
+          'Live drug crawl completed without grounding a usable category/manufacturer/drug graph.',
+        );
+      }
+
       setPhase('ready');
       setStatusMessage(
         finalGraph == null ? 'Graph ready.' : finalGraph.mutationSummary || 'Graph ready.',
@@ -703,6 +722,10 @@ export function UiAgentApp({ exitOnComplete, prompt, showReasoning }: Props) {
       setErrorMessage(undefined);
 
       if (exitOnComplete) {
+        await new Promise((resolve) => {
+          setTimeout(resolve, 0);
+        });
+        await waitForPreviewQueueToSettle();
         finishRun(0);
       }
     } catch (error) {
@@ -868,20 +891,48 @@ export function UiAgentApp({ exitOnComplete, prompt, showReasoning }: Props) {
       ),
     [analysisLines, reasoningLines, showReasoning, traceLines, wideLayout],
   );
+  const previewFrame = useMemo(() => {
+    if (graphPreview.mode === 'text-fallback') {
+      return graphPreview;
+    }
+
+    const lines = formatArtifactWorkspaceLines(
+      graph,
+      previewInnerWidth,
+      previewLineBudget,
+      graphPreview.artifactPaths,
+      devToolsInfo,
+      phase === 'ready' || graphAgentState.trigger === 'final',
+    );
+
+    return {
+      ...graphPreview,
+      contentHeight: lines.length,
+      lines,
+    } satisfies GraphPreviewFrame;
+  }, [
+    devToolsInfo,
+    graph,
+    graphAgentState.trigger,
+    graphPreview,
+    phase,
+    previewInnerWidth,
+    previewLineBudget,
+  ]);
   const previewOffset = useMemo(
     () =>
       graphScrollMode === 'auto'
-        ? getAutoPreviewOffset(graphPreview.contentHeight, previewLineBudget)
-        : clampPreviewOffset(graphPreview.contentHeight, previewLineBudget, graphScrollOffset),
-    [graphPreview.contentHeight, graphScrollMode, graphScrollOffset, previewLineBudget],
+        ? getAutoPreviewOffset(previewFrame.contentHeight, previewLineBudget)
+        : clampPreviewOffset(previewFrame.contentHeight, previewLineBudget, graphScrollOffset),
+    [graphScrollMode, graphScrollOffset, previewFrame.contentHeight, previewLineBudget],
   );
   const previewLines = useMemo(
-    () => getVisiblePreviewLines(graphPreview.lines, previewLineBudget, previewOffset, 'top'),
-    [graphPreview.lines, previewLineBudget, previewOffset],
+    () => getVisiblePreviewLines(previewFrame.lines, previewLineBudget, previewOffset, 'top'),
+    [previewFrame.lines, previewLineBudget, previewOffset],
   );
   const previewRangeLabel = useMemo(
-    () => formatPreviewRange(graphPreview.contentHeight, previewLineBudget, previewOffset),
-    [graphPreview.contentHeight, previewLineBudget, previewOffset],
+    () => formatPreviewRange(previewFrame.contentHeight, previewLineBudget, previewOffset),
+    [previewFrame.contentHeight, previewLineBudget, previewOffset],
   );
 
   useInput((inputKey, key) => {
@@ -900,7 +951,7 @@ export function UiAgentApp({ exitOnComplete, prompt, showReasoning }: Props) {
       return;
     }
 
-    const maxOffset = Math.max(0, graphPreview.contentHeight - previewLineBudget);
+    const maxOffset = Math.max(0, previewFrame.contentHeight - previewLineBudget);
 
     if (maxOffset === 0) {
       return;
@@ -932,7 +983,7 @@ export function UiAgentApp({ exitOnComplete, prompt, showReasoning }: Props) {
 
     setGraphScrollMode('manual');
     setGraphScrollOffset(
-      clampPreviewOffset(graphPreview.contentHeight, previewLineBudget, nextOffset),
+      clampPreviewOffset(previewFrame.contentHeight, previewLineBudget, nextOffset),
     );
   });
 
@@ -942,9 +993,9 @@ export function UiAgentApp({ exitOnComplete, prompt, showReasoning }: Props) {
     }
 
     setGraphScrollOffset((currentOffset) =>
-      clampPreviewOffset(graphPreview.contentHeight, previewLineBudget, currentOffset),
+      clampPreviewOffset(previewFrame.contentHeight, previewLineBudget, currentOffset),
     );
-  }, [graphPreview.contentHeight, graphScrollMode, previewLineBudget]);
+  }, [graphScrollMode, previewFrame.contentHeight, previewLineBudget]);
 
   useEffect(() => {
     const currentRenderId = graphRenderRunIdRef.current + 1;
@@ -1426,18 +1477,10 @@ function formatTokenSummary(usage: UsageSummary) {
 }
 
 function getKeyedLines(lines: string[]) {
-  const counts = new Map<string, number>();
-
-  return lines.map((line) => {
-    const occurrence = (counts.get(line) ?? 0) + 1;
-
-    counts.set(line, occurrence);
-
-    return {
-      key: `${line}-${occurrence}`,
-      line,
-    };
-  });
+  return lines.map((line, index) => ({
+    key: `${index}-${line}`,
+    line,
+  }));
 }
 
 function upsertToolEvent(currentEvents: ToolEvent[], nextEvent: ToolEvent) {
@@ -1593,6 +1636,16 @@ function mergeEvidenceItems(currentItems: EvidenceItem[], nextItems: EvidenceIte
   }
 
   return merged.slice(-14);
+}
+
+function hasUsableGroundedGraph(graph: KnowledgeGraph) {
+  const groundedCategories = graph.nodes.filter(
+    (node) => node.kind === 'category' && !node.id.startsWith('category-'),
+  ).length;
+  const companies = graph.nodes.filter((node) => node.kind === 'company').length;
+  const products = graph.nodes.filter((node) => node.kind === 'product').length;
+
+  return groundedCategories > 0 && companies > 0 && products > 0 && graph.evidence.length > 0;
 }
 
 function resolveArtifactDir() {

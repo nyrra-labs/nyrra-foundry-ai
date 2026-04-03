@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { createSeedKnowledgeGraph, MutableKnowledgeGraph } from '../shared/knowledge-graph.js';
 import {
+  getDrugSeedCategories,
+  hasGroundedDrugDiscoveries,
   seedGraphFromStructuredDiscoveries,
   shouldRequireLiveSearch,
   shouldUseDeterministicDrugData,
@@ -96,5 +98,48 @@ describe('shouldRequireLiveSearch', () => {
     expect(shouldRequireLiveSearch({ UI_AGENT_REQUIRE_LIVE_SEARCH: '0' })).toBe(false);
     expect(shouldRequireLiveSearch({ UI_AGENT_REQUIRE_LIVE_SEARCH: '1' })).toBe(true);
     expect(shouldRequireLiveSearch({ UI_AGENT_REQUIRE_LIVE_SEARCH: 'true' })).toBe(true);
+  });
+});
+
+describe('getDrugSeedCategories', () => {
+  it('prioritizes directly mentioned classes before the broader diabetes taxonomy', () => {
+    const categories = getDrugSeedCategories(
+      'Map the GLP-1 and SGLT2 diabetes-drug landscape by manufacturer and product.',
+    );
+
+    expect(categories[0]).toBe('GLP-1 receptor agonists');
+    expect(categories[1]).toBe('SGLT2 inhibitors');
+    expect(categories).toContain('Biguanides');
+  });
+});
+
+describe('hasGroundedDrugDiscoveries', () => {
+  it('requires categories, manufacturers, and drugs before the run is considered usable', () => {
+    expect(
+      hasGroundedDrugDiscoveries({
+        categories: [{ label: 'GLP-1 receptor agonists' }],
+        drugs: [],
+        manufacturers: [],
+      }),
+    ).toBe(false);
+    expect(
+      hasGroundedDrugDiscoveries({
+        categories: [{ label: 'GLP-1 receptor agonists' }],
+        drugs: [
+          {
+            categories: ['GLP-1 receptor agonists'],
+            label: 'Ozempic',
+            manufacturers: ['Novo Nordisk'],
+          },
+        ],
+        manufacturers: [
+          {
+            categories: ['GLP-1 receptor agonists'],
+            drugs: ['Ozempic'],
+            label: 'Novo Nordisk',
+          },
+        ],
+      }),
+    ).toBe(true);
   });
 });
