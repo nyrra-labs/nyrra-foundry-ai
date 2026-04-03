@@ -6,8 +6,8 @@
 
 | Provider | Package import | Foundry proxy family | Default live model | Notes |
 |---|---|---|---|---|
-| OpenAI | `@nyrra/foundry-ai/openai` | `/api/v2/llm/proxy/openai/v1` | `gpt-5-mini` | Uses Responses-compatible transport and Foundry-specific compatibility defaults |
-| Anthropic | `@nyrra/foundry-ai/anthropic` | `/api/v2/llm/proxy/anthropic/v1` | `claude-sonnet-4.6` | Preserves Anthropic provider options and uses bearer auth |
+| OpenAI | `@nyrra/foundry-ai/openai` | `/api/v2/llm/proxy/openai/v1` | `gpt-5-nano` | Uses Responses-compatible transport and Foundry-specific compatibility defaults |
+| Anthropic | `@nyrra/foundry-ai/anthropic` | `/api/v2/llm/proxy/anthropic/v1` | `claude-haiku-4.5` | Preserves Anthropic provider options and uses bearer auth |
 | Google | `@nyrra/foundry-ai/google` | `/api/v2/llm/proxy/google/v1` | `gemini-3.1-flash-lite` | Beta Foundry proxy surface with bearer-auth rewrite |
 
 ## Known aliases
@@ -89,8 +89,8 @@ The checked-in [harness capability results](./harness-capability-results.md) are
 
 The current snapshot shows:
 
-- OpenAI hard-gate model: `gpt-5-mini`
-- Anthropic hard-gate model: `claude-sonnet-4.6`
+- OpenAI hard-gate model: `gpt-5-nano`
+- Anthropic hard-gate model: `claude-haiku-4.5`
 - Google hard-gate model: `gemini-3.1-flash-lite`
 
 For the latest row-by-row pass/fail details, use the matrix rather than guessing from this summary doc.
