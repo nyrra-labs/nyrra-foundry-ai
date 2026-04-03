@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["@openontology/opencode-palantir@^0.1.6"],
+  "plugin": ["@openontology/opencode-palantir@^0.1.6", "@sketchi-app/opencode-excalidraw@0.0.9"],
   "tools": {
     "palantir-mcp_*": true
   },

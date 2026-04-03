@@ -30,6 +30,7 @@ live:
 live-full:
   pnpm run test:live:devtools:full -- --update-docs
 
+# `live-model` widens to catalog scope automatically unless you pass `--canonical`.
 live-model model:
   pnpm run test:live:devtools -- --no-update-docs --model {{model}}
 
