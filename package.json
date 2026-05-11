@@ -29,25 +29,25 @@
     }
   },
   "devDependencies": {
-    "@ai-sdk/devtools": "0.0.15",
-    "@ai-sdk/anthropic": "3.0.71",
-    "@ai-sdk/google": "3.0.64",
-    "@ai-sdk/openai": "3.0.53",
-    "@biomejs/biome": "2.4.12",
+    "@ai-sdk/devtools": "0.0.17",
+    "@ai-sdk/anthropic": "3.0.76",
+    "@ai-sdk/google": "3.0.72",
+    "@ai-sdk/openai": "3.0.63",
+    "@biomejs/biome": "2.4.15",
     "@exalabs/ai-sdk": "2.0.1",
-    "@nx/js": "22.6.5",
+    "@nx/js": "22.7.1",
     "@swc-node/register": "~1.11.1",
-    "@swc/core": "~1.15.30",
+    "@swc/core": "~1.15.33",
     "@swc/helpers": "~0.5.21",
-    "@tanstack/intent": "0.0.29",
-    "@types/node": "25.6.0",
-    "ai": "6.0.168",
-    "nx": "22.6.5",
+    "@tanstack/intent": "0.0.41",
+    "@types/node": "25.7.0",
+    "ai": "6.0.177",
+    "nx": "22.7.1",
     "tslib": "2.8.1",
     "tsup": "8.5.1",
     "tsx": "4.21.0",
     "typescript": "6.0.3",
-    "vitest": "4.1.4",
-    "zod": "4.3.6"
+    "vitest": "4.1.6",
+    "zod": "4.4.3"
   }
 }
