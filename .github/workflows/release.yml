@@ -1,6 +1,12 @@
 name: Publish Release
 
 on:
+  workflow_dispatch:
+    inputs:
+      bootstrap_sha:
+        description: Full 40-character main SHA to publish and tag as the one-time 0.0.5 bootstrap
+        required: true
+        type: string
   pull_request:
     types:
       - closed
@@ -21,8 +27,160 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  bootstrap-package:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out selected main SHA
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.bootstrap_sha }}
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v6
+        name: Install pnpm
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install provenance-capable npm
+        run: |
+          set -euo pipefail
+          npm install --global npm@11.16.0
+          npm_version=$(npm --version)
+          node -e "const [major, minor] = process.argv[1].split('.').map(Number); if (major < 11 || (major === 11 && minor < 5)) process.exit(1)" "${npm_version}"
+          echo "npm ${npm_version}"
+
+      - name: Inspect resumable bootstrap state
+        id: bootstrap_state
+        env:
+          BOOTSTRAP_SHA: ${{ inputs.bootstrap_sha }}
+        run: |
+          set -euo pipefail
+          package_state=$(node scripts/reconcile-bootstrap-release.mjs inspect)
+          echo "package_state=${package_state}" >> "$GITHUB_OUTPUT"
+
+      - name: Validate one-time bootstrap source
+        env:
+          BOOTSTRAP_SHA: ${{ inputs.bootstrap_sha }}
+          PACKAGE_STATE: ${{ steps.bootstrap_state.outputs.package_state }}
+          WORKFLOW_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          package_name=$(node -p "require('./packages/foundry-ai/package.json').name")
+          package_version=$(node -p "require('./packages/foundry-ai/package.json').version")
+
+          if ! [[ "${BOOTSTRAP_SHA}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::bootstrap_sha must be a full lowercase 40-character commit SHA."
+            exit 1
+          fi
+
+          git fetch --no-tags origin main
+          checked_out_sha=$(git rev-parse HEAD)
+          main_sha=$(git rev-parse origin/main)
+
+          test "${checked_out_sha}" = "${BOOTSTRAP_SHA}"
+          test "${main_sha}" = "${WORKFLOW_SHA}"
+          test "$(git branch --show-current)" = ""
+
+          if [ "${PACKAGE_STATE}" = "absent" ]; then
+            test "${main_sha}" = "${BOOTSTRAP_SHA}"
+          else
+            git merge-base --is-ancestor "${BOOTSTRAP_SHA}" origin/main
+          fi
+
+          if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+            echo "::error::Selected bootstrap commit has tracked worktree changes."
+            git status --short
+            exit 1
+          fi
+
+          test "${package_name}" = "@shpit/foundry-ai"
+          test "${package_version}" = "0.0.5"
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run verify
+
+      - name: Revalidate pinned main SHA immediately before publish
+        id: revalidate
+        env:
+          BOOTSTRAP_SHA: ${{ inputs.bootstrap_sha }}
+          PACKAGE_STATE: ${{ steps.bootstrap_state.outputs.package_state }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          test "$(git rev-parse HEAD)" = "${BOOTSTRAP_SHA}"
+          if [ "${PACKAGE_STATE}" = "absent" ]; then
+            test "$(git rev-parse origin/main)" = "${BOOTSTRAP_SHA}"
+          else
+            git merge-base --is-ancestor "${BOOTSTRAP_SHA}" origin/main
+          fi
+          if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+            echo "::error::Tracked files changed during bootstrap verification."
+            git status --short
+            exit 1
+          fi
+
+      - name: Publish bootstrap package with provenance
+        id: bootstrap_publish
+        if: steps.bootstrap_state.outputs.package_state == 'absent'
+        continue-on-error: true
+        env:
+          BOOTSTRAP_SHA: ${{ inputs.bootstrap_sha }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_BOOTSTRAP_TOKEN }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${BOOTSTRAP_SHA}"
+          cd packages/foundry-ai
+          npm publish --provenance --access public --tag latest
+
+      - name: Reconcile accepted publish and finalize exact tag
+        id: bootstrap_finalize
+        if: always() && steps.bootstrap_state.outcome == 'success' && steps.revalidate.outcome == 'success'
+        env:
+          BOOTSTRAP_SHA: ${{ inputs.bootstrap_sha }}
+          PUBLISH_OUTCOME: ${{ steps.bootstrap_publish.outcome }}
+        run: |
+          set -euo pipefail
+          echo "Publish command outcome: ${PUBLISH_OUTCOME}"
+          node scripts/reconcile-bootstrap-release.mjs finalize
+
+      - name: Revoke one-time npm token
+        if: always()
+        env:
+          NPM_BOOTSTRAP_TOKEN: ${{ secrets.NPM_BOOTSTRAP_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_BOOTSTRAP_TOKEN }}
+          PUBLISH_OUTCOME: ${{ steps.bootstrap_publish.outcome }}
+        run: |
+          set -euo pipefail
+          if [ -z "${NPM_BOOTSTRAP_TOKEN}" ]; then
+            if [ "${PUBLISH_OUTCOME}" != "skipped" ]; then
+              echo "::error::A bootstrap publish was attempted without a revocable npm token."
+              exit 1
+            fi
+            echo "No npm token was needed for this package-present reconciliation run."
+            exit 0
+          fi
+
+          if npm whoami --registry=https://registry.npmjs.org >/dev/null 2>&1; then
+            npm token revoke "${NPM_BOOTSTRAP_TOKEN}"
+            if npm whoami --registry=https://registry.npmjs.org >/dev/null 2>&1; then
+              echo "::error::The one-time npm token still authenticates after revocation."
+              exit 1
+            fi
+            echo "One-time npm token revoked. Delete the NPM_BOOTSTRAP_TOKEN GitHub secret."
+          else
+            echo "The supplied npm token is already non-authenticating; no revocation remains."
+          fi
+
   publish-prerelease:
     if: >-
+      vars.NPM_PUBLISH_ENABLED == 'true' &&
       github.event.pull_request.merged == true &&
       !startsWith(github.event.pull_request.head.ref, 'release/')
     runs-on: ubuntu-latest
@@ -43,6 +201,7 @@ jobs:
           cache: pnpm
           registry-url: https://registry.npmjs.org
 
+      - run: npm install --global npm@11.16.0
       - run: pnpm install --frozen-lockfile
 
       - name: Prepare prerelease version
@@ -93,6 +252,7 @@ jobs:
 
   publish-stable:
     if: >-
+      vars.NPM_PUBLISH_ENABLED == 'true' &&
       github.event.pull_request.merged == true &&
       startsWith(github.event.pull_request.head.ref, 'release/')
     runs-on: ubuntu-latest
@@ -113,6 +273,7 @@ jobs:
           cache: pnpm
           registry-url: https://registry.npmjs.org
 
+      - run: npm install --global npm@11.16.0
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm exec nx run-many -t build package-audit --projects=foundry-ai --outputStyle=static

@@ -1,14 +1,14 @@
 # Model Support
 
-`@nyrra/foundry-ai` exposes language-model entrypoints only. It does not currently expose embeddings, image generation, speech, transcription, video, or rerank methods even though some upstream Foundry proxy endpoints exist.
+`@shpit/foundry-ai` exposes language-model entrypoints only. It does not currently expose embeddings, image generation, speech, transcription, video, or rerank methods even though some upstream Foundry proxy endpoints exist.
 
 ## Provider summary
 
 | Provider | Package import | Foundry proxy family | Default live model | Notes |
 |---|---|---|---|---|
-| OpenAI | `@nyrra/foundry-ai/openai` | `/api/v2/llm/proxy/openai/v1` | `gpt-5-nano` | Uses Responses-compatible transport and Foundry-specific compatibility defaults |
-| Anthropic | `@nyrra/foundry-ai/anthropic` | `/api/v2/llm/proxy/anthropic/v1` | `claude-haiku-4.5` | Preserves Anthropic provider options and uses bearer auth |
-| Google | `@nyrra/foundry-ai/google` | `/api/v2/llm/proxy/google/v1` | `gemini-3.1-flash-lite` | Beta Foundry proxy surface with bearer-auth rewrite |
+| OpenAI | `@shpit/foundry-ai/openai` | `/api/v2/llm/proxy/openai/v1` | `gpt-5-nano` | Uses Responses-compatible transport and Foundry-specific compatibility defaults |
+| Anthropic | `@shpit/foundry-ai/anthropic` | `/api/v2/llm/proxy/anthropic/v1` | `claude-haiku-4.5` | Preserves Anthropic provider options and uses bearer auth |
+| Google | `@shpit/foundry-ai/google` | `/api/v2/llm/proxy/google/v1` | `gemini-3.1-flash-lite` | Beta Foundry proxy surface with bearer-auth rewrite |
 
 ## Known aliases
 

@@ -2,7 +2,7 @@
 
 ## What this package is for
 
-`@nyrra/foundry-ai` is for applications that want to use the AI SDK with Palantir Foundry's provider-compatible LLM proxy endpoints instead of calling public provider APIs directly.
+`@shpit/foundry-ai` is for applications that want to use the AI SDK with Palantir Foundry's provider-compatible LLM proxy endpoints instead of calling public provider APIs directly.
 
 Typical use cases:
 
@@ -36,8 +36,8 @@ Palantir's docs show the same proxy family used from OSDK and in-platform helper
 ## Minimal env-based setup
 
 ```ts
-import { loadFoundryConfig } from '@nyrra/foundry-ai';
-import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
+import { loadFoundryConfig } from '@shpit/foundry-ai';
+import { createFoundryOpenAI } from '@shpit/foundry-ai/openai';
 import { generateText } from 'ai';
 
 const config = loadFoundryConfig();
@@ -60,9 +60,9 @@ const result = await generateText({
 The package intentionally does not export a registry helper. Compose one in application code:
 
 ```ts
-import { loadFoundryConfig } from '@nyrra/foundry-ai';
-import { createFoundryAnthropic } from '@nyrra/foundry-ai/anthropic';
-import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
+import { loadFoundryConfig } from '@shpit/foundry-ai';
+import { createFoundryAnthropic } from '@shpit/foundry-ai/anthropic';
+import { createFoundryOpenAI } from '@shpit/foundry-ai/openai';
 import { createProviderRegistry } from 'ai';
 
 const config = loadFoundryConfig();
@@ -75,8 +75,8 @@ export const registry = createProviderRegistry({
 
 ## Repo examples
 
-- [Examples overview with base vs advanced split](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/examples/README.md)
-- [Published base examples](https://github.com/nyrra-labs/nyrra-foundry-ai/tree/main/packages/foundry-ai/skills/foundry-ai-provider/references/examples)
+- [Examples overview with base vs advanced split](https://github.com/shpitdev/foundry-ai/blob/main/examples/README.md)
+- [Published base examples](https://github.com/shpitdev/foundry-ai/tree/main/packages/foundry-ai/skills/foundry-ai-provider/references/examples)
 
 ## Relevant Palantir docs
 

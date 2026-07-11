@@ -1,16 +1,12 @@
-<p align="center">
-  <img src="https://www.nyrra.ai/nyrra-logo-5-colors.svg" alt="Nyrra" width="240" />
-</p>
-
-# @nyrra/foundry-ai
+# @shpit/foundry-ai
 
 Thin Palantir Foundry provider adapters and model catalog for the Vercel AI SDK.
 
-[![CI](https://github.com/nyrra-labs/nyrra-foundry-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/nyrra-labs/nyrra-foundry-ai/actions/workflows/ci.yml)
-[![Semgrep](https://github.com/nyrra-labs/nyrra-foundry-ai/actions/workflows/semgrep.yml/badge.svg)](https://github.com/nyrra-labs/nyrra-foundry-ai/actions/workflows/semgrep.yml)
-[![npm](https://img.shields.io/npm/v/%40nyrra%2Ffoundry-ai/latest?logo=npm&label=npm)](https://www.npmjs.com/package/@nyrra/foundry-ai)
-[![next](https://img.shields.io/npm/v/%40nyrra%2Ffoundry-ai/next?logo=npm&label=next)](https://www.npmjs.com/package/@nyrra/foundry-ai?activeTab=versions)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/nyrra-labs/nyrra-foundry-ai)
+[![CI](https://github.com/shpitdev/foundry-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/shpitdev/foundry-ai/actions/workflows/ci.yml)
+[![Semgrep](https://github.com/shpitdev/foundry-ai/actions/workflows/semgrep.yml/badge.svg)](https://github.com/shpitdev/foundry-ai/actions/workflows/semgrep.yml)
+[![npm](https://img.shields.io/npm/v/%40shpit%2Ffoundry-ai/latest?logo=npm&label=npm)](https://www.npmjs.com/package/@shpit/foundry-ai)
+[![next](https://img.shields.io/npm/v/%40shpit%2Ffoundry-ai/next?logo=npm&label=next)](https://www.npmjs.com/package/@shpit/foundry-ai?activeTab=versions)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/shpitdev/foundry-ai)
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.2-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![AI%20SDK](https://img.shields.io/badge/AI%20SDK-6.0.140-000000?logo=vercel&logoColor=white)](https://ai-sdk.dev/)
@@ -43,7 +39,7 @@ Thin Palantir Foundry provider adapters and model catalog for the Vercel AI SDK.
 Install the package, `ai`, and only the provider peer dependency you need:
 
 ```bash
-pnpm add @nyrra/foundry-ai ai @ai-sdk/openai
+pnpm add @shpit/foundry-ai ai @ai-sdk/openai
 ```
 
 ```bash
@@ -53,8 +49,8 @@ FOUNDRY_ATTRIBUTION_RID=
 ```
 
 ```ts
-import { loadFoundryConfig } from '@nyrra/foundry-ai';
-import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
+import { loadFoundryConfig } from '@shpit/foundry-ai';
+import { createFoundryOpenAI } from '@shpit/foundry-ai/openai';
 import { generateText } from 'ai';
 
 const openai = createFoundryOpenAI(loadFoundryConfig());
@@ -69,12 +65,18 @@ console.log(text);
 
 See the published package README for the npm-facing surface: [`packages/foundry-ai/README.md`](./packages/foundry-ai/README.md).
 
+## Consumer Migration
+
+The first public package under this identity is `@shpit/foundry-ai@0.0.5`. Consumers, including foundry-claw, should change the dependency and every package import specifier to `@shpit/foundry-ai` after the npm cutover is complete.
+
+The root exports, provider subpaths, `FOUNDRY_*` environment variables, model aliases, raw-RID behavior, and runtime semantics are unchanged. No compatibility package or alternate import name is shipped.
+
 ## Agent Skill
 
 Install the published agent skill with:
 
 ```bash
-npx skills add https://github.com/nyrra-labs/nyrra-foundry-ai --skill foundry-ai-provider
+npx skills add https://github.com/shpitdev/foundry-ai --skill foundry-ai-provider
 ```
 
 That flow lets the `skills` CLI prompt for scope and agent links interactively. The install event is what `skills.sh` uses for leaderboard/indexing.
@@ -96,7 +98,7 @@ CI runs lint, unit tests, typecheck, build, TanStack Intent validation, and a pa
 
 - AI SDK DevTools is wired into the live harness and the advanced DevTools instrumentation examples. The middleware captures every `streamText` call — tool invocations, results, token usage, and full request/response payloads — into `.devtools/generations.json`. Start the viewer in a separate terminal with `npx @ai-sdk/devtools` and open `http://localhost:4983`. For the live harness: `pnpm run test:live:devtools -- --no-update-docs --model openai:gpt-5-nano` or `just live-model openai:gpt-5-nano`. For the advanced examples: `pnpm run example:devtools` or `pnpm run example:devtools:parallel`.
 - TanStack Intent validates the published skill surface with `pnpm exec intent validate packages/foundry-ai/skills`.
-- In consumer repos, TanStack Intent discovers the installed package from `node_modules`. After adding `@nyrra/foundry-ai` to the app, run `npx @tanstack/intent@latest list` and map `node_modules/@nyrra/foundry-ai/skills/foundry-ai-provider/SKILL.md` in your agent config.
+- In consumer repos, TanStack Intent discovers the installed package from `node_modules`. After adding `@shpit/foundry-ai` to the app, run `npx @tanstack/intent@latest list` and map `node_modules/@shpit/foundry-ai/skills/foundry-ai-provider/SKILL.md` in your agent config.
 - The safe example runner builds first and then executes with Bun when available. Start with `pnpm run example tool-calling openai`, `bun run example:devtools`, or `bun run example:devtools:parallel`.
 
 ## Docs And Examples
@@ -114,7 +116,7 @@ Base examples live under [`examples/base`](./examples/base), which is a symlink 
 
 ## Release Workflow
 
-Stable releases and prereleases both run through Nx release and the shared GitHub Actions workflow. For the exact steps, trusted publishing setup, and local dry-run commands, see [`docs/RELEASING.md`](./docs/RELEASING.md).
+Stable releases and prereleases both run through Nx release and the shared GitHub Actions workflow. Publishing remains disabled until the repository and npm cutover gates are complete. The first package is bootstrapped only from an explicitly selected clean `main` SHA in GitHub Actions, with provenance and automatic revocation of its one-time npm token. For the exact transfer, GitHub metadata cleanup, bootstrap publish, trusted-publisher, and verification steps, see [`docs/RELEASING.md`](./docs/RELEASING.md).
 
 ## External Services
 
@@ -123,6 +125,6 @@ Stable releases and prereleases both run through Nx release and the shared GitHu
 
 ## Copyright And License
 
-Copyright 2026 NYRRA Inc.
+Copyright 2026 SHPIT LLC
 
 Licensed under Apache-2.0. See [`LICENSE`](./LICENSE) and [`NOTICE`](./NOTICE).

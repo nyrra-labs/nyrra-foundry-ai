@@ -11,6 +11,22 @@
         "cwd": "{workspaceRoot}"
       }
     },
+    "identity-check": {
+      "cache": false,
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/check-neutral-identity.mjs",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "release-policy-check": {
+      "cache": false,
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/check-release-policy.mjs",
+        "cwd": "{workspaceRoot}"
+      }
+    },
     "build": {
       "executor": "nx:run-commands",
       "outputs": ["{projectRoot}/dist"],

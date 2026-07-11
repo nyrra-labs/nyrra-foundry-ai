@@ -1,6 +1,6 @@
-import type { OpenAIModelId } from '@nyrra/foundry-ai';
-import { loadFoundryConfig } from '@nyrra/foundry-ai';
-import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
+import type { OpenAIModelId } from '@shpit/foundry-ai';
+import { loadFoundryConfig } from '@shpit/foundry-ai';
+import { createFoundryOpenAI } from '@shpit/foundry-ai/openai';
 import { generateText } from 'ai';
 
 const config = loadFoundryConfig();

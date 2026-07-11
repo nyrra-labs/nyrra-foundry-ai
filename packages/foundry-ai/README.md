@@ -1,17 +1,13 @@
-<p align="center">
-  <img src="https://www.nyrra.ai/nyrra-logo-5-colors.svg" alt="Nyrra" width="220" />
-</p>
-
-# @nyrra/foundry-ai
+# @shpit/foundry-ai
 
 Thin Palantir Foundry provider adapters and model catalog for the Vercel AI SDK.
 
 [![AI%20SDK](https://img.shields.io/badge/AI%20SDK-6.0.140-000000?logo=vercel&logoColor=white)](https://ai-sdk.dev/)
-[![npm](https://img.shields.io/npm/v/%40nyrra%2Ffoundry-ai/latest?logo=npm&label=npm)](https://www.npmjs.com/package/@nyrra/foundry-ai)
-[![next](https://img.shields.io/npm/v/%40nyrra%2Ffoundry-ai/next?logo=npm&label=next)](https://www.npmjs.com/package/@nyrra/foundry-ai?activeTab=versions)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/nyrra-labs/nyrra-foundry-ai)
+[![npm](https://img.shields.io/npm/v/%40shpit%2Ffoundry-ai/latest?logo=npm&label=npm)](https://www.npmjs.com/package/@shpit/foundry-ai)
+[![next](https://img.shields.io/npm/v/%40shpit%2Ffoundry-ai/next?logo=npm&label=next)](https://www.npmjs.com/package/@shpit/foundry-ai?activeTab=versions)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/shpitdev/foundry-ai)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.2-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![License](https://img.shields.io/badge/license-Apache--2.0-0f172a)](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/LICENSE)
+[![License](https://img.shields.io/badge/license-Apache--2.0-0f172a)](https://github.com/shpitdev/foundry-ai/blob/main/packages/foundry-ai/LICENSE)
 
 ## What It Does
 
@@ -25,28 +21,34 @@ Thin Palantir Foundry provider adapters and model catalog for the Vercel AI SDK.
 Install `ai`, this package, and only the provider peer dependency you need:
 
 ```bash
-pnpm add @nyrra/foundry-ai ai @ai-sdk/openai
+pnpm add @shpit/foundry-ai ai @ai-sdk/openai
 ```
 
 ```bash
-pnpm add @nyrra/foundry-ai ai @ai-sdk/anthropic
+pnpm add @shpit/foundry-ai ai @ai-sdk/anthropic
 ```
 
 ```bash
-pnpm add @nyrra/foundry-ai ai @ai-sdk/google
+pnpm add @shpit/foundry-ai ai @ai-sdk/google
 ```
 
-If you use more than one provider, install both peers. For the rationale and bundle-size tradeoffs, see the [dependency strategy guide](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/docs/dependency-strategy.md).
+If you use more than one provider, install both peers. For the rationale and bundle-size tradeoffs, see the [dependency strategy guide](https://github.com/shpitdev/foundry-ai/blob/main/packages/foundry-ai/docs/dependency-strategy.md).
+
+## Migrating Existing Consumers
+
+Use `@shpit/foundry-ai@0.0.5` as the first release under this public package identity. Replace the dependency and import specifiers, but keep the same root exports and provider subpaths. Existing `FOUNDRY_*` configuration, model aliases, raw RIDs, and runtime behavior remain valid. No compatibility package or alternate import name is published.
+
+The first release is published from a pinned clean `main` SHA in GitHub Actions with npm provenance. It is not published from a maintainer workstation.
 
 ## Agent Skill
 
 Install the published agent skill with:
 
 ```bash
-npx skills add https://github.com/nyrra-labs/nyrra-foundry-ai --skill foundry-ai-provider
+npx skills add https://github.com/shpitdev/foundry-ai --skill foundry-ai-provider
 ```
 
-That flow lets the `skills` CLI prompt for scope and agent links interactively. The install event is what `skills.sh` uses for leaderboard/indexing. In TanStack Intent consumer repos, install `@nyrra/foundry-ai` directly, run `npx @tanstack/intent@latest list`, and map `node_modules/@nyrra/foundry-ai/skills/foundry-ai-provider/SKILL.md` in your agent config.
+That flow lets the `skills` CLI prompt for scope and agent links interactively. The install event is what `skills.sh` uses for leaderboard/indexing. In TanStack Intent consumer repos, install `@shpit/foundry-ai` directly, run `npx @tanstack/intent@latest list`, and map `node_modules/@shpit/foundry-ai/skills/foundry-ai-provider/SKILL.md` in your agent config.
 
 ## Verified Use Case
 
@@ -63,8 +65,8 @@ FOUNDRY_ATTRIBUTION_RID=
 ```
 
 ```ts
-import { loadFoundryConfig } from '@nyrra/foundry-ai';
-import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
+import { loadFoundryConfig } from '@shpit/foundry-ai';
+import { createFoundryOpenAI } from '@shpit/foundry-ai/openai';
 import { generateText } from 'ai';
 
 const openai = createFoundryOpenAI(loadFoundryConfig());
@@ -80,9 +82,9 @@ console.log(result.text);
 ## Provider Surface
 
 - Root exports config loading, catalog helpers, errors, and model ID types.
-- `@nyrra/foundry-ai/openai` exports `createFoundryOpenAI`.
-- `@nyrra/foundry-ai/anthropic` exports `createFoundryAnthropic`.
-- `@nyrra/foundry-ai/google` exports `createFoundryGoogle`.
+- `@shpit/foundry-ai/openai` exports `createFoundryOpenAI`.
+- `@shpit/foundry-ai/anthropic` exports `createFoundryAnthropic`.
+- `@shpit/foundry-ai/google` exports `createFoundryGoogle`.
 - There is no package-level registry helper. Compose multi-provider routing in application code with AI SDK `createProviderRegistry`.
 
 ## Model IDs
@@ -91,7 +93,7 @@ console.log(result.text);
 - Use raw Foundry RIDs when your stack exposes a model that is not yet in the package catalog.
 - Sunset and deprecated enrollment entries are intentionally excluded from the public alias catalog.
 - `getModelMetadata()` exposes normalized catalog data for current aliases, including `modelIdentifier`, `inputTypes`, `trainingCutoffDate`, `performance`, and derived `supportsVision` / `supportsResponses` flags.
-- Alias and raw-RID behavior are documented in the [model support guide](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/docs/model-support.md).
+- Alias and raw-RID behavior are documented in the [model support guide](https://github.com/shpitdev/foundry-ai/blob/main/packages/foundry-ai/docs/model-support.md).
 
 ## Foundry-Specific Behavior
 
@@ -103,14 +105,14 @@ console.log(result.text);
 
 ## Docs And Examples
 
-- [Usage guide](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/docs/usage.md)
-- [Model support guide](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/docs/model-support.md)
-- [Dependency strategy guide](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/docs/dependency-strategy.md)
-- [Harness capability results](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/docs/harness-capability-results.md)
-- [AI SDK community provider draft](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/docs/ai-sdk-community-provider.mdx)
-- [TanStack Intent skill](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/skills/foundry-ai-provider/SKILL.md)
-- [Examples overview](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/examples/README.md)
-- [Published base examples](https://github.com/nyrra-labs/nyrra-foundry-ai/tree/main/packages/foundry-ai/skills/foundry-ai-provider/references/examples)
+- [Usage guide](https://github.com/shpitdev/foundry-ai/blob/main/packages/foundry-ai/docs/usage.md)
+- [Model support guide](https://github.com/shpitdev/foundry-ai/blob/main/packages/foundry-ai/docs/model-support.md)
+- [Dependency strategy guide](https://github.com/shpitdev/foundry-ai/blob/main/packages/foundry-ai/docs/dependency-strategy.md)
+- [Harness capability results](https://github.com/shpitdev/foundry-ai/blob/main/packages/foundry-ai/docs/harness-capability-results.md)
+- [AI SDK community provider draft](https://github.com/shpitdev/foundry-ai/blob/main/packages/foundry-ai/docs/ai-sdk-community-provider.mdx)
+- [TanStack Intent skill](https://github.com/shpitdev/foundry-ai/blob/main/packages/foundry-ai/skills/foundry-ai-provider/SKILL.md)
+- [Examples overview](https://github.com/shpitdev/foundry-ai/blob/main/examples/README.md)
+- [Published base examples](https://github.com/shpitdev/foundry-ai/tree/main/packages/foundry-ai/skills/foundry-ai-provider/references/examples)
 
 ## Testing And CI
 
@@ -125,6 +127,6 @@ CI runs lint, unit tests, typecheck, build, TanStack Intent skill validation, an
 
 ## Copyright And License
 
-Copyright 2026 NYRRA Inc.
+Copyright 2026 SHPIT LLC
 
-Licensed under Apache-2.0. See the [license](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/LICENSE) and [notice](https://github.com/nyrra-labs/nyrra-foundry-ai/blob/main/packages/foundry-ai/NOTICE).
+Licensed under Apache-2.0. See the [license](https://github.com/shpitdev/foundry-ai/blob/main/packages/foundry-ai/LICENSE) and [notice](https://github.com/shpitdev/foundry-ai/blob/main/packages/foundry-ai/NOTICE).

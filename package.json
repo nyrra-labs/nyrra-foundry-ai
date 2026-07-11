@@ -1,5 +1,5 @@
 {
-  "name": "nyrra-foundry-ai",
+  "name": "foundry-ai",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.24.0",
@@ -10,7 +10,9 @@
     "example:devtools": "node scripts/run-example.mjs tool-calling-devtools",
     "example:devtools:parallel": "node scripts/run-example.mjs tool-calling-parallel-devtools",
     "format": "pnpm exec biome check --write .",
+    "identity-check": "node scripts/check-neutral-identity.mjs",
     "lint": "pnpm exec nx run foundry-ai:lint --outputStyle=static",
+    "release-policy-check": "node scripts/check-release-policy.mjs",
     "release": "node scripts/create-stable-release-pr.mjs",
     "test": "pnpm exec nx run foundry-ai:test --outputStyle=static",
     "test:live": "pnpm exec nx run foundry-ai:test-live --outputStyle=stream-without-prefixes",
@@ -18,7 +20,9 @@
     "test:live:devtools": "pnpm exec nx run foundry-ai:test-live-devtools --outputStyle=stream-without-prefixes",
     "test:live:devtools:full": "pnpm run test:live:devtools -- --catalog",
     "test:live:summary": "node scripts/update-harness-results-docs.mjs --stdout",
-    "typecheck": "pnpm exec nx run foundry-ai:typecheck --outputStyle=static"
+    "typecheck": "pnpm exec nx run foundry-ai:typecheck --outputStyle=static",
+    "verify": "pnpm exec nx run-many -t identity-check release-policy-check lint test typecheck build skills-validate package-audit --projects=foundry-ai --outputStyle=static",
+    "verify:public-metadata": "node scripts/verify-public-metadata.mjs"
   },
   "pnpm": {
     "overrides": {
@@ -48,6 +52,7 @@
     "tsx": "4.21.0",
     "typescript": "6.0.3",
     "vitest": "4.1.4",
+    "yaml": "2.8.3",
     "zod": "4.3.6"
   }
 }
