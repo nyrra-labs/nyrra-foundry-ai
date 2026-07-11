@@ -23,12 +23,18 @@ export interface FoundryOpenAIProvider {
 export function createFoundryOpenAI(config: FoundryConfig): FoundryOpenAIProvider {
   const providerId = 'foundry-openai';
   const resolvedConfig = resolveFoundryConfig(config, 'createFoundryOpenAI');
+  const headers =
+    resolvedConfig.attributionRid || resolvedConfig.traceParent || resolvedConfig.traceState
+      ? {
+          ...(resolvedConfig.attributionRid ? { attribution: resolvedConfig.attributionRid } : {}),
+          ...(resolvedConfig.traceParent ? { traceParent: resolvedConfig.traceParent } : {}),
+          ...(resolvedConfig.traceState ? { traceState: resolvedConfig.traceState } : {}),
+        }
+      : undefined;
   const baseProvider = createOpenAI({
     apiKey: resolvedConfig.token,
     baseURL: `${resolvedConfig.foundryUrl}/api/v2/llm/proxy/openai/v1`,
-    headers: resolvedConfig.attributionRid
-      ? { attribution: resolvedConfig.attributionRid }
-      : undefined,
+    headers,
     name: providerId,
   });
 

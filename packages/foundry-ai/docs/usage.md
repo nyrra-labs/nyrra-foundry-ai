@@ -32,6 +32,10 @@ Palantir's docs show the same proxy family used from OSDK and in-platform helper
 | `FOUNDRY_URL` | yes | Foundry enrollment base URL |
 | `FOUNDRY_TOKEN` | yes | bearer token for the proxy endpoints |
 | `FOUNDRY_ATTRIBUTION_RID` | no | usage attribution RID header |
+| `FOUNDRY_TRACE_PARENT` | no | W3C traceparent value for Foundry observability |
+| `FOUNDRY_TRACE_STATE` | no | W3C tracestate value for Foundry observability |
+
+Palantir's [LLM-provider compatible APIs documentation](https://www.palantir.com/docs/foundry/aip/llm-provider-compatible-apis) documents these trace-context headers and notes that third-party OAuth2 applications need the `api:use-language-models-execute` scope.
 
 ## Minimal env-based setup
 

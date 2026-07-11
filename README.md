@@ -46,6 +46,8 @@ pnpm add @shpit/foundry-ai ai @ai-sdk/openai
 FOUNDRY_URL=https://your-stack.palantirfoundry.com
 FOUNDRY_TOKEN=your-token
 FOUNDRY_ATTRIBUTION_RID=
+FOUNDRY_TRACE_PARENT=
+FOUNDRY_TRACE_STATE=
 ```
 
 ```ts

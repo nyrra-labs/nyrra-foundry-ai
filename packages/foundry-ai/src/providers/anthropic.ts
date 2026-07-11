@@ -22,12 +22,18 @@ export interface FoundryAnthropicProvider {
 export function createFoundryAnthropic(config: FoundryConfig): FoundryAnthropicProvider {
   const providerId = 'foundry-anthropic';
   const resolvedConfig = resolveFoundryConfig(config, 'createFoundryAnthropic');
+  const headers =
+    resolvedConfig.attributionRid || resolvedConfig.traceParent || resolvedConfig.traceState
+      ? {
+          ...(resolvedConfig.attributionRid ? { attribution: resolvedConfig.attributionRid } : {}),
+          ...(resolvedConfig.traceParent ? { traceParent: resolvedConfig.traceParent } : {}),
+          ...(resolvedConfig.traceState ? { traceState: resolvedConfig.traceState } : {}),
+        }
+      : undefined;
   const baseProvider = createAnthropic({
     authToken: resolvedConfig.token,
     baseURL: `${resolvedConfig.foundryUrl}/api/v2/llm/proxy/anthropic/v1`,
-    headers: resolvedConfig.attributionRid
-      ? { attribution: resolvedConfig.attributionRid }
-      : undefined,
+    headers,
     name: providerId,
   });
 

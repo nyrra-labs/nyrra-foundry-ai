@@ -25,6 +25,8 @@ Bun is the recommended path. The scripts auto-load `.env.local` when `FOUNDRY_UR
 - `FOUNDRY_URL`
 - `FOUNDRY_TOKEN`
 - `FOUNDRY_ATTRIBUTION_RID` — optional
+- `FOUNDRY_TRACE_PARENT` — optional W3C traceparent value
+- `FOUNDRY_TRACE_STATE` — optional W3C tracestate value
 - `EXA_API_KEY` — required for the `tool-calling-*-devtools` examples
 
 ## Running Examples
