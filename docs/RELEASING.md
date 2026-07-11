@@ -93,7 +93,9 @@ Perform these steps in order:
    test "$(git rev-list -n 1 '@shpit/foundry-ai@0.0.5')" = "${BOOTSTRAP_SHA}"
    ```
 
-10. The workflow revokes the token and verifies that it no longer authenticates. If that step is not green, manually revoke the token on npmjs.com before doing anything else. Then remove the now-invalid GitHub secret:
+10. The workflow automatically revokes the granular token with npm CLI 11.16 or newer. If the CLI revocation fails, it falls back to the npm registry token-deletion API. It then verifies non-authentication with repeated registry-liveness checks and retry backoff.
+
+    If the revocation step is red, manually revoke the token on npmjs.com before doing anything else; that is the required fallback only when the automated CLI/API revocation or verification cannot prove the token is inactive. After revocation is confirmed, remove the now-invalid GitHub secret:
 
     ```bash
     gh secret delete NPM_BOOTSTRAP_TOKEN --repo shpitdev/foundry-ai

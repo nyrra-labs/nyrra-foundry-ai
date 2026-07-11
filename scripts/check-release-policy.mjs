@@ -49,6 +49,10 @@ requireCondition(
   'Bootstrap must use a GitHub runner.',
 );
 requireCondition(
+  bootstrapJob?.if?.includes("github.event_name == 'workflow_dispatch'"),
+  'Bootstrap job must only run for workflow_dispatch.',
+);
+requireCondition(
   bootstrapJob?.if?.includes("github.ref == 'refs/heads/main'"),
   'Bootstrap dispatch must run from the main workflow ref.',
 );
@@ -150,14 +154,49 @@ requireCondition(
   revokeStep.run?.includes('already non-authenticating'),
   'Bootstrap token cleanup must be idempotent after an earlier accepted revocation.',
 );
+for (const requiredCheck of [
+  'npm ping --registry=https://registry.npmjs.org',
+  'for attempt in 1 2 3',
+  'sleep $((attempt * 2))',
+  'probe_token_state "Post-revocation"',
+  'mixed or inconclusive',
+  'curl -sS -X DELETE',
+  "-w $'\\n%{http_code}'",
+  `https://registry.npmjs.org/-/npm/v1/tokens/token/${shellVariable('NPM_BOOTSTRAP_TOKEN')}`,
+  'Manually revoke the token on npmjs.com right now.',
+]) {
+  requireCondition(
+    revokeStep.run?.includes(requiredCheck),
+    `Bootstrap token cleanup is missing retry hardening: ${requiredCheck}`,
+  );
+}
 
 for (const jobName of ['publish-prerelease', 'publish-stable']) {
   const publishJob = workflow.jobs?.[jobName];
+  requireCondition(
+    publishJob?.if?.includes("vars.NPM_PUBLISH_ENABLED == 'true'"),
+    `${jobName} must require NPM_PUBLISH_ENABLED=true.`,
+  );
+  requireCondition(
+    publishJob?.if?.includes('github.event.pull_request.merged == true'),
+    `${jobName} must only publish merged pull requests.`,
+  );
   requireCondition(
     publishJob?.steps?.some((step) => step.run === 'npm install --global npm@11.16.0'),
     `${jobName} must pin a trusted-publishing-compatible npm version.`,
   );
 }
+
+const releaseBranchCheck = "startsWith(github.event.pull_request.head.ref, 'release/')";
+requireCondition(
+  workflow.jobs?.['publish-prerelease']?.if?.includes(`!${releaseBranchCheck}`),
+  'Prerelease publishing must exclude release branches.',
+);
+requireCondition(
+  workflow.jobs?.['publish-stable']?.if?.includes(releaseBranchCheck) &&
+    !workflow.jobs?.['publish-stable']?.if?.includes(`!${releaseBranchCheck}`),
+  'Stable publishing must require a release branch.',
+);
 
 for (const [jobName, job] of Object.entries(workflow.jobs)) {
   for (const step of job.steps ?? []) {

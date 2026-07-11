@@ -182,6 +182,9 @@ export async function inspectPublishedPackage({
   }
 
   const attestationUrl = metadata.dist?.attestations?.url;
+  if (attestationUrl == null) {
+    throw new BootstrapUnavailableError('Published package attestation URL is not available yet.');
+  }
   assertMatch(
     typeof attestationUrl === 'string' &&
       attestationUrl.startsWith(`${registry}/-/npm/v1/attestations/`),
