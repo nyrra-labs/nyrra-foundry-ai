@@ -56,8 +56,7 @@ Foundry OpenAI requires minimal compatibility handling because the underlying SD
 - If a caller explicitly sets `providerOptions.openai.store = true`, the adapter throws a clear error before the request is sent.
 - For catalogued OpenAI reasoning targets, the adapter adds `providerOptions.openai.forceReasoning = true` only when the caller did not already provide `forceReasoning`.
 - OpenAI function tools default to `strict = true` only when the caller left `strict` unspecified. Explicit `strict` values are preserved.
-- `embeddingModel()` and `embedding()` use the OpenAI-compatible `/embeddings` endpoint. The known aliases `text-embedding-3-small` and `text-embedding-3-large` resolve to their Foundry RIDs; raw Foundry RIDs pass through.
-- Unknown embedding aliases throw `FoundryModelNotFoundError` so typos are not sent as model IDs.
+- `embeddingModel()` and `embedding()` use the OpenAI-compatible `/embeddings` endpoint, which takes plain OpenAI model strings rather than Foundry RIDs. The typed convenience aliases `text-embedding-3-small` and `text-embedding-3-large` resolve to themselves, and any other model string passes through unchanged.
 
 For uncatalogued OpenAI reasoning RIDs, the package cannot infer reasoning capability. Callers must set `providerOptions.openai.forceReasoning = true` explicitly when needed.
 

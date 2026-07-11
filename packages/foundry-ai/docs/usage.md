@@ -56,7 +56,7 @@ const result = await generateText({
 
 ## OpenAI embeddings
 
-Use the same provider instance with AI SDK `embed` or `embedMany`. Friendly aliases resolve to Foundry model RIDs before the OpenAI-compatible request is sent.
+Use the same provider instance with AI SDK `embed` or `embedMany`. The friendly aliases are typed convenience constants, and the plain model string is sent as-is to the Foundry embeddings proxy rather than being resolved to a Foundry RID.
 
 ```ts
 import { loadFoundryConfig } from '@shpit/foundry-ai';

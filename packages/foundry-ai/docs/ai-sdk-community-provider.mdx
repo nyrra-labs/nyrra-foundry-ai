@@ -108,7 +108,7 @@ const { embedding } = await embed({
 });
 ```
 
-The OpenAI provider supports `text-embedding-3-small`, `text-embedding-3-large`, and raw Foundry RIDs. Anthropic and Google embeddings remain unsupported.
+The OpenAI provider provides typed aliases for `text-embedding-3-small` and `text-embedding-3-large`, while other plain OpenAI model strings pass through unchanged. Embeddings do not use Foundry RID routing. Anthropic and Google embeddings remain unsupported.
 
 ## Multi-provider routing
 

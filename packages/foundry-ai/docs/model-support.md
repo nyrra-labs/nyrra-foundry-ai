@@ -63,7 +63,7 @@ OpenAI embedding aliases:
 
 - Known aliases resolve to the package catalog and then to Foundry RIDs.
 - Raw Foundry RIDs pass through unchanged when you call a provider factory directly.
-- Unknown embedding aliases throw `FoundryModelNotFoundError`; use a catalog alias or a raw Foundry language-model RID.
+- OpenAI embeddings are distinct from language-model RID routing: the typed aliases `text-embedding-3-small` and `text-embedding-3-large` resolve to themselves, and any other plain model string passes through unchanged to the embeddings proxy.
 - Reverse RID lookup is available through `MODEL_CATALOG_BY_RID` and catalog helpers from the root entrypoint.
 - Sunset and deprecated enrollment entries are excluded from the public alias catalog.
 

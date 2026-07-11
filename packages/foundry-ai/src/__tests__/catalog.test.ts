@@ -53,12 +53,8 @@ describe('model catalog', () => {
   });
 
   it('resolves metadata for known OpenAI embedding models', () => {
-    expect(resolveModelRid('text-embedding-3-small')).toBe(
-      'ri.language-model-service..language-model.text-embedding-3-small',
-    );
-    expect(resolveModelRid('text-embedding-3-large')).toBe(
-      'ri.language-model-service..language-model.text-embedding-3-large',
-    );
+    expect(resolveModelRid('text-embedding-3-small')).toBe('text-embedding-3-small');
+    expect(resolveModelRid('text-embedding-3-large')).toBe('text-embedding-3-large');
     expect(getModelMetadata('text-embedding-3-small')).toMatchObject({
       provider: 'openai',
       inputTypes: ['OPEN_AI_EMBEDDINGS'],

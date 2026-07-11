@@ -169,29 +169,17 @@ describe('provider adapters', () => {
     expect(openai.responses).toBeTypeOf('function');
   });
 
-  it('maps OpenAI embedding aliases to RIDs and preserves raw RID passthrough', () => {
+  it('resolves OpenAI embedding aliases and passes through unknown model ids', () => {
     const openai = createFoundryOpenAI(config);
-    const rawRid = 'ri.language-model-service..language-model.custom-embedding-model';
+    const customModelId = 'custom-embedding-model';
     const aliasModel = { modelId: 'small' };
     const rawModel = { modelId: 'raw' };
     openaiEmbeddingMock.mockReturnValueOnce(aliasModel).mockReturnValueOnce(rawModel);
 
     expect(openai.embeddingModel('text-embedding-3-small')).toBe(aliasModel);
-    expect(openai.embedding(rawRid)).toBe(rawModel);
-    expect(openaiEmbeddingMock).toHaveBeenNthCalledWith(
-      1,
-      'ri.language-model-service..language-model.text-embedding-3-small',
-    );
-    expect(openaiEmbeddingMock).toHaveBeenNthCalledWith(2, rawRid);
-  });
-
-  it('rejects unknown OpenAI embedding aliases', () => {
-    const openai = createFoundryOpenAI(config);
-
-    expect(() => openai.embeddingModel('unknown-embedding-alias')).toThrow(
-      /Unknown model: "unknown-embedding-alias"/,
-    );
-    expect(openaiEmbeddingMock).not.toHaveBeenCalled();
+    expect(openai.embedding(customModelId)).toBe(rawModel);
+    expect(openaiEmbeddingMock).toHaveBeenNthCalledWith(1, 'text-embedding-3-small');
+    expect(openaiEmbeddingMock).toHaveBeenNthCalledWith(2, customModelId);
   });
 
   it('adds only the OpenAI compatibility options required by the Foundry proxy', async () => {

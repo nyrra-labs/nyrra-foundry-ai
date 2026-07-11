@@ -362,7 +362,7 @@ const OPENAI_MODEL_DEFINITIONS = {
 
 const OPENAI_EMBEDDING_MODEL_DEFINITIONS = {
   'text-embedding-3-small': {
-    rid: 'ri.language-model-service..language-model.text-embedding-3-small',
+    rid: 'text-embedding-3-small',
     modelIdentifier: 'TEXT_EMBEDDING_3_SMALL',
     displayName: 'Text Embedding 3 Small',
     lifecycle: 'ga',
@@ -376,7 +376,7 @@ const OPENAI_EMBEDDING_MODEL_DEFINITIONS = {
     externalUrl: 'https://platform.openai.com/docs/models/text-embedding-3-small',
   },
   'text-embedding-3-large': {
-    rid: 'ri.language-model-service..language-model.text-embedding-3-large',
+    rid: 'text-embedding-3-large',
     modelIdentifier: 'TEXT_EMBEDDING_3_LARGE',
     displayName: 'Text Embedding 3 Large',
     lifecycle: 'ga',

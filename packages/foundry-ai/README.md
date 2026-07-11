@@ -103,7 +103,7 @@ console.log(result.text);
 - `providerOptions.openai.store=true` throws before the request is sent.
 - Known OpenAI reasoning aliases automatically get `providerOptions.openai.forceReasoning=true` unless the caller already set it.
 - The Google adapter rewrites the AI SDK's `x-goog-api-key` auth into the bearer-token header that Foundry expects.
-- OpenAI `embeddingModel()` and `embedding()` support `text-embedding-3-small`, `text-embedding-3-large`, and raw Foundry RIDs. Other embedding providers and image, audio, video, and rerank methods are not exposed.
+- OpenAI `embeddingModel()` and `embedding()` provide typed aliases for `text-embedding-3-small` and `text-embedding-3-large`, while other plain OpenAI model strings pass through unchanged. Embeddings do not use Foundry RID routing. Other embedding providers and image, audio, video, and rerank methods are not exposed.
 
 ## Docs And Examples
 

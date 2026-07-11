@@ -14,7 +14,7 @@
 - Throws early when a caller sets `providerOptions.openai.store = true`.
 - Automatically sets `forceReasoning = true` for known OpenAI reasoning aliases unless the caller already set it.
 - Defaults function tools to `strict = true` only when the caller left `strict` unspecified.
-- Exposes `embeddingModel()` and `embedding()` for `text-embedding-3-small`, `text-embedding-3-large`, and raw Foundry RIDs.
+- Exposes `embeddingModel()` and `embedding()` with typed aliases for `text-embedding-3-small` and `text-embedding-3-large`; other plain OpenAI model strings pass through unchanged because embeddings do not use Foundry RID routing.
 
 - Uses bearer auth through the Anthropic SDK's `authToken` path.
 - Preserves Anthropic provider options instead of rewriting them.

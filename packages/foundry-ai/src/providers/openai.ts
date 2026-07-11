@@ -2,7 +2,6 @@ import { createOpenAI } from '@ai-sdk/openai';
 import type { wrapLanguageModel } from 'ai';
 import { NoSuchModelError } from 'ai';
 import { resolveFoundryConfig } from '../config.js';
-import { FoundryModelNotFoundError } from '../errors.js';
 import { wrapFoundryLanguageModel } from '../middleware.js';
 import { resolveModelTarget } from '../models/catalog.js';
 import {
@@ -59,14 +58,6 @@ export function createFoundryOpenAI(config: FoundryConfig): FoundryOpenAIProvide
 
   const createEmbeddingModel = (modelId: OpenAIEmbeddingModelId): FoundryEmbeddingModel => {
     const resolvedModel = resolveModelTarget(modelId);
-
-    if (
-      resolvedModel.metadata?.inputTypes.includes('OPEN_AI_EMBEDDINGS') !== true &&
-      !modelId.startsWith('ri.language-model-service..language-model.')
-    ) {
-      throw new FoundryModelNotFoundError(modelId);
-    }
-
     return baseProvider.embeddingModel(resolvedModel.rid);
   };
 
