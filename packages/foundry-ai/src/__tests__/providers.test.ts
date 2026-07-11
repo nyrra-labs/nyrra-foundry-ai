@@ -135,6 +135,14 @@ describe('provider adapters', () => {
     expect(createOpenAIMock).toHaveBeenCalledWith(expect.objectContaining({ headers: undefined }));
   });
 
+  it('sets only the OpenAI attribution header when trace context is absent', () => {
+    createFoundryOpenAI(config);
+
+    expect(createOpenAIMock).toHaveBeenCalledWith(
+      expect.objectContaining({ headers: { attribution: 'ri.attribution.main' } }),
+    );
+  });
+
   it('maps OpenAI aliases to RIDs and preserves raw RID passthrough', () => {
     const openai = createFoundryOpenAI(config);
     const rawRid = 'ri.language-model-service..language-model.gpt-5-2';
@@ -332,6 +340,14 @@ describe('provider adapters', () => {
     );
   });
 
+  it('sets only the Anthropic attribution header when trace context is absent', () => {
+    createFoundryAnthropic(config);
+
+    expect(createAnthropicMock).toHaveBeenCalledWith(
+      expect.objectContaining({ headers: { attribution: 'ri.attribution.main' } }),
+    );
+  });
+
   it('maps Anthropic aliases to RIDs and preserves raw RID passthrough', () => {
     const anthropic = createFoundryAnthropic(config);
     const rawRid = 'ri.language-model-service..language-model.anthropic-claude-4-6-sonnet';
@@ -445,6 +461,14 @@ describe('provider adapters', () => {
     });
 
     expect(createGoogleMock).toHaveBeenCalledWith(expect.objectContaining({ headers: undefined }));
+  });
+
+  it('sets only the Google attribution header when trace context is absent', () => {
+    createFoundryGoogle(config);
+
+    expect(createGoogleMock).toHaveBeenCalledWith(
+      expect.objectContaining({ headers: { attribution: 'ri.attribution.main' } }),
+    );
   });
 
   it('maps Google aliases to RIDs and preserves raw RID passthrough', () => {
