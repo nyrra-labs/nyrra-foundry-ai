@@ -13,7 +13,12 @@ import {
   resolveModelTarget,
 } from '../models/catalog.js';
 import type { GoogleModelId, KnownGoogleModelId } from '../models/google-models.js';
-import type { KnownOpenAIModelId, OpenAIModelId } from '../models/openai-models.js';
+import type {
+  KnownOpenAIEmbeddingModelId,
+  KnownOpenAIModelId,
+  OpenAIEmbeddingModelId,
+  OpenAIModelId,
+} from '../models/openai-models.js';
 
 describe('model catalog', () => {
   it('resolves metadata for known OpenAI models', () => {
@@ -44,6 +49,21 @@ describe('model catalog', () => {
       provider: 'openai',
       supportsResponses: true,
       supportsVision: true,
+    });
+  });
+
+  it('resolves metadata for known OpenAI embedding models', () => {
+    expect(resolveModelRid('text-embedding-3-small')).toBe(
+      'ri.language-model-service..language-model.text-embedding-3-small',
+    );
+    expect(resolveModelRid('text-embedding-3-large')).toBe(
+      'ri.language-model-service..language-model.text-embedding-3-large',
+    );
+    expect(getModelMetadata('text-embedding-3-small')).toMatchObject({
+      provider: 'openai',
+      inputTypes: ['OPEN_AI_EMBEDDINGS'],
+      supportsResponses: false,
+      supportsVision: false,
     });
   });
 
@@ -204,6 +224,8 @@ describe('config loading', () => {
 describe('type surface', () => {
   it('accepts known aliases and raw RIDs', () => {
     const knownOpenAiAlias: KnownOpenAIModelId = 'gpt-5.4-mini';
+    const knownOpenAiEmbeddingAlias: KnownOpenAIEmbeddingModelId = 'text-embedding-3-small';
+    const openAiEmbeddingAlias: OpenAIEmbeddingModelId = 'text-embedding-3-large';
     const openAiAlias: OpenAIModelId = 'gpt-5.4-mini';
     const openAiRid: OpenAIModelId = 'ri.language-model-service..language-model.gpt-5-2';
     const knownAnthropicAlias: KnownAnthropicModelId = 'claude-sonnet-4.6';
@@ -217,6 +239,8 @@ describe('type surface', () => {
     const knownModel: KnownModelId = 'gemini-3.1-flash-lite';
 
     expect(knownOpenAiAlias).toBe('gpt-5.4-mini');
+    expect(knownOpenAiEmbeddingAlias).toBe('text-embedding-3-small');
+    expect(openAiEmbeddingAlias).toBe('text-embedding-3-large');
     expect(openAiAlias).toBe('gpt-5.4-mini');
     expect(openAiRid).toBe('ri.language-model-service..language-model.gpt-5-2');
     expect(knownAnthropicAlias).toBe('claude-sonnet-4.6');

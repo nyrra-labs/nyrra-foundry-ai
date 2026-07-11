@@ -10,6 +10,7 @@ description: Use when wiring @shpit/foundry-ai into an app that should call Pala
 - adding `@shpit/foundry-ai` to an app
 - replacing direct public provider calls with Foundry proxy endpoints
 - troubleshooting alias vs RID behavior or provider-specific Foundry caveats
+- adding OpenAI embeddings through Foundry's OpenAI-compatible proxy
 
 ## Quick start
 
@@ -41,5 +42,5 @@ The `references/examples/*.ts` files are the source of truth. The repo-root `exa
 - installing all provider peers instead of only the ones the app imports
 - setting `providerOptions.openai.store = true`
 - assuming Google support is as stable as OpenAI or Anthropic
-- expecting embedding or image methods from this package
+- expecting embedding methods from Anthropic or Google, or image methods from any provider
 - claiming Foundry-native runtime support because the proxy family exists in Palantir docs

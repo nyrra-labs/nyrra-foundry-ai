@@ -2,14 +2,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTestLanguageModel } from './helpers/test-language-model.js';
 
 const openaiResponsesMock = vi.hoisted(() => vi.fn());
+const openaiEmbeddingMock = vi.hoisted(() => vi.fn());
 const createOpenAIMock = vi.hoisted(() =>
   vi.fn(() => {
     const provider = ((modelId: string) => openaiResponsesMock(modelId)) as {
       (modelId: string): ReturnType<typeof openaiResponsesMock>;
       responses(modelId: string): ReturnType<typeof openaiResponsesMock>;
+      embeddingModel(modelId: string): ReturnType<typeof openaiEmbeddingMock>;
+      embedding(modelId: string): ReturnType<typeof openaiEmbeddingMock>;
     };
 
     provider.responses = openaiResponsesMock;
+    provider.embeddingModel = openaiEmbeddingMock;
+    provider.embedding = openaiEmbeddingMock;
 
     return provider;
   }),
@@ -68,6 +73,7 @@ describe('provider adapters', () => {
 
   beforeEach(() => {
     openaiResponsesMock.mockReset();
+    openaiEmbeddingMock.mockReset();
     anthropicLanguageModelMock.mockReset();
     googleLanguageModelMock.mockReset();
 
@@ -161,6 +167,31 @@ describe('provider adapters', () => {
     expect(openai.specificationVersion).toBe('v3');
     expect(openai.languageModel).toBeTypeOf('function');
     expect(openai.responses).toBeTypeOf('function');
+  });
+
+  it('maps OpenAI embedding aliases to RIDs and preserves raw RID passthrough', () => {
+    const openai = createFoundryOpenAI(config);
+    const rawRid = 'ri.language-model-service..language-model.custom-embedding-model';
+    const aliasModel = { modelId: 'small' };
+    const rawModel = { modelId: 'raw' };
+    openaiEmbeddingMock.mockReturnValueOnce(aliasModel).mockReturnValueOnce(rawModel);
+
+    expect(openai.embeddingModel('text-embedding-3-small')).toBe(aliasModel);
+    expect(openai.embedding(rawRid)).toBe(rawModel);
+    expect(openaiEmbeddingMock).toHaveBeenNthCalledWith(
+      1,
+      'ri.language-model-service..language-model.text-embedding-3-small',
+    );
+    expect(openaiEmbeddingMock).toHaveBeenNthCalledWith(2, rawRid);
+  });
+
+  it('rejects unknown OpenAI embedding aliases', () => {
+    const openai = createFoundryOpenAI(config);
+
+    expect(() => openai.embeddingModel('unknown-embedding-alias')).toThrow(
+      /Unknown model: "unknown-embedding-alias"/,
+    );
+    expect(openaiEmbeddingMock).not.toHaveBeenCalled();
   });
 
   it('adds only the OpenAI compatibility options required by the Foundry proxy', async () => {
@@ -498,5 +529,14 @@ describe('provider adapters', () => {
         token: 'token-123',
       }),
     ).toThrow(/config\.foundryUrl/);
+  });
+
+  it('keeps Anthropic and Google embedding models unsupported', () => {
+    expect(() => createFoundryAnthropic(config).embeddingModel('embedding-model')).toThrow(
+      /embeddingModel/,
+    );
+    expect(() => createFoundryGoogle(config).embeddingModel('embedding-model')).toThrow(
+      /embeddingModel/,
+    );
   });
 });

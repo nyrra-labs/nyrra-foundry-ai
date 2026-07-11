@@ -360,14 +360,54 @@ const OPENAI_MODEL_DEFINITIONS = {
   },
 } as const satisfies Record<string, ModelDefinition>;
 
+const OPENAI_EMBEDDING_MODEL_DEFINITIONS = {
+  'text-embedding-3-small': {
+    rid: 'ri.language-model-service..language-model.text-embedding-3-small',
+    modelIdentifier: 'TEXT_EMBEDDING_3_SMALL',
+    displayName: 'Text Embedding 3 Small',
+    lifecycle: 'ga',
+    inputTypes: ['OPEN_AI_EMBEDDINGS'],
+    trainingCutoffDate: '2021-09-01T00:00:00Z',
+    performance: {
+      cost: 'LOW',
+      modelClass: 'LIGHTWEIGHT',
+      speed: 'HIGH',
+    },
+    externalUrl: 'https://platform.openai.com/docs/models/text-embedding-3-small',
+  },
+  'text-embedding-3-large': {
+    rid: 'ri.language-model-service..language-model.text-embedding-3-large',
+    modelIdentifier: 'TEXT_EMBEDDING_3_LARGE',
+    displayName: 'Text Embedding 3 Large',
+    lifecycle: 'ga',
+    inputTypes: ['OPEN_AI_EMBEDDINGS'],
+    trainingCutoffDate: '2021-09-01T00:00:00Z',
+    performance: {
+      cost: 'MEDIUM',
+      modelClass: 'HEAVYWEIGHT',
+      speed: 'HIGH',
+    },
+    externalUrl: 'https://platform.openai.com/docs/models/text-embedding-3-large',
+  },
+} as const satisfies Record<string, ModelDefinition>;
+
 export const OPENAI_MODELS = createProviderModelCatalog('openai', OPENAI_MODEL_DEFINITIONS);
+export const OPENAI_EMBEDDING_MODELS = createProviderModelCatalog(
+  'openai',
+  OPENAI_EMBEDDING_MODEL_DEFINITIONS,
+);
 
 export type KnownOpenAIModelId = keyof typeof OPENAI_MODELS;
 export type OpenAIModelId = KnownOpenAIModelId | (string & {});
+export type KnownOpenAIEmbeddingModelId = keyof typeof OPENAI_EMBEDDING_MODELS;
+export type OpenAIEmbeddingModelId = KnownOpenAIEmbeddingModelId | (string & {});
 
 export const OPENAI_MODEL_IDS = Object.freeze(
   Object.keys(OPENAI_MODELS),
 ) as readonly KnownOpenAIModelId[];
+export const OPENAI_EMBEDDING_MODEL_IDS = Object.freeze(
+  Object.keys(OPENAI_EMBEDDING_MODELS),
+) as readonly KnownOpenAIEmbeddingModelId[];
 
 const OPENAI_REASONING_MODEL_TARGETS = new Set(
   Object.entries(OPENAI_MODELS)

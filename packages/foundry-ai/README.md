@@ -11,7 +11,7 @@ Thin Palantir Foundry provider adapters and model catalog for the Vercel AI SDK.
 
 ## What It Does
 
-- Routes AI SDK language-model calls through Foundry's provider-compatible proxy endpoints.
+- Routes AI SDK language-model calls and OpenAI embeddings through Foundry's provider-compatible proxy endpoints.
 - Maps friendly model aliases such as `gpt-5-mini`, `claude-sonnet-4.6`, and `gemini-3.1-flash-lite` to Foundry RIDs.
 - Keeps installs lean by exposing provider-specific subpaths and optional peer dependencies.
 - Ships a TanStack Intent skill for provider-specific setup and troubleshooting.
@@ -103,7 +103,7 @@ console.log(result.text);
 - `providerOptions.openai.store=true` throws before the request is sent.
 - Known OpenAI reasoning aliases automatically get `providerOptions.openai.forceReasoning=true` unless the caller already set it.
 - The Google adapter rewrites the AI SDK's `x-goog-api-key` auth into the bearer-token header that Foundry expects.
-- Embedding, image, audio, video, and rerank methods are not exposed by this package yet.
+- OpenAI `embeddingModel()` and `embedding()` support `text-embedding-3-small`, `text-embedding-3-large`, and raw Foundry RIDs. Other embedding providers and image, audio, video, and rerank methods are not exposed.
 
 ## Docs And Examples
 

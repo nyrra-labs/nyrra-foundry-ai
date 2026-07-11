@@ -4,13 +4,18 @@ import type { KnownAnthropicModelId } from './anthropic-models.js';
 import { ANTHROPIC_MODELS } from './anthropic-models.js';
 import type { KnownGoogleModelId } from './google-models.js';
 import { GOOGLE_MODELS } from './google-models.js';
-import type { KnownOpenAIModelId } from './openai-models.js';
-import { OPENAI_MODELS } from './openai-models.js';
+import type { KnownOpenAIEmbeddingModelId, KnownOpenAIModelId } from './openai-models.js';
+import { OPENAI_EMBEDDING_MODELS, OPENAI_MODELS } from './openai-models.js';
 
-export type KnownModelId = KnownOpenAIModelId | KnownAnthropicModelId | KnownGoogleModelId;
+export type KnownModelId =
+  | KnownOpenAIModelId
+  | KnownOpenAIEmbeddingModelId
+  | KnownAnthropicModelId
+  | KnownGoogleModelId;
 
 export const MODEL_CATALOG = {
   ...OPENAI_MODELS,
+  ...OPENAI_EMBEDDING_MODELS,
   ...ANTHROPIC_MODELS,
   ...GOOGLE_MODELS,
 } as const satisfies Record<KnownModelId, ModelMetadata>;

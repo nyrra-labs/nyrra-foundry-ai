@@ -217,13 +217,15 @@ export function getLiveCapabilityRid(provider: LiveProvider): string {
   return resolveModelRid(getLiveCapabilityModels()[provider] as never);
 }
 
-export function getEmbeddingProbeModelIds(): Partial<Record<LiveProvider, string>> {
+export function getEmbeddingProbeModelIds(): Partial<Record<LiveProvider, readonly string[]>> {
   loadLiveFoundryConfig();
 
   return {
-    openai: process.env.LIVE_OPENAI_EMBEDDING_MODEL?.trim() || 'text-embedding-3-small',
+    openai: process.env.LIVE_OPENAI_EMBEDDING_MODEL?.trim()
+      ? [process.env.LIVE_OPENAI_EMBEDDING_MODEL.trim()]
+      : ['text-embedding-3-small', 'text-embedding-3-large'],
     ...(process.env.LIVE_GOOGLE_EMBEDDING_MODEL?.trim()
-      ? { google: process.env.LIVE_GOOGLE_EMBEDDING_MODEL.trim() }
+      ? { google: [process.env.LIVE_GOOGLE_EMBEDDING_MODEL.trim()] }
       : {}),
   };
 }
