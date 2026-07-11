@@ -225,30 +225,9 @@ jobs:
             exit 0
           fi
 
-          set +e
-          npm token revoke "${NPM_BOOTSTRAP_TOKEN}"
-          cli_revoke_status=$?
-          set -e
-
-          if [ "${cli_revoke_status}" -ne 0 ]; then
-            echo "::warning::npm CLI token revocation failed; attempting the npm registry API fallback."
-            set +e
-            api_response=$(curl -sS -X DELETE \
-              -H "Authorization: Bearer ${NPM_BOOTSTRAP_TOKEN}" \
-              -w $'\n%{http_code}' \
-              "https://registry.npmjs.org/-/npm/v1/tokens/token/${NPM_BOOTSTRAP_TOKEN}")
-            api_revoke_status=$?
-            set -e
-            api_http_status="${api_response##*$'\n'}"
-            api_body="${api_response%$'\n'*}"
-
-            if [ "${api_revoke_status}" -ne 0 ] || ! [[ "${api_http_status}" =~ ^2[0-9]{2}$ ]]; then
-              api_error=$(tr '\n' ' ' <<<"${api_body:-<empty response>}")
-              echo "::error::npm CLI token revocation and the registry API fallback both failed (curl exit=${api_revoke_status}, HTTP ${api_http_status:-unknown}, API response: ${api_error}). Manually revoke the token on npmjs.com right now."
-              exit 1
-            fi
-
-            echo "npm registry API fallback accepted the token revocation."
+          if ! npm token revoke "${NPM_BOOTSTRAP_TOKEN}"; then
+            echo "::error::npm CLI token revocation failed. Manually revoke the token on npmjs.com right now."
+            exit 1
           fi
 
           probe_token_state "Post-revocation"

@@ -143,8 +143,12 @@ requireCondition(
   'Token cleanup must distinguish a skipped safe resume from a publish attempt.',
 );
 requireCondition(
-  revokeStep.run?.includes(`npm token revoke "${shellVariable('NPM_BOOTSTRAP_TOKEN')}"`),
-  'Bootstrap must revoke the temporary npm token.',
+  revokeStep.run?.includes(`if ! npm token revoke "${shellVariable('NPM_BOOTSTRAP_TOKEN')}"; then`),
+  'Bootstrap must hard-fail when npm CLI token revocation fails.',
+);
+requireCondition(
+  !revokeStep.run?.includes('/-/npm/v1/tokens/token/'),
+  'Bootstrap must not use the classic-token registry API fallback.',
 );
 requireCondition(
   revokeStep.run?.includes('npm whoami'),
@@ -160,9 +164,6 @@ for (const requiredCheck of [
   'sleep $((attempt * 2))',
   'probe_token_state "Post-revocation"',
   'mixed or inconclusive',
-  'curl -sS -X DELETE',
-  "-w $'\\n%{http_code}'",
-  `https://registry.npmjs.org/-/npm/v1/tokens/token/${shellVariable('NPM_BOOTSTRAP_TOKEN')}`,
   'Manually revoke the token on npmjs.com right now.',
 ]) {
   requireCondition(
