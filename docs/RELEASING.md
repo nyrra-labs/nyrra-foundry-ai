@@ -1,79 +1,141 @@
 # Releasing
 
-## Summary
+## Release Identity
 
-This repo publishes `@nyrra/foundry-ai` with Nx release.
+- Repository: `shpitdev/foundry-ai`
+- npm package: `@shpit/foundry-ai`
+- first public version under this identity: `0.0.5`
+- stable tag format: `@shpit/foundry-ai@{version}`
 
-- Stable releases and prereleases both use the `Release` GitHub Actions workflow.
-- Prereleases run automatically on pushes to `main` that touch the package or release workflow.
-- Stable releases stay manual and should be run from `main`.
+Version `0.0.5` continues the existing pre-1.0 patch sequence while giving the new package identity one unambiguous bootstrap version. The API surface and runtime behavior are unchanged.
 
-The workflows run lint, unit tests, typecheck, and build before they cut a release commit or publish to npm.
+## Publishing Gate
 
-## Required Repository Setup
+The `Publish Release` workflow is inert for ordinary merges unless the repository variable `NPM_PUBLISH_ENABLED` is exactly `true`. Keep that variable absent or set to `false` until every cutover step below is complete.
 
-Add these repository secrets before publishing:
+The new package must be bootstrapped once through the manual `release.yml` GitHub Actions dispatch. Never publish the bootstrap version from a maintainer workstation. The bootstrap job uses a GitHub-hosted runner, Node 24, npm 11.16.0, `id-token: write`, an explicitly selected full `main` SHA, `npm publish --provenance --access public`, and a one-time npm token that it revokes on every exit path.
 
-- `SEMGREP_APP_TOKEN`: required only for the Semgrep workflow
+## GitHub And npm Cutover
 
-GitHub Actions also needs permission to push the generated release commit and tag back to `main`. If branch protection blocks Actions from pushing, the release workflow will fail after versioning or publishing.
+Perform these steps in order:
 
-This repo is configured for npm trusted publishing from GitHub Actions, not a long-lived publish token. The publish workflow requires GitHub-hosted runners and the `id-token: write` permission so npm can exchange the workflow OIDC identity for a short-lived publish credential.
-npm trusted publishing is configured against a workflow filename, and npm currently allows only one trusted publisher connection per package. That is why both stable releases and prereleases go through the same `release.yml` workflow.
+1. Merge the identity-preparation PR while `NPM_PUBLISH_ENABLED` is absent or `false`.
+2. Transfer the repository to the `shpitdev` organization and rename it to `foundry-ai`. Do not create another repository at the former location because that would break GitHub's transfer redirect.
+3. Make the destination repository public. Update local clones with `git remote set-url origin git@github.com:shpitdev/foundry-ai.git` and verify `git remote -v`.
+4. Replace the inherited GitHub description, homepage, and topics. Replacing the complete topic set removes every retired organization topic rather than relying on piecemeal deletion:
 
-## First Release
+   ```bash
+   gh api --method PATCH repos/shpitdev/foundry-ai \
+     -f description='Thin Palantir Foundry provider adapters and model catalog for the Vercel AI SDK.' \
+     -f homepage='https://www.npmjs.com/package/@shpit/foundry-ai'
 
-Trusted publishing is configured on the npm package itself, and npm's `npm trust` command requires that the package already exist on the registry. In practice, assume a one-time bootstrap publish is needed from a maintainer machine before GitHub Actions can take over trusted publishes.
+   gh api --method PUT repos/shpitdev/foundry-ai/topics --input - <<'JSON'
+   {
+     "names": [
+       "ai",
+       "ai-sdk",
+       "ai-sdk-provider",
+       "foundry",
+       "foundry-ai",
+       "llm",
+       "nx",
+       "palantir",
+       "palantir-foundry",
+       "shpit",
+       "typescript",
+       "vercel-ai-sdk"
+     ]
+   }
+   JSON
+   ```
 
-Bootstrap steps:
+5. Verify that the destination is public and its owner, name, default branch, description, homepage, and exact topic allowlist are correct:
 
-- make sure the `@nyrra` npm org/scope exists
-- publish `@nyrra/foundry-ai` once interactively from a maintainer machine
-- on npmjs.com, add a trusted publisher for this repository and the workflow filename `release.yml`
-- after trusted publishing works, set the package to disallow token-based publishing
+   ```bash
+   pnpm run verify:public-metadata
+   ```
 
-Bootstrap publish command:
+6. Review destination organization rulesets, Actions permissions, Dependabot, private vulnerability reporting, and the `SEMGREP_APP_TOKEN` secret. Confirm pull requests and the `CI` and `Semgrep` checks still work after transfer. Confirm the package manifest's repository URL is exactly `git+https://github.com/shpitdev/foundry-ai.git`; npm requires an exact, case-sensitive repository match for provenance and trusted publishing.
+7. On npmjs.com, create a one-day granular access token with read/write access to the `@shpit` scope and bypass-2FA enabled. This token exists only to create the brand-new public package. Copy it directly into the prompted secret input without putting it in shell history:
 
-```bash
-cd packages/foundry-ai
-npm publish --access public
-```
+   ```bash
+   gh secret set NPM_BOOTSTRAP_TOKEN --repo shpitdev/foundry-ai
+   ```
 
-`first_release=true` still matters for the first automated release cut because there are no prior git tags yet. It tells Nx to fall back to the version in `packages/foundry-ai/package.json`.
+8. Select the exact current `main` SHA through GitHub and dispatch the bootstrap workflow from `main`:
 
-## Stable Releases
+   ```bash
+   BOOTSTRAP_SHA=$(gh api repos/shpitdev/foundry-ai/commits/main --jq .sha)
+   test "${#BOOTSTRAP_SHA}" -eq 40
+   gh workflow run release.yml \
+     --repo shpitdev/foundry-ai \
+     --ref main \
+     -f bootstrap_sha="${BOOTSTRAP_SHA}"
+   gh run watch --repo shpitdev/foundry-ai --exit-status
+   ```
 
-Run the `Release` workflow from `main`.
+   For a new package, the workflow requires the selected SHA to equal the current `main` SHA, re-fetches and revalidates it immediately before publishing, and attempts the publish only while the package and tag are absent. A nonzero publish result does not immediately end finalization because npm may have accepted the immutable package before the runner received a network failure.
 
-- set `release_type=stable`
-- leave `first_release=false` after the first publish
-- set `dry_run=true` if you want a preview without changing files or publishing
-- configure npm trusted publishing for `release.yml` before using the workflow for real publishes
+   The `always()`-gated reconciliation then polls npm. It creates the annotated tag at `BOOTSTRAP_SHA` only after npm reports exactly `0.0.5` and the npm-hosted provenance attestation binds the package tarball, repository, workflow, `main` ref, GitHub-hosted runner, and source commit to that SHA. If the package is still absent, mismatched, or unverifiable, it fails without creating a tag.
 
-The workflow lets Nx determine the semver bump from conventional commits. Because the repo is still in `0.x`, Nx's zero-major adjustment keeps `feat` changes at the patch level instead of jumping to `0.1.0`.
+   A rerun with an existing package is the safe-resume path: the selected SHA must remain in current `main` history, the publish step is skipped, the same package and attestation checks run, and an absent tag is created or an existing matching annotated tag is accepted. A mismatched tag is always rejected. This makes accepted-publish recovery and completed reruns idempotent without permitting a different package or commit to be tagged.
 
-## Prereleases
+   If the first run already revoked the temporary token, do not create a replacement for a safe-resume run. Delete the stale `NPM_BOOTSTRAP_TOKEN` secret or leave it unset; the package-present path does not publish and accepts an absent token. Token cleanup also treats an already non-authenticating supplied token as complete.
 
-Prereleases are cut automatically on pushes to `main` that match the workflow path filters.
-They do not push release commits back to `main`. The prerelease version sequence is derived from the npm `next` dist-tag, which avoids conflicts with the repository rule that requires pull requests for changes to `main`.
+9. Require the workflow to be green. It must report the package, selected SHA, remote tag target, tag action, repository, and SLSA provenance predicate in its step summary. Independently verify the registry and tag:
 
-Manual prerelease runs are still available from the `Release` workflow on `main`.
+   ```bash
+   test "$(npm view @shpit/foundry-ai@0.0.5 version --registry=https://registry.npmjs.org)" = "0.0.5"
+   test "$(npm view @shpit/foundry-ai dist-tags.latest --registry=https://registry.npmjs.org)" = "0.0.5"
+   test "$(npm view @shpit/foundry-ai@0.0.5 dist.attestations.provenance.predicateType --registry=https://registry.npmjs.org)" = "https://slsa.dev/provenance/v1"
 
-- set `release_type=prerelease`
-- `preid` defaults to `rc`
-- prereleases publish with the npm dist-tag `next`
-- set `dry_run=true` for a no-publish preview
+   git fetch origin 'refs/tags/@shpit/foundry-ai@0.0.5:refs/tags/@shpit/foundry-ai@0.0.5'
+   test "$(git rev-list -n 1 '@shpit/foundry-ai@0.0.5')" = "${BOOTSTRAP_SHA}"
+   ```
 
-The prerelease workflow uses the same conventional-commit bump resolution as stable releases, then converts that bump into its prerelease form by passing `--preid` to Nx release.
+10. The workflow revokes the token and verifies that it no longer authenticates. If that step is not green, manually revoke the token on npmjs.com before doing anything else. Then remove the now-invalid GitHub secret:
+
+    ```bash
+    gh secret delete NPM_BOOTSTRAP_TOKEN --repo shpitdev/foundry-ai
+    ```
+
+    Confirm the token no longer appears in the npm access-token list and the GitHub secret no longer appears in `gh secret list --repo shpitdev/foundry-ai`.
+
+11. In the npm package settings, add one trusted publisher with these exact values:
+
+   - provider: GitHub Actions
+   - organization or user: `shpitdev`
+   - repository: `foundry-ai`
+   - workflow filename: `release.yml`
+   - environment: leave blank
+   - allowed action: `npm publish`
+
+12. Set the repository Actions variable `NPM_PUBLISH_ENABLED=true`. The next merged non-release PR that touches a release path will publish `0.0.6-rc.0` with the `next` tag; a merged `release/*` PR publishes its manifest version with `latest` and creates its stable tag.
+13. After the first OIDC trusted publish succeeds, set npm publishing access to **Require two-factor authentication and disallow tokens**. Trusted publishing continues to work because it uses OIDC rather than a traditional npm token.
+14. Only after `@shpit/foundry-ai@0.0.5` is publicly installable should foundry-claw switch its dependency and imports to `@shpit/foundry-ai`. Keep the same root exports, provider subpaths, `FOUNDRY_*` variables, model aliases, and raw-RID behavior.
+
+## Automated Release Behavior
+
+- A merged pull request whose branch does not start with `release/` publishes the next `0.0.x-rc.N` prerelease with the `next` dist-tag.
+- A merged `release/*` pull request publishes the stable version already present in `packages/foundry-ai/package.json`, then pushes the matching annotated package tag.
+- Both jobs build and run the package-content audit immediately before publishing.
+- npm trusted publishing is bound to `release.yml`; npm permits one trusted-publisher connection per package.
+- The stable-release helper refuses to run unless `origin` points directly at `shpitdev/foundry-ai`, preventing generated changelog links from using a redirected repository identity.
+- The one-time bootstrap dispatch is separate from `NPM_PUBLISH_ENABLED`; it safely resumes an accepted or completed `0.0.5` publish only when npm provenance and the annotated tag resolve to the explicitly selected SHA.
 
 ## Local Verification
 
-Useful local commands:
+Run the full repository verification and inspect the exact archive before any publish:
 
 ```bash
-pnpm install
-pnpm exec nx run-many -t lint test typecheck build --projects=foundry-ai --outputStyle=static
+pnpm install --frozen-lockfile
+pnpm run format
+pnpm run verify
 pnpm exec nx release --group npm-packages --dry-run --skip-publish --first-release
 pnpm exec nx release --group npm-packages --preid rc --dry-run --skip-publish --first-release
-cd packages/foundry-ai && npm publish --access public --dry-run
+cd packages/foundry-ai
+npm pack --dry-run --json
+npm publish --access public --dry-run
 ```
+
+Official references: [npm provenance](https://docs.npmjs.com/generating-provenance-statements/), [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/), [npm token revocation](https://docs.npmjs.com/cli/npm-token/), [npm publishing access](https://docs.npmjs.com/requiring-2fa-for-package-publishing-and-settings-modification/), [GitHub repository metadata](https://docs.github.com/en/rest/repos/repos), and [GitHub repository transfers](https://docs.github.com/en/repositories/creating-and-managing-repositories/transferring-a-repository).

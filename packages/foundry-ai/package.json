@@ -1,15 +1,15 @@
 {
-  "name": "@nyrra/foundry-ai",
-  "version": "0.0.4",
+  "name": "@shpit/foundry-ai",
+  "version": "0.0.5",
   "description": "Thin Palantir Foundry provider adapters and model catalog for the Vercel AI SDK.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nyrra-labs/nyrra-foundry-ai.git"
+    "url": "git+https://github.com/shpitdev/foundry-ai.git"
   },
-  "homepage": "https://github.com/nyrra-labs/nyrra-foundry-ai/tree/main/packages/foundry-ai#readme",
+  "homepage": "https://github.com/shpitdev/foundry-ai/tree/main/packages/foundry-ai#readme",
   "bugs": {
-    "url": "https://github.com/nyrra-labs/nyrra-foundry-ai/issues"
+    "url": "https://github.com/shpitdev/foundry-ai/issues"
   },
   "keywords": [
     "ai",
@@ -17,7 +17,7 @@
     "ai-sdk-provider",
     "foundry",
     "llm-proxy",
-    "nyrra",
+    "foundry-provider",
     "palantir",
     "palantir-foundry",
     "ts",

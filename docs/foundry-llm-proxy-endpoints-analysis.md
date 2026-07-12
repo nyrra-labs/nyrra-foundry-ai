@@ -4,7 +4,7 @@ This note trims the endpoint discussion down to what looks relevant and defensib
 
 ## Bottom line
 
-- `@nyrra/foundry-ai` already targets Foundry's current provider-compatible proxy family under `/api/v2/llm/proxy/...`.
+- `@shpit/foundry-ai` already targets Foundry's current provider-compatible proxy family under `/api/v2/llm/proxy/...`.
 - Those endpoints use provider-shaped requests and responses, but model selection stays Foundry-native through RIDs.
 - I did not find evidence of a second provider-compatible endpoint family that should replace the proxy-first transport strategy.
 

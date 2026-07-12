@@ -1,4 +1,4 @@
-# nyrra-foundry-ai Agent Guide
+# foundry-ai Agent Guide
 
 ## Required Workflow
 

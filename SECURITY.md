@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-This project is pre-1.0 and not published yet. Security fixes land on the latest `main` branch. Once npm releases start, only the latest published release and `main` should be considered supported.
+This project is pre-1.0. Security fixes land on the latest `main` branch. Only the latest release of `@shpit/foundry-ai` and `main` should be considered supported after the package cutover.
 
 ## Reporting a Vulnerability
 

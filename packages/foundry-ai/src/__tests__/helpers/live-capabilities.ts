@@ -857,7 +857,9 @@ function createCaseKey(provider: LiveProvider, modelId: string, capability: stri
 }
 
 async function fetchVisionProbeImageBytes() {
-  const response = await fetch('https://www.nyrra.ai/opengraph.jpg');
+  const response = await fetch(
+    'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png',
+  );
 
   if (!response.ok) {
     throw new Error(

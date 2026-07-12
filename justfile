@@ -47,10 +47,7 @@ skills:
 
 # `verify` is the required preflight before opening a stable release PR.
 verify:
-  pnpm run lint
-  pnpm run test
-  pnpm run typecheck
-  pnpm run build
+  pnpm run verify
 
 # `release` prepares and opens the stable release PR; publish happens after merge in CI.
 release: verify

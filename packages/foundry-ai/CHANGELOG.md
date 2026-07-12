@@ -1,9 +1,17 @@
+## 0.0.5 (2026-07-11)
+
+### 📦 Package Identity
+
+- publish future releases as `@shpit/foundry-ai` from `shpitdev/foundry-ai`
+- preserve the existing root exports, provider subpaths, configuration, and model behavior for consumer migration
+- bootstrap the first package from a pinned main SHA in GitHub Actions with provenance and automatic token revocation
+
 ## 0.0.4 (2026-03-30)
 
 ### 🩹 Fixes
 
-- update lockfile for peer dep range changes ([62c26ff](https://github.com/nyrra-labs/nyrra-foundry-ai/commit/62c26ff))
-- sync foundry-ai peer dependency ranges with latest sdk versions ([b069db5](https://github.com/nyrra-labs/nyrra-foundry-ai/commit/b069db5))
+- update lockfile for peer dep range changes ([62c26ff](https://github.com/shpitdev/foundry-ai/commit/62c26ff))
+- sync foundry-ai peer dependency ranges with latest sdk versions ([b069db5](https://github.com/shpitdev/foundry-ai/commit/b069db5))
 
 ### ❤️ Thank You
 
@@ -13,13 +21,13 @@
 
 ### 🚀 Features
 
-- enrich exa devtools examples with extra tools and mid-tier models ([9284006](https://github.com/nyrra-labs/nyrra-foundry-ai/commit/9284006))
+- enrich exa devtools examples with extra tools and mid-tier models ([9284006](https://github.com/shpitdev/foundry-ai/commit/9284006))
 
 ### 🩹 Fixes
 
-- remove throw from onError in tool-calling-streaming example ([f472d4a](https://github.com/nyrra-labs/nyrra-foundry-ai/commit/f472d4a))
-- remove throw from onError callbacks to avoid unhandled rejections ([476a1ac](https://github.com/nyrra-labs/nyrra-foundry-ai/commit/476a1ac))
-- update package-audit for split example modules ([2d457e0](https://github.com/nyrra-labs/nyrra-foundry-ai/commit/2d457e0))
+- remove throw from onError in tool-calling-streaming example ([f472d4a](https://github.com/shpitdev/foundry-ai/commit/f472d4a))
+- remove throw from onError callbacks to avoid unhandled rejections ([476a1ac](https://github.com/shpitdev/foundry-ai/commit/476a1ac))
+- update package-audit for split example modules ([2d457e0](https://github.com/shpitdev/foundry-ai/commit/2d457e0))
 
 ### ❤️ Thank You
 
@@ -29,7 +37,7 @@
 
 ### 🚀 Features
 
-- implement phase 1 foundry ai package ([abad30a](https://github.com/nyrra-labs/nyrra-foundry-ai/commit/abad30a))
+- implement phase 1 foundry ai package ([abad30a](https://github.com/shpitdev/foundry-ai/commit/abad30a))
 
 ### ❤️ Thank You
 

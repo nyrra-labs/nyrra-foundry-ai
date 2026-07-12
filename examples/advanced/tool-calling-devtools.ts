@@ -1,8 +1,8 @@
 import type { AnthropicLanguageModelOptions } from '@ai-sdk/anthropic';
 import { webSearch } from '@exalabs/ai-sdk';
-import type { AnthropicModelId } from '@nyrra/foundry-ai';
-import { loadFoundryConfig } from '@nyrra/foundry-ai';
-import { createFoundryAnthropic } from '@nyrra/foundry-ai/anthropic';
+import type { AnthropicModelId } from '@shpit/foundry-ai';
+import { loadFoundryConfig } from '@shpit/foundry-ai';
+import { createFoundryAnthropic } from '@shpit/foundry-ai/anthropic';
 import { stepCountIs, streamText, tool } from 'ai';
 import { z } from 'zod';
 import { requireEnv } from '../base/config.js';
@@ -20,7 +20,7 @@ const provider = 'anthropic';
 const modelId: AnthropicModelId = 'claude-sonnet-4.6';
 const model = wrapWithDevTools(createFoundryAnthropic(config)(modelId));
 const prompt =
-  'Research https://www.nyrra.ai/ and the nyrra-labs GitHub organization. Use at most two webSearch calls, then call saveCompanyProfile exactly once with a concise structured profile. After the save tool succeeds, return a short final summary with cited sources.';
+  'Research https://www.palantir.com/platforms/foundry/ and the palantir GitHub organization. Use at most two webSearch calls, then call saveCompanyProfile exactly once with a concise structured profile. After the save tool succeeds, return a short final summary with cited sources.';
 const system =
   'Use webSearch to gather enough evidence. Do not narrate your plan. After you have enough information, call saveCompanyProfile exactly once, then finish with a short cited summary. Do not stop after a search result without saving the profile.';
 const tools = {

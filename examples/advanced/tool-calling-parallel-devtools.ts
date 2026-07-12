@@ -1,8 +1,8 @@
 import type { AnthropicLanguageModelOptions } from '@ai-sdk/anthropic';
 import { webSearch } from '@exalabs/ai-sdk';
-import type { AnthropicModelId } from '@nyrra/foundry-ai';
-import { loadFoundryConfig } from '@nyrra/foundry-ai';
-import { createFoundryAnthropic } from '@nyrra/foundry-ai/anthropic';
+import type { AnthropicModelId } from '@shpit/foundry-ai';
+import { loadFoundryConfig } from '@shpit/foundry-ai';
+import { createFoundryAnthropic } from '@shpit/foundry-ai/anthropic';
 import { type LanguageModelUsage, stepCountIs, ToolLoopAgent, tool } from 'ai';
 import { z } from 'zod';
 import { requireEnv } from '../base/config.js';

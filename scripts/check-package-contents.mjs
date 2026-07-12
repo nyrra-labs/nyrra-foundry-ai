@@ -1,7 +1,10 @@
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const packageRoot = resolve('packages/foundry-ai');
+const expectedPackageName = '@shpit/foundry-ai';
+const forbiddenIdentity = String.fromCharCode(110, 121, 114, 114, 97);
 const requiredFiles = [
   'README.md',
   'LICENSE',
@@ -49,8 +52,27 @@ const missingFiles = requiredFiles.filter((file) => !files.has(file));
 const forbiddenFiles = [...files].filter((file) =>
   forbiddenPatterns.some((pattern) => pattern.test(file)),
 );
+const identityMatches = [...files].filter((file) => {
+  if (file.toLowerCase().includes(forbiddenIdentity)) {
+    return true;
+  }
 
-if (missingFiles.length > 0 || forbiddenFiles.length > 0) {
+  return readFileSync(resolve(packageRoot, file))
+    .toString('utf8')
+    .toLowerCase()
+    .includes(forbiddenIdentity);
+});
+
+if (
+  packSummary.name !== expectedPackageName ||
+  missingFiles.length > 0 ||
+  forbiddenFiles.length > 0 ||
+  identityMatches.length > 0
+) {
+  if (packSummary.name !== expectedPackageName) {
+    console.error(`Expected package name ${expectedPackageName}, received ${packSummary.name}.`);
+  }
+
   if (missingFiles.length > 0) {
     console.error('Missing required published files:');
     for (const file of missingFiles) {
@@ -61,6 +83,13 @@ if (missingFiles.length > 0 || forbiddenFiles.length > 0) {
   if (forbiddenFiles.length > 0) {
     console.error('Unexpected files leaked into the published package:');
     for (const file of forbiddenFiles) {
+      console.error(`- ${file}`);
+    }
+  }
+
+  if (identityMatches.length > 0) {
+    console.error('Retired identity references leaked into the published package:');
+    for (const file of identityMatches) {
       console.error(`- ${file}`);
     }
   }

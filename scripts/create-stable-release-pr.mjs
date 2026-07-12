@@ -3,10 +3,14 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
-const packageName = '@nyrra/foundry-ai';
+const packageName = '@shpit/foundry-ai';
 const packageManifestPath = 'packages/foundry-ai/package.json';
 const remoteName = 'origin';
 const baseBranch = 'main';
+const expectedRemoteUrls = new Set([
+  'git@github.com:shpitdev/foundry-ai.git',
+  'https://github.com/shpitdev/foundry-ai.git',
+]);
 
 function run(command, args, options = {}) {
   return execFileSync(command, args, {
@@ -87,6 +91,15 @@ function ensureCleanWorktree() {
   }
 }
 
+function ensureReleaseRemote() {
+  const remoteUrl = run('git', ['remote', 'get-url', remoteName]);
+  if (!expectedRemoteUrls.has(remoteUrl)) {
+    throw new Error(
+      `Release remote must be the public destination. Expected one of ${[...expectedRemoteUrls].join(', ')}, received ${remoteUrl}.`,
+    );
+  }
+}
+
 function ensureStableTagOnMain() {
   const currentVersion = readManifestVersion();
   const tagName = `${packageName}@${currentVersion}`;
@@ -149,6 +162,7 @@ See the CHANGELOG diff in this PR for the full release notes.`;
 }
 
 ensureCleanWorktree();
+ensureReleaseRemote();
 runStreaming('git', ['fetch', remoteName, baseBranch, '--tags']);
 runStreaming('git', ['switch', baseBranch]);
 runStreaming('git', ['pull', '--ff-only', remoteName, baseBranch]);
