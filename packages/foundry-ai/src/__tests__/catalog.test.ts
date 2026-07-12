@@ -202,8 +202,8 @@ describe('model catalog', () => {
 
   it('does not publish sunset aliases as known models', () => {
     expect(getModelMetadata('gpt-4o-mini')).toBeUndefined();
-    expect(getModelMetadata('gpt-5-1-codex-max')).toBeUndefined();
-    expect(getModelMetadata('gpt-5-2-codex')).toBeUndefined();
+    expect(getModelMetadata('gpt-5.1-codex-max')).toBeUndefined();
+    expect(getModelMetadata('gpt-5.2-codex')).toBeUndefined();
     expect(getModelMetadata('gemini-3-pro')).toBeUndefined();
   });
 
