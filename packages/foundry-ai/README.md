@@ -62,6 +62,8 @@ The verified path today is env-based server usage with `FOUNDRY_URL` and `FOUNDR
 FOUNDRY_URL=https://your-stack.palantirfoundry.com
 FOUNDRY_TOKEN=your-token
 FOUNDRY_ATTRIBUTION_RID=
+FOUNDRY_TRACE_PARENT=
+FOUNDRY_TRACE_STATE=
 ```
 
 ```ts

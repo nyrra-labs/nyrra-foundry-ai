@@ -105,19 +105,42 @@ describe('provider adapters', () => {
     vi.clearAllMocks();
   });
 
-  it('creates an OpenAI provider with the normalized Foundry proxy URL and attribution header', () => {
+  it('creates an OpenAI provider with normalized config and observability headers', () => {
     createFoundryOpenAI({
       foundryUrl: ' https://example.palantirfoundry.com/// ',
       token: ' token-123 ',
       attributionRid: ' ri.attribution.main ',
+      traceParent: ' 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01 ',
+      traceState: ' vendor=value ',
     });
 
     expect(createOpenAIMock).toHaveBeenCalledWith({
       apiKey: 'token-123',
       baseURL: 'https://example.palantirfoundry.com/api/v2/llm/proxy/openai/v1',
-      headers: { attribution: 'ri.attribution.main' },
+      headers: {
+        attribution: 'ri.attribution.main',
+        traceParent: '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01',
+        traceState: 'vendor=value',
+      },
       name: 'foundry-openai',
     });
+  });
+
+  it('leaves OpenAI headers undefined when optional config is absent', () => {
+    createFoundryOpenAI({
+      foundryUrl: 'https://example.palantirfoundry.com',
+      token: 'token-123',
+    });
+
+    expect(createOpenAIMock).toHaveBeenCalledWith(expect.objectContaining({ headers: undefined }));
+  });
+
+  it('sets only the OpenAI attribution header when trace context is absent', () => {
+    createFoundryOpenAI(config);
+
+    expect(createOpenAIMock).toHaveBeenCalledWith(
+      expect.objectContaining({ headers: { attribution: 'ri.attribution.main' } }),
+    );
   });
 
   it('maps OpenAI aliases to RIDs and preserves raw RID passthrough', () => {
@@ -288,14 +311,41 @@ describe('provider adapters', () => {
   });
 
   it('creates an Anthropic provider using authToken instead of apiKey', () => {
-    createFoundryAnthropic(config);
+    createFoundryAnthropic({
+      ...config,
+      traceParent: '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01',
+      traceState: 'vendor=value',
+    });
 
     expect(createAnthropicMock).toHaveBeenCalledWith({
       authToken: 'token-123',
       baseURL: 'https://example.palantirfoundry.com/api/v2/llm/proxy/anthropic/v1',
-      headers: { attribution: 'ri.attribution.main' },
+      headers: {
+        attribution: 'ri.attribution.main',
+        traceParent: '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01',
+        traceState: 'vendor=value',
+      },
       name: 'foundry-anthropic',
     });
+  });
+
+  it('leaves Anthropic headers undefined when optional config is absent', () => {
+    createFoundryAnthropic({
+      foundryUrl: 'https://example.palantirfoundry.com',
+      token: 'token-123',
+    });
+
+    expect(createAnthropicMock).toHaveBeenCalledWith(
+      expect.objectContaining({ headers: undefined }),
+    );
+  });
+
+  it('sets only the Anthropic attribution header when trace context is absent', () => {
+    createFoundryAnthropic(config);
+
+    expect(createAnthropicMock).toHaveBeenCalledWith(
+      expect.objectContaining({ headers: { attribution: 'ri.attribution.main' } }),
+    );
   });
 
   it('maps Anthropic aliases to RIDs and preserves raw RID passthrough', () => {
@@ -364,13 +414,19 @@ describe('provider adapters', () => {
       foundryUrl: ' https://example.palantirfoundry.com/// ',
       token: ' token-123 ',
       attributionRid: ' ri.attribution.main ',
+      traceParent: ' 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01 ',
+      traceState: ' vendor=value ',
     });
 
     expect(createGoogleMock).toHaveBeenCalledWith({
       apiKey: 'token-123',
       baseURL: 'https://example.palantirfoundry.com/api/v2/llm/proxy/google/v1',
       fetch: expect.any(Function),
-      headers: { attribution: 'ri.attribution.main' },
+      headers: {
+        attribution: 'ri.attribution.main',
+        traceParent: '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01',
+        traceState: 'vendor=value',
+      },
       name: 'foundry-google',
     });
 
@@ -396,6 +452,23 @@ describe('provider adapters', () => {
     expect((proxiedRequest as Request).headers.get('x-test')).toBe('1');
 
     fetchSpy.mockRestore();
+  });
+
+  it('leaves Google headers undefined when optional config is absent', () => {
+    createFoundryGoogle({
+      foundryUrl: 'https://example.palantirfoundry.com',
+      token: 'token-123',
+    });
+
+    expect(createGoogleMock).toHaveBeenCalledWith(expect.objectContaining({ headers: undefined }));
+  });
+
+  it('sets only the Google attribution header when trace context is absent', () => {
+    createFoundryGoogle(config);
+
+    expect(createGoogleMock).toHaveBeenCalledWith(
+      expect.objectContaining({ headers: { attribution: 'ri.attribution.main' } }),
+    );
   });
 
   it('maps Google aliases to RIDs and preserves raw RID passthrough', () => {

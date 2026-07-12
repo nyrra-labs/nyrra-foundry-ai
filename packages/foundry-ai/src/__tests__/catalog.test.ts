@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { loadFoundryConfig } from '../config.js';
+import { loadFoundryConfig, resolveFoundryConfig } from '../config.js';
 import { FoundryModelNotFoundError } from '../errors.js';
 import type { AnthropicModelId, KnownAnthropicModelId } from '../models/anthropic-models.js';
 import {
@@ -150,12 +150,54 @@ describe('config loading', () => {
         FOUNDRY_URL: 'https://example.palantirfoundry.com///',
         FOUNDRY_TOKEN: 'token',
         FOUNDRY_ATTRIBUTION_RID: '   ',
+        FOUNDRY_TRACE_PARENT: '   ',
+        FOUNDRY_TRACE_STATE: '   ',
       }),
     ).toEqual({
       foundryUrl: 'https://example.palantirfoundry.com',
       token: 'token',
       attributionRid: undefined,
+      traceParent: undefined,
+      traceState: undefined,
     });
+  });
+
+  it('loads and trims W3C trace-context values', () => {
+    expect(
+      loadFoundryConfig({
+        FOUNDRY_URL: 'https://example.palantirfoundry.com',
+        FOUNDRY_TOKEN: 'token',
+        FOUNDRY_TRACE_PARENT: ' 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01 ',
+        FOUNDRY_TRACE_STATE: ' vendor=value ',
+      }),
+    ).toEqual({
+      foundryUrl: 'https://example.palantirfoundry.com',
+      token: 'token',
+      attributionRid: undefined,
+      traceParent: '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01',
+      traceState: 'vendor=value',
+    });
+  });
+
+  it('rejects invalid traceParent values from env and direct config', () => {
+    expect(() =>
+      loadFoundryConfig({
+        FOUNDRY_URL: 'https://example.palantirfoundry.com',
+        FOUNDRY_TOKEN: 'token',
+        FOUNDRY_TRACE_PARENT: 'not-a-trace-parent',
+      }),
+    ).toThrow(/W3C traceparent format/);
+
+    expect(() =>
+      resolveFoundryConfig(
+        {
+          foundryUrl: 'https://example.palantirfoundry.com',
+          token: 'token',
+          traceParent: '00-ABC92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01',
+        },
+        'test',
+      ),
+    ).toThrow(/W3C traceparent format/);
   });
 });
 

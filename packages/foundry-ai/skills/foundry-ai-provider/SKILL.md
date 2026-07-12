@@ -14,7 +14,7 @@ description: Use when wiring @shpit/foundry-ai into an app that should call Pala
 ## Quick start
 
 1. Install `@shpit/foundry-ai`, `ai`, and only the provider peer dependency you need.
-2. Load config from `FOUNDRY_URL`, `FOUNDRY_TOKEN`, and optional `FOUNDRY_ATTRIBUTION_RID`.
+2. Load config from `FOUNDRY_URL` and `FOUNDRY_TOKEN`, with optional `FOUNDRY_ATTRIBUTION_RID`, `FOUNDRY_TRACE_PARENT`, and `FOUNDRY_TRACE_STATE`.
 3. Import only the provider subpath you need: `openai`, `anthropic`, or `google`.
 4. Use a known alias when the model is in the package catalog. Use a raw Foundry RID when it is not.
 5. Compose multi-provider routing in application code with AI SDK `createProviderRegistry`.

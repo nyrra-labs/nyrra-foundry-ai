@@ -22,13 +22,19 @@ export interface FoundryGoogleProvider {
 export function createFoundryGoogle(config: FoundryConfig): FoundryGoogleProvider {
   const providerId = 'foundry-google';
   const resolvedConfig = resolveFoundryConfig(config, 'createFoundryGoogle');
+  const headers =
+    resolvedConfig.attributionRid || resolvedConfig.traceParent || resolvedConfig.traceState
+      ? {
+          ...(resolvedConfig.attributionRid ? { attribution: resolvedConfig.attributionRid } : {}),
+          ...(resolvedConfig.traceParent ? { traceParent: resolvedConfig.traceParent } : {}),
+          ...(resolvedConfig.traceState ? { traceState: resolvedConfig.traceState } : {}),
+        }
+      : undefined;
   const baseProvider = createGoogleGenerativeAI({
     apiKey: resolvedConfig.token,
     baseURL: `${resolvedConfig.foundryUrl}/api/v2/llm/proxy/google/v1`,
     fetch: createGoogleProxyFetch(resolvedConfig.token),
-    headers: resolvedConfig.attributionRid
-      ? { attribution: resolvedConfig.attributionRid }
-      : undefined,
+    headers,
     name: providerId,
   });
 
