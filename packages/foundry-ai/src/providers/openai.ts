@@ -4,10 +4,15 @@ import { NoSuchModelError } from 'ai';
 import { resolveFoundryConfig } from '../config.js';
 import { wrapFoundryLanguageModel } from '../middleware.js';
 import { resolveModelTarget } from '../models/catalog.js';
-import { isKnownOpenAIReasoningTarget, type OpenAIModelId } from '../models/openai-models.js';
+import {
+  isKnownOpenAIReasoningTarget,
+  type OpenAIEmbeddingModelId,
+  type OpenAIModelId,
+} from '../models/openai-models.js';
 import type { FoundryConfig } from '../types.js';
 
 type FoundryLanguageModel = Parameters<typeof wrapLanguageModel>[0]['model'];
+type FoundryEmbeddingModel = ReturnType<ReturnType<typeof createOpenAI>['embeddingModel']>;
 type FoundryCallOptions = Parameters<FoundryLanguageModel['doGenerate']>[0];
 type FoundryFunctionTool = NonNullable<FoundryCallOptions['tools']>[number];
 
@@ -16,19 +21,26 @@ export interface FoundryOpenAIProvider {
   specificationVersion: 'v3';
   languageModel(modelId: OpenAIModelId): FoundryLanguageModel;
   responses(modelId: OpenAIModelId): FoundryLanguageModel;
-  embeddingModel(modelId: string): never;
+  embeddingModel(modelId: OpenAIEmbeddingModelId): FoundryEmbeddingModel;
+  embedding(modelId: OpenAIEmbeddingModelId): FoundryEmbeddingModel;
   imageModel(modelId: string): never;
 }
 
 export function createFoundryOpenAI(config: FoundryConfig): FoundryOpenAIProvider {
   const providerId = 'foundry-openai';
   const resolvedConfig = resolveFoundryConfig(config, 'createFoundryOpenAI');
+  const headers =
+    resolvedConfig.attributionRid || resolvedConfig.traceParent || resolvedConfig.traceState
+      ? {
+          ...(resolvedConfig.attributionRid ? { attribution: resolvedConfig.attributionRid } : {}),
+          ...(resolvedConfig.traceParent ? { traceParent: resolvedConfig.traceParent } : {}),
+          ...(resolvedConfig.traceState ? { traceState: resolvedConfig.traceState } : {}),
+        }
+      : undefined;
   const baseProvider = createOpenAI({
     apiKey: resolvedConfig.token,
     baseURL: `${resolvedConfig.foundryUrl}/api/v2/llm/proxy/openai/v1`,
-    headers: resolvedConfig.attributionRid
-      ? { attribution: resolvedConfig.attributionRid }
-      : undefined,
+    headers,
     name: providerId,
   });
 
@@ -44,6 +56,11 @@ export function createFoundryOpenAI(config: FoundryConfig): FoundryOpenAIProvide
     });
   };
 
+  const createEmbeddingModel = (modelId: OpenAIEmbeddingModelId): FoundryEmbeddingModel => {
+    const resolvedModel = resolveModelTarget(modelId);
+    return baseProvider.embeddingModel(resolvedModel.rid);
+  };
+
   function provider(modelId: OpenAIModelId): FoundryLanguageModel {
     return createLanguageModel(modelId);
   }
@@ -53,9 +70,8 @@ export function createFoundryOpenAI(config: FoundryConfig): FoundryOpenAIProvide
   callableProvider.specificationVersion = 'v3';
   callableProvider.languageModel = createLanguageModel;
   callableProvider.responses = createLanguageModel;
-  callableProvider.embeddingModel = (modelId: string) => {
-    throw new NoSuchModelError({ modelId, modelType: 'embeddingModel' });
-  };
+  callableProvider.embeddingModel = createEmbeddingModel;
+  callableProvider.embedding = createEmbeddingModel;
   callableProvider.imageModel = (modelId: string) => {
     throw new NoSuchModelError({ modelId, modelType: 'imageModel' });
   };

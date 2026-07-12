@@ -117,6 +117,25 @@ const GOOGLE_MODEL_DEFINITIONS = {
     },
     externalUrl: 'https://deepmind.google/models/model-cards/gemini-3-1-flash-lite/',
   },
+  'gemini-3.5-flash': {
+    rid: 'ri.language-model-service..language-model.gemini-3-5-flash',
+    modelIdentifier: 'GEMINI_3_5_FLASH',
+    displayName: 'Gemini 3.5 Flash',
+    lifecycle: 'ga',
+    inputTypes: [
+      'GEMINI_CHAT',
+      'GENERIC_COMPLETION',
+      'GENERIC_CHAT_COMPLETION',
+      'GENERIC_VISION_COMPLETION',
+    ],
+    trainingCutoffDate: '2025-01-01T00:00:00Z',
+    performance: {
+      cost: 'LOW',
+      modelClass: 'LIGHTWEIGHT',
+      speed: 'HIGH',
+    },
+    externalUrl: 'https://cloud.google.com/vertex-ai/generative-ai/docs/models/gemini/3-5-flash',
+  },
 } as const satisfies Record<string, ModelDefinition>;
 
 export const GOOGLE_MODELS = createProviderModelCatalog('google', GOOGLE_MODEL_DEFINITIONS);

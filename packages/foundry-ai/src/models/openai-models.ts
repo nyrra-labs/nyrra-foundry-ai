@@ -108,6 +108,26 @@ const OPENAI_MODEL_DEFINITIONS = {
     },
     externalUrl: 'https://platform.openai.com/docs/models/gpt-5',
   },
+  'gpt-5-pro': {
+    rid: 'ri.language-model-service..language-model.gpt-5-pro',
+    modelIdentifier: 'GPT_5_PRO',
+    displayName: 'GPT-5 Pro',
+    lifecycle: 'ga',
+    inputTypes: [
+      'GENERIC_COMPLETION',
+      'GENERIC_CHAT_COMPLETION',
+      'GENERIC_VISION_COMPLETION',
+      'OPEN_AI_REASONING',
+      'OPEN_AI_RESPONSES',
+    ],
+    trainingCutoffDate: '2024-09-30T00:00:00Z',
+    performance: {
+      cost: 'HIGH',
+      modelClass: 'REASONING',
+      speed: 'LOW',
+    },
+    externalUrl: 'https://platform.openai.com/docs/models/gpt-5-pro',
+  },
   'gpt-5-codex': {
     rid: 'ri.language-model-service..language-model.gpt-5-codex',
     modelIdentifier: 'GPT_5_CODEX',
@@ -252,6 +272,25 @@ const OPENAI_MODEL_DEFINITIONS = {
     },
     externalUrl: 'https://platform.openai.com/docs/models/gpt-5.2',
   },
+  'gpt-5.3-codex': {
+    rid: 'ri.language-model-service..language-model.gpt-5-3-codex',
+    modelIdentifier: 'GPT_5_3_CODEX',
+    displayName: 'GPT-5.3 Codex',
+    lifecycle: 'ga',
+    inputTypes: [
+      'GENERIC_COMPLETION',
+      'GENERIC_CHAT_COMPLETION',
+      'GENERIC_VISION_COMPLETION',
+      'OPEN_AI_RESPONSES',
+    ],
+    trainingCutoffDate: '2025-08-31T00:00:00Z',
+    performance: {
+      cost: 'MEDIUM',
+      modelClass: 'REASONING',
+      speed: 'MEDIUM',
+    },
+    externalUrl: 'https://platform.openai.com/docs/models/gpt-5.3-codex',
+  },
   'gpt-5.4': {
     rid: 'ri.language-model-service..language-model.gpt-5-4',
     modelIdentifier: 'GPT_5_4',
@@ -273,6 +312,28 @@ const OPENAI_MODEL_DEFINITIONS = {
       speed: 'MEDIUM',
     },
     externalUrl: 'https://platform.openai.com/docs/models/gpt-5.4',
+  },
+  'gpt-5.5': {
+    rid: 'ri.language-model-service..language-model.gpt-5-5',
+    modelIdentifier: 'GPT_5_5',
+    displayName: 'GPT-5.5',
+    lifecycle: 'experimental',
+    inputTypes: [
+      'GENERIC_COMPLETION',
+      'GENERIC_CHAT_COMPLETION',
+      'GPT_CHAT_COMPLETION',
+      'GPT_WITH_VISION_COMPLETION',
+      'GENERIC_VISION_COMPLETION',
+      'OPEN_AI_REASONING',
+      'OPEN_AI_RESPONSES',
+    ],
+    trainingCutoffDate: '2025-12-31T00:00:00Z',
+    performance: {
+      cost: 'MEDIUM',
+      modelClass: 'HEAVYWEIGHT',
+      speed: 'MEDIUM',
+    },
+    externalUrl: 'https://platform.openai.com/docs/models/gpt-5.5',
   },
   'gpt-5.4-mini': {
     rid: 'ri.language-model-service..language-model.gpt-5-4-mini',
@@ -360,14 +421,54 @@ const OPENAI_MODEL_DEFINITIONS = {
   },
 } as const satisfies Record<string, ModelDefinition>;
 
+const OPENAI_EMBEDDING_MODEL_DEFINITIONS = {
+  'text-embedding-3-small': {
+    rid: 'text-embedding-3-small',
+    modelIdentifier: 'TEXT_EMBEDDING_3_SMALL',
+    displayName: 'Text Embedding 3 Small',
+    lifecycle: 'ga',
+    inputTypes: ['OPEN_AI_EMBEDDINGS'],
+    trainingCutoffDate: '2021-09-01T00:00:00Z',
+    performance: {
+      cost: 'LOW',
+      modelClass: 'LIGHTWEIGHT',
+      speed: 'HIGH',
+    },
+    externalUrl: 'https://platform.openai.com/docs/models/text-embedding-3-small',
+  },
+  'text-embedding-3-large': {
+    rid: 'text-embedding-3-large',
+    modelIdentifier: 'TEXT_EMBEDDING_3_LARGE',
+    displayName: 'Text Embedding 3 Large',
+    lifecycle: 'ga',
+    inputTypes: ['OPEN_AI_EMBEDDINGS'],
+    trainingCutoffDate: '2021-09-01T00:00:00Z',
+    performance: {
+      cost: 'MEDIUM',
+      modelClass: 'HEAVYWEIGHT',
+      speed: 'HIGH',
+    },
+    externalUrl: 'https://platform.openai.com/docs/models/text-embedding-3-large',
+  },
+} as const satisfies Record<string, ModelDefinition>;
+
 export const OPENAI_MODELS = createProviderModelCatalog('openai', OPENAI_MODEL_DEFINITIONS);
+export const OPENAI_EMBEDDING_MODELS = createProviderModelCatalog(
+  'openai',
+  OPENAI_EMBEDDING_MODEL_DEFINITIONS,
+);
 
 export type KnownOpenAIModelId = keyof typeof OPENAI_MODELS;
 export type OpenAIModelId = KnownOpenAIModelId | (string & {});
+export type KnownOpenAIEmbeddingModelId = keyof typeof OPENAI_EMBEDDING_MODELS;
+export type OpenAIEmbeddingModelId = KnownOpenAIEmbeddingModelId | (string & {});
 
 export const OPENAI_MODEL_IDS = Object.freeze(
   Object.keys(OPENAI_MODELS),
 ) as readonly KnownOpenAIModelId[];
+export const OPENAI_EMBEDDING_MODEL_IDS = Object.freeze(
+  Object.keys(OPENAI_EMBEDDING_MODELS),
+) as readonly KnownOpenAIEmbeddingModelId[];
 
 const OPENAI_REASONING_MODEL_TARGETS = new Set(
   Object.entries(OPENAI_MODELS)

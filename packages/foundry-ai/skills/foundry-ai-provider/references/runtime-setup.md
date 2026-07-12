@@ -5,6 +5,8 @@ Start with env-based server setup:
 - `FOUNDRY_URL`
 - `FOUNDRY_TOKEN`
 - `FOUNDRY_ATTRIBUTION_RID` when attribution is needed
+- `FOUNDRY_TRACE_PARENT` when Foundry trace observability is needed
+- `FOUNDRY_TRACE_STATE` when vendor trace state should be propagated
 
 Verified path today:
 

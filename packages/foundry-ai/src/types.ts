@@ -2,6 +2,8 @@ export interface FoundryConfig {
   foundryUrl: string;
   token: string;
   attributionRid?: string;
+  traceParent?: string;
+  traceState?: string;
 }
 
 export type ModelProvider = 'openai' | 'anthropic' | 'google';
@@ -15,7 +17,8 @@ export type ModelInputType =
   | 'GPT_CHAT_COMPLETION'
   | 'GPT_WITH_VISION_COMPLETION'
   | 'OPEN_AI_REASONING'
-  | 'OPEN_AI_RESPONSES';
+  | 'OPEN_AI_RESPONSES'
+  | 'OPEN_AI_EMBEDDINGS';
 export type ModelCost = 'LOW' | 'MEDIUM' | 'HIGH';
 export type ModelClass = 'HEAVYWEIGHT' | 'LIGHTWEIGHT' | 'REASONING';
 export type ModelSpeed = 'LOW' | 'MEDIUM' | 'HIGH';

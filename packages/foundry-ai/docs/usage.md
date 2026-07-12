@@ -14,6 +14,7 @@ Typical use cases:
 
 - env-based server setup with `FOUNDRY_URL` and `FOUNDRY_TOKEN`
 - OpenAI, Anthropic, and Google language-model entrypoints from this package
+- OpenAI `text-embedding-3-small` and `text-embedding-3-large` embeddings
 - application-level routing with AI SDK `createProviderRegistry`
 
 ## What is not yet verified
@@ -32,6 +33,10 @@ Palantir's docs show the same proxy family used from OSDK and in-platform helper
 | `FOUNDRY_URL` | yes | Foundry enrollment base URL |
 | `FOUNDRY_TOKEN` | yes | bearer token for the proxy endpoints |
 | `FOUNDRY_ATTRIBUTION_RID` | no | usage attribution RID header |
+| `FOUNDRY_TRACE_PARENT` | no | W3C traceparent value for Foundry observability |
+| `FOUNDRY_TRACE_STATE` | no | W3C tracestate value for Foundry observability |
+
+Palantir's [LLM-provider compatible APIs documentation](https://www.palantir.com/docs/foundry/aip/llm-provider-compatible-apis) documents these trace-context headers and notes that third-party OAuth2 applications need the `api:use-language-models-execute` scope.
 
 ## Minimal env-based setup
 
@@ -46,6 +51,29 @@ const openai = createFoundryOpenAI(config);
 const result = await generateText({
   model: openai('gpt-5-mini'),
   prompt: 'Summarize why Foundry model aliases are useful.',
+});
+```
+
+## OpenAI embeddings
+
+Use the same provider instance with AI SDK `embed` or `embedMany`. The friendly aliases are typed convenience constants, and the plain model string is sent as-is to the Foundry embeddings proxy rather than being resolved to a Foundry RID.
+
+```ts
+import { loadFoundryConfig } from '@shpit/foundry-ai';
+import { createFoundryOpenAI } from '@shpit/foundry-ai/openai';
+import { embed, embedMany } from 'ai';
+
+const openai = createFoundryOpenAI(loadFoundryConfig());
+const model = openai.embeddingModel('text-embedding-3-small');
+
+const { embedding } = await embed({
+  model,
+  value: 'Foundry-governed embedding input',
+});
+
+const { embeddings } = await embedMany({
+  model,
+  values: ['first input', 'second input'],
 });
 ```
 
@@ -82,4 +110,5 @@ export const registry = createProviderRegistry({
 
 - [LLM-provider compatible APIs](https://www.palantir.com/docs/foundry/aip/llm-provider-compatible-apis/)
 - [OpenAI Responses proxy reference](https://www.palantir.com/docs/foundry/api/v2/llm-apis/models/openai-responses-proxy)
+- [OpenAI Embeddings proxy reference](https://www.palantir.com/docs/foundry/api/v2/llm-apis/models/openai-embeddings-proxy)
 - [Anthropic Messages proxy reference](https://www.palantir.com/docs/foundry/api/v2/llm-apis/models/anthropic-messages-proxy)

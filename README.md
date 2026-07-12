@@ -21,7 +21,7 @@ Thin Palantir Foundry provider adapters and model catalog for the Vercel AI SDK.
 
 ## What It Does
 
-- Routes AI SDK language-model calls through Foundry's provider-compatible proxy endpoints.
+- Routes AI SDK language-model calls and OpenAI embeddings through Foundry's provider-compatible proxy endpoints.
 - Maps friendly model names such as `gpt-5-mini`, `claude-sonnet-4.6`, and `gemini-3.1-flash-lite` to Foundry RIDs.
 - Keeps installs lean through provider-specific subpaths for OpenAI, Anthropic, and Google.
 - Ships a TanStack Intent skill plus a small set of provider-specific reference examples.
@@ -46,6 +46,8 @@ pnpm add @shpit/foundry-ai ai @ai-sdk/openai
 FOUNDRY_URL=https://your-stack.palantirfoundry.com
 FOUNDRY_TOKEN=your-token
 FOUNDRY_ATTRIBUTION_RID=
+FOUNDRY_TRACE_PARENT=
+FOUNDRY_TRACE_STATE=
 ```
 
 ```ts

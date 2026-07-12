@@ -28,7 +28,7 @@ The package does not try to invent a separate request API. Callers should contin
 - `resolveModelProvider()`
 - `resolveModelRid()`
 - `resolveModelTarget()`
-- type exports for `FoundryConfig`, `OpenAIModelId`, `AnthropicModelId`, `GoogleModelId`, `KnownOpenAIModelId`, `KnownAnthropicModelId`, `KnownGoogleModelId`, `KnownModelId`, `ModelDefinition`, `ModelMetadata`, `ModelInputType`, `ModelPerformance`, `ModelCost`, `ModelClass`, `ModelSpeed`, `ModelProvider`, `ModelLifecycle`, and `ResolvedModelTarget`
+- type exports for `FoundryConfig`, `OpenAIModelId`, `OpenAIEmbeddingModelId`, `AnthropicModelId`, `GoogleModelId`, `KnownOpenAIModelId`, `KnownOpenAIEmbeddingModelId`, `KnownAnthropicModelId`, `KnownGoogleModelId`, `KnownModelId`, `ModelDefinition`, `ModelMetadata`, `ModelInputType`, `ModelPerformance`, `ModelCost`, `ModelClass`, `ModelSpeed`, `ModelProvider`, `ModelLifecycle`, and `ResolvedModelTarget`
 
 ### Provider entrypoints
 
@@ -56,6 +56,7 @@ Foundry OpenAI requires minimal compatibility handling because the underlying SD
 - If a caller explicitly sets `providerOptions.openai.store = true`, the adapter throws a clear error before the request is sent.
 - For catalogued OpenAI reasoning targets, the adapter adds `providerOptions.openai.forceReasoning = true` only when the caller did not already provide `forceReasoning`.
 - OpenAI function tools default to `strict = true` only when the caller left `strict` unspecified. Explicit `strict` values are preserved.
+- `embeddingModel()` and `embedding()` use the OpenAI-compatible `/embeddings` endpoint, which takes plain OpenAI model strings rather than Foundry RIDs. The typed convenience aliases `text-embedding-3-small` and `text-embedding-3-large` resolve to themselves, and any other model string passes through unchanged.
 
 For uncatalogued OpenAI reasoning RIDs, the package cannot infer reasoning capability. Callers must set `providerOptions.openai.forceReasoning = true` explicitly when needed.
 
@@ -178,7 +179,7 @@ Primary live language-model capabilities currently covered:
 - `vision.image_input`
 - `reasoning.visibility`
 - `registry.routing`
-- `embedding.proxy_probe` where the stack has an explicitly configured supported target
+- `embedding.proxy_probe` for both catalogued OpenAI embedding models; Anthropic and Google remain explicitly unsupported
 
 Explicitly unsupported or out-of-scope capabilities should stay visible in the matrix as `skipped` until the package or the active Foundry stack actually supports them.
 
