@@ -56,7 +56,7 @@ Perform these steps in order:
    ```
 
 6. Review destination organization rulesets, Actions permissions, Dependabot, private vulnerability reporting, and the `SEMGREP_APP_TOKEN` secret. Confirm pull requests and the `CI` and `Semgrep` checks still work after transfer. Confirm the package manifest's repository URL is exactly `git+https://github.com/shpitdev/foundry-ai.git`; npm requires an exact, case-sensitive repository match for provenance and trusted publishing.
-7. On npmjs.com, create a one-day granular access token with read/write access to the `@shpit` scope and bypass-2FA enabled. This token exists only to create the brand-new public package. Copy it directly into the prompted secret input without putting it in shell history:
+7. On npmjs.com, create a one-day granular access token with read/write access to the `@shpit` scope and bypass-2FA enabled. Ensure the token can manage and revoke itself. This token exists only to create the brand-new public package. Copy it directly into the prompted secret input without putting it in shell history:
 
    ```bash
    gh secret set NPM_BOOTSTRAP_TOKEN --repo shpitdev/foundry-ai
@@ -93,7 +93,9 @@ Perform these steps in order:
    test "$(git rev-list -n 1 '@shpit/foundry-ai@0.0.5')" = "${BOOTSTRAP_SHA}"
    ```
 
-10. The workflow revokes the token and verifies that it no longer authenticates. If that step is not green, manually revoke the token on npmjs.com before doing anything else. Then remove the now-invalid GitHub secret:
+10. The workflow automatically revokes the granular token with npm CLI 11.16 or newer, then verifies non-authentication with repeated registry-liveness checks and retry backoff. npm has stated that it expects to restrict bypass-2FA and other sensitive-action permissions on granular tokens sometime in 2026; if that change prevents CLI self-revocation, this workflow step hard-fails by design.
+
+    If the revocation step is red, manually revoke the token on npmjs.com immediately before doing anything else. Manual revocation is the only fallback when CLI revocation or verification cannot prove the token is inactive. After revocation is confirmed, remove the now-invalid GitHub secret:
 
     ```bash
     gh secret delete NPM_BOOTSTRAP_TOKEN --repo shpitdev/foundry-ai

@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 import {
   BootstrapMismatchError,
+  BootstrapUnavailableError,
   inspectBootstrapState,
   reconcileBootstrapRelease,
 } from './reconcile-bootstrap-release.mjs';
@@ -52,14 +53,23 @@ function provenanceStatement({ repositoryUrl = repository, sha = commitSha } = {
   };
 }
 
-function registryResponses(options = {}) {
+function registryMetadataResponse(options = {}) {
+  const dist = { integrity };
+  if (!options.omitAttestationUrl) {
+    dist.attestations = { url: options.attestationUrl ?? attestationUrl };
+  }
   const metadata = {
     name: packageName,
     version,
     gitHead: options.metadataSha ?? commitSha,
     repository: { url: 'git+https://github.com/shpitdev/foundry-ai.git' },
-    dist: { integrity, attestations: { url: attestationUrl } },
+    dist,
   };
+
+  return new Response(JSON.stringify(metadata), { status: 200 });
+}
+
+function registryResponses(options = {}) {
   const attestationDocument = {
     attestations: [
       {
@@ -75,7 +85,7 @@ function registryResponses(options = {}) {
   };
 
   return [
-    new Response(JSON.stringify(metadata), { status: 200 }),
+    registryMetadataResponse(options),
     new Response(JSON.stringify(attestationDocument), { status: 200 }),
   ];
 }
@@ -182,6 +192,84 @@ describe('bootstrap release reconciliation', () => {
         version,
       }),
     ).rejects.toBeInstanceOf(BootstrapMismatchError);
+    expect(run).not.toHaveBeenCalled();
+  });
+
+  it('retries until a lagging attestation becomes available', async () => {
+    const fetchImpl = fetchSequence([
+      registryMetadataResponse({ omitAttestationUrl: true }),
+      ...registryResponses(),
+    ]);
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    const { run } = gitRunner();
+
+    const reconciled = await reconcileBootstrapRelease({
+      attempts: 2,
+      commitSha,
+      delayMs: 25,
+      fetchImpl,
+      packageName,
+      repository,
+      run,
+      sleep,
+      version,
+    });
+
+    expect(reconciled.tagState).toMatchObject({ action: 'created', targetSha: commitSha });
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+    expect(sleep).toHaveBeenCalledOnce();
+    expect(sleep).toHaveBeenCalledWith(25);
+  });
+
+  it('reports unavailable after exhausting retries for a missing attestation', async () => {
+    const fetchImpl = fetchSequence([
+      registryMetadataResponse({ omitAttestationUrl: true }),
+      registryMetadataResponse({ omitAttestationUrl: true }),
+      registryMetadataResponse({ omitAttestationUrl: true }),
+    ]);
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    const { run } = gitRunner();
+
+    await expect(
+      reconcileBootstrapRelease({
+        attempts: 3,
+        commitSha,
+        delayMs: 25,
+        fetchImpl,
+        packageName,
+        repository,
+        run,
+        sleep,
+        version,
+      }),
+    ).rejects.toBeInstanceOf(BootstrapUnavailableError);
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+    expect(sleep).toHaveBeenCalledTimes(2);
+    expect(run).not.toHaveBeenCalled();
+  });
+
+  it('rejects a malformed present attestation URL without retrying', async () => {
+    const fetchImpl = fetchSequence([
+      registryMetadataResponse({ attestationUrl: 'https://example.com/attestation' }),
+    ]);
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    const { run } = gitRunner();
+
+    await expect(
+      reconcileBootstrapRelease({
+        attempts: 3,
+        commitSha,
+        delayMs: 25,
+        fetchImpl,
+        packageName,
+        repository,
+        run,
+        sleep,
+        version,
+      }),
+    ).rejects.toBeInstanceOf(BootstrapMismatchError);
+    expect(fetchImpl).toHaveBeenCalledOnce();
+    expect(sleep).not.toHaveBeenCalled();
     expect(run).not.toHaveBeenCalled();
   });
 });

@@ -167,16 +167,76 @@ jobs:
             exit 0
           fi
 
-          if npm whoami --registry=https://registry.npmjs.org >/dev/null 2>&1; then
-            npm token revoke "${NPM_BOOTSTRAP_TOKEN}"
-            if npm whoami --registry=https://registry.npmjs.org >/dev/null 2>&1; then
-              echo "::error::The one-time npm token still authenticates after revocation."
+          probe_token_state() {
+            local phase="$1"
+            local authenticating=0
+            local non_authenticating=0
+            local inconclusive=0
+            local attempt
+            local whoami_output
+            local whoami_status
+
+            for attempt in 1 2 3; do
+              if ! npm ping --registry=https://registry.npmjs.org >/dev/null 2>&1; then
+                echo "::warning::${phase} token probe ${attempt}/3 could not confirm npm registry liveness."
+                inconclusive=$((inconclusive + 1))
+              else
+                set +e
+                whoami_output=$(npm whoami --registry=https://registry.npmjs.org 2>&1)
+                whoami_status=$?
+                set -e
+
+                if [ "${whoami_status}" -eq 0 ]; then
+                  authenticating=$((authenticating + 1))
+                elif grep -Eqi '(E401|ENEEDAUTH|401 Unauthorized|must be logged in)' <<<"${whoami_output}"; then
+                  non_authenticating=$((non_authenticating + 1))
+                else
+                  echo "::warning::${phase} token probe ${attempt}/3 returned an inconclusive npm whoami error."
+                  inconclusive=$((inconclusive + 1))
+                fi
+              fi
+
+              if [ "${attempt}" -lt 3 ]; then
+                sleep $((attempt * 2))
+              fi
+            done
+
+            if [ "${inconclusive}" -ne 0 ] || { [ "${authenticating}" -ne 0 ] && [ "${non_authenticating}" -ne 0 ]; }; then
+              echo "::error::${phase} token probes were mixed or inconclusive (authenticating=${authenticating}, non-authenticating=${non_authenticating}, inconclusive=${inconclusive}). Manually revoke the token on npmjs.com right now."
               exit 1
             fi
-            echo "One-time npm token revoked. Delete the NPM_BOOTSTRAP_TOKEN GitHub secret."
-          else
+
+            if [ "${authenticating}" -eq 3 ]; then
+              TOKEN_STATE="authenticating"
+              return
+            fi
+            if [ "${non_authenticating}" -eq 3 ]; then
+              TOKEN_STATE="non-authenticating"
+              return
+            fi
+
+            echo "::error::${phase} token probes did not reach a conclusive result. Manually revoke the token on npmjs.com right now."
+            exit 1
+          }
+
+          probe_token_state "Pre-revocation"
+          if [ "${TOKEN_STATE}" = "non-authenticating" ]; then
             echo "The supplied npm token is already non-authenticating; no revocation remains."
+            exit 0
           fi
+
+          if ! npm token revoke "${NPM_BOOTSTRAP_TOKEN}"; then
+            echo "::error::npm CLI token revocation failed. Manually revoke the token on npmjs.com right now."
+            exit 1
+          fi
+
+          probe_token_state "Post-revocation"
+          if [ "${TOKEN_STATE}" != "non-authenticating" ]; then
+            echo "::error::The one-time npm token still authenticates after revocation. Manually revoke the token on npmjs.com right now."
+            exit 1
+          fi
+
+          echo "One-time npm token revoked. Delete the NPM_BOOTSTRAP_TOKEN GitHub secret."
 
   publish-prerelease:
     if: >-
