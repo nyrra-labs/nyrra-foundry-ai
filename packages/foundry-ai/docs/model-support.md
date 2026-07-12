@@ -19,6 +19,7 @@
 - `gpt-4.1-nano`
 - `gpt-4o`
 - `gpt-5`
+- `gpt-5-pro`
 - `gpt-5-codex`
 - `gpt-5-mini`
 - `gpt-5-nano`
@@ -26,7 +27,9 @@
 - `gpt-5.1-codex`
 - `gpt-5.1-codex-mini`
 - `gpt-5.2`
+- `gpt-5.3-codex`
 - `gpt-5.4`
+- `gpt-5.5`
 - `gpt-5.4-mini`
 - `gpt-5.4-nano`
 - `o3`
@@ -46,6 +49,8 @@ OpenAI embedding aliases:
 - `claude-opus-4.1`
 - `claude-opus-4.5`
 - `claude-opus-4.6`
+- `claude-opus-4.7`
+- `claude-opus-4.8`
 - `claude-sonnet-4`
 - `claude-sonnet-4.5`
 - `claude-sonnet-4.6`
@@ -58,10 +63,12 @@ OpenAI embedding aliases:
 - `gemini-3-flash`
 - `gemini-3.1-pro`
 - `gemini-3.1-flash-lite`
+- `gemini-3.5-flash`
 
 ## Supported model ID patterns
 
 - Known aliases resolve to the package catalog and then to Foundry RIDs.
+- `gpt-5-pro` and `gpt-5.3-codex` are Responses-API-only, consistent with this package's OpenAI Responses transport.
 - Raw Foundry RIDs pass through unchanged when you call a provider factory directly.
 - OpenAI embeddings are distinct from language-model RID routing: the typed aliases `text-embedding-3-small` and `text-embedding-3-large` resolve to themselves, and any other plain model string passes through unchanged to the embeddings proxy.
 - Reverse RID lookup is available through `MODEL_CATALOG_BY_RID` and catalog helpers from the root entrypoint.
