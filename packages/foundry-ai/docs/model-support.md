@@ -1,12 +1,12 @@
 # Model Support
 
-`@shpit/foundry-ai` exposes language-model entrypoints only. It does not currently expose embeddings, image generation, speech, transcription, video, or rerank methods even though some upstream Foundry proxy endpoints exist.
+`@shpit/foundry-ai` exposes language-model entrypoints for OpenAI, Anthropic, and Google, plus OpenAI embeddings. Image generation, speech, transcription, video, and rerank methods remain out of scope.
 
 ## Provider summary
 
 | Provider | Package import | Foundry proxy family | Default live model | Notes |
 |---|---|---|---|---|
-| OpenAI | `@shpit/foundry-ai/openai` | `/api/v2/llm/proxy/openai/v1` | `gpt-5-nano` | Uses Responses-compatible transport and Foundry-specific compatibility defaults |
+| OpenAI | `@shpit/foundry-ai/openai` | `/api/v2/llm/proxy/openai/v1` | `gpt-5-nano` | Uses Responses-compatible language transport and the OpenAI embeddings proxy |
 | Anthropic | `@shpit/foundry-ai/anthropic` | `/api/v2/llm/proxy/anthropic/v1` | `claude-haiku-4.5` | Preserves Anthropic provider options and uses bearer auth |
 | Google | `@shpit/foundry-ai/google` | `/api/v2/llm/proxy/google/v1` | `gemini-3.1-flash-lite` | Beta Foundry proxy surface with bearer-auth rewrite |
 
@@ -31,6 +31,11 @@
 - `gpt-5.4-nano`
 - `o3`
 - `o4-mini`
+
+OpenAI embedding aliases:
+
+- `text-embedding-3-small`
+- `text-embedding-3-large`
 
 ### Anthropic
 
@@ -58,6 +63,7 @@
 
 - Known aliases resolve to the package catalog and then to Foundry RIDs.
 - Raw Foundry RIDs pass through unchanged when you call a provider factory directly.
+- OpenAI embeddings are distinct from language-model RID routing: the typed aliases `text-embedding-3-small` and `text-embedding-3-large` resolve to themselves, and any other plain model string passes through unchanged to the embeddings proxy.
 - Reverse RID lookup is available through `MODEL_CATALOG_BY_RID` and catalog helpers from the root entrypoint.
 - Sunset and deprecated enrollment entries are excluded from the public alias catalog.
 
@@ -78,6 +84,7 @@
 ## Important behavior notes
 
 - OpenAI traffic always sets `providerOptions.openai.store = false`.
+- OpenAI embeddings use `openai.embeddingModel()` or `openai.embedding()` with AI SDK `embed` and `embedMany`.
 - Setting `providerOptions.openai.store = true` throws before the request is sent.
 - Known OpenAI reasoning aliases automatically get `forceReasoning = true` unless the caller already set it.
 - Google support should be treated as beta until the Foundry proxy contract is more stable.

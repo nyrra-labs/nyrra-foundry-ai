@@ -14,6 +14,7 @@ Typical use cases:
 
 - env-based server setup with `FOUNDRY_URL` and `FOUNDRY_TOKEN`
 - OpenAI, Anthropic, and Google language-model entrypoints from this package
+- OpenAI `text-embedding-3-small` and `text-embedding-3-large` embeddings
 - application-level routing with AI SDK `createProviderRegistry`
 
 ## What is not yet verified
@@ -53,6 +54,29 @@ const result = await generateText({
 });
 ```
 
+## OpenAI embeddings
+
+Use the same provider instance with AI SDK `embed` or `embedMany`. The friendly aliases are typed convenience constants, and the plain model string is sent as-is to the Foundry embeddings proxy rather than being resolved to a Foundry RID.
+
+```ts
+import { loadFoundryConfig } from '@shpit/foundry-ai';
+import { createFoundryOpenAI } from '@shpit/foundry-ai/openai';
+import { embed, embedMany } from 'ai';
+
+const openai = createFoundryOpenAI(loadFoundryConfig());
+const model = openai.embeddingModel('text-embedding-3-small');
+
+const { embedding } = await embed({
+  model,
+  value: 'Foundry-governed embedding input',
+});
+
+const { embeddings } = await embedMany({
+  model,
+  values: ['first input', 'second input'],
+});
+```
+
 ## Local dev and deployed server guidance
 
 - In local development, provide `FOUNDRY_URL` and a valid Foundry token from your normal developer workflow, for example through Developer Console or another approved token source.
@@ -86,4 +110,5 @@ export const registry = createProviderRegistry({
 
 - [LLM-provider compatible APIs](https://www.palantir.com/docs/foundry/aip/llm-provider-compatible-apis/)
 - [OpenAI Responses proxy reference](https://www.palantir.com/docs/foundry/api/v2/llm-apis/models/openai-responses-proxy)
+- [OpenAI Embeddings proxy reference](https://www.palantir.com/docs/foundry/api/v2/llm-apis/models/openai-embeddings-proxy)
 - [Anthropic Messages proxy reference](https://www.palantir.com/docs/foundry/api/v2/llm-apis/models/anthropic-messages-proxy)

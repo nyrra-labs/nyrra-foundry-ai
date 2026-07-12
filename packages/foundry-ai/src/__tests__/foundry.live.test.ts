@@ -1,5 +1,4 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { createOpenAI } from '@ai-sdk/openai';
 import {
   createProviderRegistry,
   embed,
@@ -63,6 +62,9 @@ const registry = createProviderRegistry({
 });
 const recorder = new LiveCapabilityRecorder();
 const embeddingModels = getEmbeddingProbeModelIds();
+const openAIEmbeddingModels = (
+  embeddingModels.openai ?? ['text-embedding-3-small', 'text-embedding-3-large']
+).filter((modelId) => shouldIncludeLiveCapabilityCase('openai', modelId));
 const visionProbeImageBytes = getVisionProbeImageBytes();
 const visionModels = getVisionProbeModelIds();
 
@@ -80,12 +82,6 @@ function shouldIncludeSharedProviderProbe(provider: LiveProvider) {
   return liveFilters.modelId == null && shouldIncludeLiveCapabilityCase(provider);
 }
 
-const directOpenAI = createOpenAI({
-  apiKey: config.token,
-  baseURL: `${config.foundryUrl}/api/v2/llm/proxy/openai/v1`,
-  headers: config.attributionRid ? { attribution: config.attributionRid } : undefined,
-  name: 'foundry-openai-embedding-probe',
-});
 const directGoogle = createGoogleGenerativeAI({
   apiKey: config.token,
   baseURL: `${config.foundryUrl}/api/v2/llm/proxy/google/v1`,
@@ -554,26 +550,18 @@ describe('live Foundry capability matrix', () => {
     });
   }
 
-  if (shouldIncludeSharedProviderProbe('openai')) {
-    it('OpenAI embedding proxy probe', async (ctx) => {
+  if (openAIEmbeddingModels.length > 0) {
+    it.each(openAIEmbeddingModels)('OpenAI embedding proxy probe: %s', async (embeddingModelId) => {
       const spec: CapabilityCaseSpec = {
         capability: 'embedding.proxy_probe',
         expectation: 'investigate',
-        modelId: embeddingModels.openai ?? 'text-embedding-3-small',
+        modelId: embeddingModelId,
         provider: 'openai',
       };
 
-      if (!embeddingModels.openai) {
-        skipCapabilityCase(
-          ctx,
-          spec,
-          'OpenAI embedding probe model is not configured for this stack.',
-        );
-      }
-
       await recorder.runCase(spec, async (telemetry) => {
         const result = await embed({
-          model: directOpenAI.embeddingModel(embeddingModels.openai as string),
+          model: openai.embeddingModel(embeddingModelId),
           value: 'Foundry capability matrix embedding probe',
           experimental_telemetry: telemetry,
         });
@@ -598,7 +586,7 @@ describe('live Foundry capability matrix', () => {
         {
           capability: 'embedding.proxy_probe',
           expectation: 'investigate',
-          modelId: embeddingModels.anthropic ?? models.anthropic,
+          modelId: embeddingModels.anthropic?.[0] ?? models.anthropic,
           provider: 'anthropic',
         },
         'Anthropic embeddings are not configured as a supported matrix target yet.',
@@ -614,7 +602,7 @@ describe('live Foundry capability matrix', () => {
       const spec: CapabilityCaseSpec = {
         capability: 'embedding.proxy_probe',
         expectation: 'investigate',
-        modelId: embeddingModels.google ?? models.google,
+        modelId: embeddingModels.google?.[0] ?? models.google,
         provider: 'google',
       };
 
@@ -628,7 +616,7 @@ describe('live Foundry capability matrix', () => {
 
       await recorder.runCase(spec, async (telemetry) => {
         const result = await embed({
-          model: directGoogle.embeddingModel(embeddingModels.google as string),
+          model: directGoogle.embeddingModel(embeddingModels.google?.[0] as string),
           value: 'Foundry capability matrix embedding probe',
           experimental_telemetry: telemetry,
         });

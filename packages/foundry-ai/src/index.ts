@@ -24,9 +24,13 @@ export {
   type KnownGoogleModelId,
 } from './models/google-models.js';
 export {
+  type KnownOpenAIEmbeddingModelId,
   type KnownOpenAIModelId,
+  OPENAI_EMBEDDING_MODEL_IDS,
+  OPENAI_EMBEDDING_MODELS,
   OPENAI_MODEL_IDS,
   OPENAI_MODELS,
+  type OpenAIEmbeddingModelId,
   type OpenAIModelId,
 } from './models/openai-models.js';
 export type {
