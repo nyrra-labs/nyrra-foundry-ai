@@ -28,6 +28,7 @@ describe('model catalog', () => {
     expect(resolveModelRid('gpt-5.4-mini')).toBe(
       'ri.language-model-service..language-model.gpt-5-4-mini',
     );
+    expect(resolveModelRid('gpt-5.5')).toBe('ri.language-model-service..language-model.gpt-5-5');
     expect(resolveModelProvider('gpt-5-mini')).toBe('openai');
     expect(getModelMetadata('gpt-5-mini')).toMatchObject({
       displayName: 'GPT-5 mini',
@@ -50,6 +51,38 @@ describe('model catalog', () => {
       supportsResponses: true,
       supportsVision: true,
     });
+    expect(getModelMetadata('gpt-5-pro')).toMatchObject({
+      displayName: 'GPT-5 Pro',
+      modelIdentifier: 'GPT_5_PRO',
+      provider: 'openai',
+      inputTypes: [
+        'GENERIC_COMPLETION',
+        'GENERIC_CHAT_COMPLETION',
+        'GENERIC_VISION_COMPLETION',
+        'OPEN_AI_REASONING',
+        'OPEN_AI_RESPONSES',
+      ],
+      performance: {
+        cost: 'HIGH',
+        modelClass: 'REASONING',
+        speed: 'LOW',
+      },
+      supportsResponses: true,
+      supportsVision: true,
+    });
+    expect(getModelMetadata('gpt-5.3-codex')).toMatchObject({
+      displayName: 'GPT-5.3 Codex',
+      modelIdentifier: 'GPT_5_3_CODEX',
+      provider: 'openai',
+      inputTypes: [
+        'GENERIC_COMPLETION',
+        'GENERIC_CHAT_COMPLETION',
+        'GENERIC_VISION_COMPLETION',
+        'OPEN_AI_RESPONSES',
+      ],
+      supportsResponses: true,
+      supportsVision: true,
+    });
   });
 
   it('resolves metadata for known OpenAI embedding models', () => {
@@ -68,6 +101,17 @@ describe('model catalog', () => {
       'ri.language-model-service..language-model.anthropic-claude-4-6-sonnet',
     );
     expect(resolveModelProvider('claude-sonnet-4.6')).toBe('anthropic');
+    expect(resolveModelRid('claude-opus-4.7')).toBe(
+      'ri.language-model-service..language-model.anthropic-claude-4-7-opus',
+    );
+    expect(getModelMetadata('claude-opus-4.8')).toMatchObject({
+      displayName: 'Claude Opus 4.8',
+      modelIdentifier: 'ANTHROPIC_CLAUDE_48_OPUS',
+      provider: 'anthropic',
+      inputTypes: expect.arrayContaining(['CLAUDE_CHAT', 'GENERIC_VISION_COMPLETION']),
+      supportsResponses: false,
+      supportsVision: true,
+    });
   });
 
   it('resolves metadata for known Google models', () => {
@@ -79,6 +123,23 @@ describe('model catalog', () => {
       displayName: 'Gemini 3.1 Flash Lite (Preview)',
       lifecycle: 'experimental',
       modelIdentifier: 'GEMINI_3_1_FLASH_LITE',
+      provider: 'google',
+      inputTypes: expect.arrayContaining(['GEMINI_CHAT', 'GENERIC_VISION_COMPLETION']),
+      performance: {
+        cost: 'LOW',
+        modelClass: 'LIGHTWEIGHT',
+        speed: 'HIGH',
+      },
+      supportsResponses: false,
+      supportsVision: true,
+    });
+    expect(resolveModelRid('gemini-3.5-flash')).toBe(
+      'ri.language-model-service..language-model.gemini-3-5-flash',
+    );
+    expect(resolveModelProvider('gemini-3.5-flash')).toBe('google');
+    expect(getModelMetadata('gemini-3.5-flash')).toMatchObject({
+      displayName: 'Gemini 3.5 Flash',
+      modelIdentifier: 'GEMINI_3_5_FLASH',
       provider: 'google',
       inputTypes: expect.arrayContaining(['GEMINI_CHAT', 'GENERIC_VISION_COMPLETION']),
       performance: {
@@ -141,6 +202,8 @@ describe('model catalog', () => {
 
   it('does not publish sunset aliases as known models', () => {
     expect(getModelMetadata('gpt-4o-mini')).toBeUndefined();
+    expect(getModelMetadata('gpt-5.1-codex-max')).toBeUndefined();
+    expect(getModelMetadata('gpt-5.2-codex')).toBeUndefined();
     expect(getModelMetadata('gemini-3-pro')).toBeUndefined();
   });
 
