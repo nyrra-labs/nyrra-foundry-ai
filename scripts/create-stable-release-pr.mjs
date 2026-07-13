@@ -3,7 +3,7 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
-const packageName = '@shpit/foundry-ai';
+const packageName = '@nyrra/foundry-ai';
 const packageManifestPath = 'packages/foundry-ai/package.json';
 const remoteName = 'origin';
 const baseBranch = 'main';

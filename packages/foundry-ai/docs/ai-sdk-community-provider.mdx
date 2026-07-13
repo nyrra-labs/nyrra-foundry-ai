@@ -1,11 +1,11 @@
 ---
 title: Foundry AI
-description: Learn how to use @shpit/foundry-ai to access Palantir Foundry LLM proxy endpoints from the AI SDK.
+description: Learn how to use @nyrra/foundry-ai to access Palantir Foundry LLM proxy endpoints from the AI SDK.
 ---
 
 # Foundry AI
 
-The [`@shpit/foundry-ai`](https://www.npmjs.com/package/@shpit/foundry-ai) community provider routes AI SDK language-model and OpenAI embedding requests through Palantir Foundry's provider-compatible proxy endpoints.
+The [`@nyrra/foundry-ai`](https://www.npmjs.com/package/@nyrra/foundry-ai) community provider routes AI SDK language-model and OpenAI embedding requests through Palantir Foundry's provider-compatible proxy endpoints.
 
 Use it when you want local development and deployed server workloads to call secure/private Foundry endpoints while keeping AI SDK application code and provider-specific request shapes.
 
@@ -28,16 +28,16 @@ Install the package, `ai`, and only the provider peer dependency you need:
 
 <Tabs items={['pnpm', 'npm', 'yarn', 'bun']}>
   <Tab>
-    <Snippet text="pnpm add @shpit/foundry-ai ai @ai-sdk/openai" dark />
+    <Snippet text="pnpm add @nyrra/foundry-ai ai @ai-sdk/openai" dark />
   </Tab>
   <Tab>
-    <Snippet text="npm install @shpit/foundry-ai ai @ai-sdk/openai" dark />
+    <Snippet text="npm install @nyrra/foundry-ai ai @ai-sdk/openai" dark />
   </Tab>
   <Tab>
-    <Snippet text="yarn add @shpit/foundry-ai ai @ai-sdk/openai" dark />
+    <Snippet text="yarn add @nyrra/foundry-ai ai @ai-sdk/openai" dark />
   </Tab>
   <Tab>
-    <Snippet text="bun add @shpit/foundry-ai ai @ai-sdk/openai" dark />
+    <Snippet text="bun add @nyrra/foundry-ai ai @ai-sdk/openai" dark />
   </Tab>
 </Tabs>
 
@@ -60,16 +60,16 @@ FOUNDRY_ATTRIBUTION_RID=
 Import the root config helper plus the provider-specific subpath you need:
 
 ```ts
-import { loadFoundryConfig } from '@shpit/foundry-ai';
-import { createFoundryOpenAI } from '@shpit/foundry-ai/openai';
+import { loadFoundryConfig } from '@nyrra/foundry-ai';
+import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
 
 const openai = createFoundryOpenAI(loadFoundryConfig());
 ```
 
 Other entrypoints:
 
-- `@shpit/foundry-ai/anthropic`
-- `@shpit/foundry-ai/google`
+- `@nyrra/foundry-ai/anthropic`
+- `@nyrra/foundry-ai/google`
 
 ## Language models
 
@@ -83,8 +83,8 @@ Known aliases resolve through the package catalog. Raw RIDs pass through unchang
 ## Example
 
 ```ts
-import { loadFoundryConfig } from '@shpit/foundry-ai';
-import { createFoundryOpenAI } from '@shpit/foundry-ai/openai';
+import { loadFoundryConfig } from '@nyrra/foundry-ai';
+import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
 import { generateText } from 'ai';
 
 const openai = createFoundryOpenAI(loadFoundryConfig());
@@ -115,9 +115,9 @@ The OpenAI provider provides typed aliases for `text-embedding-3-small` and `tex
 The package does not export a registry helper. Compose one in application code with AI SDK `createProviderRegistry`:
 
 ```ts
-import { loadFoundryConfig } from '@shpit/foundry-ai';
-import { createFoundryAnthropic } from '@shpit/foundry-ai/anthropic';
-import { createFoundryOpenAI } from '@shpit/foundry-ai/openai';
+import { loadFoundryConfig } from '@nyrra/foundry-ai';
+import { createFoundryAnthropic } from '@nyrra/foundry-ai/anthropic';
+import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
 import { createProviderRegistry } from 'ai';
 
 const config = loadFoundryConfig();

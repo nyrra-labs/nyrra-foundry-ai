@@ -1,20 +1,20 @@
 ---
 name: foundry-ai-provider
-description: Use when wiring @shpit/foundry-ai into an app that should call Palantir Foundry LLM proxy endpoints through the AI SDK. Covers env setup, provider peer selection, alias vs RID routing, OpenAI compatibility rules, Google beta caveats, and when to avoid unverified Foundry-native runtimes.
+description: Use when wiring @nyrra/foundry-ai into an app that should call Palantir Foundry LLM proxy endpoints through the AI SDK. Covers env setup, provider peer selection, alias vs RID routing, OpenAI compatibility rules, Google beta caveats, and when to avoid unverified Foundry-native runtimes.
 ---
 
 # Foundry AI Provider
 
 ## Use this skill when
 
-- adding `@shpit/foundry-ai` to an app
+- adding `@nyrra/foundry-ai` to an app
 - replacing direct public provider calls with Foundry proxy endpoints
 - troubleshooting alias vs RID behavior or provider-specific Foundry caveats
 - adding OpenAI embeddings through Foundry's OpenAI-compatible proxy
 
 ## Quick start
 
-1. Install `@shpit/foundry-ai`, `ai`, and only the provider peer dependency you need.
+1. Install `@nyrra/foundry-ai`, `ai`, and only the provider peer dependency you need.
 2. Load config from `FOUNDRY_URL` and `FOUNDRY_TOKEN`, with optional `FOUNDRY_ATTRIBUTION_RID`, `FOUNDRY_TRACE_PARENT`, and `FOUNDRY_TRACE_STATE`.
 3. Import only the provider subpath you need: `openai`, `anthropic`, or `google`.
 4. Use a known alias when the model is in the package catalog. Use a raw Foundry RID when it is not.

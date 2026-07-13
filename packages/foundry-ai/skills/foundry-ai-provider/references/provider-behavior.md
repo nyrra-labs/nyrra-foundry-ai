@@ -1,8 +1,8 @@
 # Provider Behavior
 
-- OpenAI: `@shpit/foundry-ai`, `ai`, `@ai-sdk/openai`
-- Anthropic: `@shpit/foundry-ai`, `ai`, `@ai-sdk/anthropic`
-- Google: `@shpit/foundry-ai`, `ai`, `@ai-sdk/google`
+- OpenAI: `@nyrra/foundry-ai`, `ai`, `@ai-sdk/openai`
+- Anthropic: `@nyrra/foundry-ai`, `ai`, `@ai-sdk/anthropic`
+- Google: `@nyrra/foundry-ai`, `ai`, `@ai-sdk/google`
 - Multi-provider app: install only the peers you actually route to
 
 - Known aliases resolve through the shared package catalog.

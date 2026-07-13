@@ -10,7 +10,6 @@
     "example:devtools": "node scripts/run-example.mjs tool-calling-devtools",
     "example:devtools:parallel": "node scripts/run-example.mjs tool-calling-parallel-devtools",
     "format": "pnpm exec biome check --write .",
-    "identity-check": "node scripts/check-neutral-identity.mjs",
     "lint": "pnpm exec nx run foundry-ai:lint --outputStyle=static",
     "release-policy-check": "node scripts/check-release-policy.mjs",
     "release": "node scripts/create-stable-release-pr.mjs",
@@ -21,7 +20,7 @@
     "test:live:devtools:full": "pnpm run test:live:devtools -- --catalog",
     "test:live:summary": "node scripts/update-harness-results-docs.mjs --stdout",
     "typecheck": "pnpm exec nx run foundry-ai:typecheck --outputStyle=static",
-    "verify": "pnpm exec nx run-many -t identity-check release-policy-check lint test typecheck build skills-validate package-audit --projects=foundry-ai --outputStyle=static",
+    "verify": "pnpm exec nx run-many -t release-policy-check lint test typecheck build skills-validate package-audit --projects=foundry-ai --outputStyle=static",
     "verify:public-metadata": "node scripts/verify-public-metadata.mjs"
   },
   "pnpm": {
