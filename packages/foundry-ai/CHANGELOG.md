@@ -6,6 +6,16 @@
 - preserve the package name, root exports, provider subpaths, configuration, and model behavior
 - publish through GitHub Actions with npm trusted publishing and provenance
 
+### 🚀 Features
+
+- add live-confirmed support for GPT-5.5, GPT-5 Pro, GPT-5.3 Codex, Claude Opus 4.7/4.8, and Gemini 3.5 Flash
+- expand the live capability harness and provider documentation
+
+### 🛠️ Maintenance
+
+- refresh supported AI SDK dependencies and GitHub Actions
+- configure merge-queue-aware CI and Graphite CI optimization
+
 ## 0.0.4 (2026-03-30)
 
 ### 🩹 Fixes
