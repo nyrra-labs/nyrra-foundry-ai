@@ -2,7 +2,7 @@
 
 ## What this package is for
 
-`@shpit/foundry-ai` is for applications that want to use the AI SDK with Palantir Foundry's provider-compatible LLM proxy endpoints instead of calling public provider APIs directly.
+`@nyrra/foundry-ai` is for applications that want to use the AI SDK with Palantir Foundry's provider-compatible LLM proxy endpoints instead of calling public provider APIs directly.
 
 Typical use cases:
 
@@ -41,8 +41,8 @@ Palantir's [LLM-provider compatible APIs documentation](https://www.palantir.com
 ## Minimal env-based setup
 
 ```ts
-import { loadFoundryConfig } from '@shpit/foundry-ai';
-import { createFoundryOpenAI } from '@shpit/foundry-ai/openai';
+import { loadFoundryConfig } from '@nyrra/foundry-ai';
+import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
 import { generateText } from 'ai';
 
 const config = loadFoundryConfig();
@@ -59,8 +59,8 @@ const result = await generateText({
 Use the same provider instance with AI SDK `embed` or `embedMany`. The friendly aliases are typed convenience constants, and the plain model string is sent as-is to the Foundry embeddings proxy rather than being resolved to a Foundry RID.
 
 ```ts
-import { loadFoundryConfig } from '@shpit/foundry-ai';
-import { createFoundryOpenAI } from '@shpit/foundry-ai/openai';
+import { loadFoundryConfig } from '@nyrra/foundry-ai';
+import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
 import { embed, embedMany } from 'ai';
 
 const openai = createFoundryOpenAI(loadFoundryConfig());
@@ -88,9 +88,9 @@ const { embeddings } = await embedMany({
 The package intentionally does not export a registry helper. Compose one in application code:
 
 ```ts
-import { loadFoundryConfig } from '@shpit/foundry-ai';
-import { createFoundryAnthropic } from '@shpit/foundry-ai/anthropic';
-import { createFoundryOpenAI } from '@shpit/foundry-ai/openai';
+import { loadFoundryConfig } from '@nyrra/foundry-ai';
+import { createFoundryAnthropic } from '@nyrra/foundry-ai/anthropic';
+import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
 import { createProviderRegistry } from 'ai';
 
 const config = loadFoundryConfig();

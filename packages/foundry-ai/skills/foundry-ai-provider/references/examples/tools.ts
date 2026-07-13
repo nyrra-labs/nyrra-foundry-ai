@@ -26,7 +26,7 @@ const TOOL_DATA = {
 } as const;
 
 export const TOOL_CALLING_PROMPT =
-  'First call getToolData, then answer in two concise bullets for a server-side @shpit/foundry-ai integration.';
+  'First call getToolData, then answer in two concise bullets for a server-side @nyrra/foundry-ai integration.';
 
 export function createToolSet(): ToolSet {
   return {

@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
 const manifestPath = 'packages/foundry-ai/package.json';
-const packageName = '@shpit/foundry-ai';
+const packageName = '@nyrra/foundry-ai';
 const prereleaseTag = 'next';
 const prereleaseId = process.argv[2] ?? 'rc';
 

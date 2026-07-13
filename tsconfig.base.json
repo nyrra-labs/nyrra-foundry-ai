@@ -20,10 +20,10 @@
     "types": ["node"],
     "verbatimModuleSyntax": true,
     "paths": {
-      "@shpit/foundry-ai": ["./packages/foundry-ai/src/index.ts"],
-      "@shpit/foundry-ai/anthropic": ["./packages/foundry-ai/src/providers/anthropic.ts"],
-      "@shpit/foundry-ai/google": ["./packages/foundry-ai/src/providers/google.ts"],
-      "@shpit/foundry-ai/openai": ["./packages/foundry-ai/src/providers/openai.ts"]
+      "@nyrra/foundry-ai": ["./packages/foundry-ai/src/index.ts"],
+      "@nyrra/foundry-ai/anthropic": ["./packages/foundry-ai/src/providers/anthropic.ts"],
+      "@nyrra/foundry-ai/google": ["./packages/foundry-ai/src/providers/google.ts"],
+      "@nyrra/foundry-ai/openai": ["./packages/foundry-ai/src/providers/openai.ts"]
     }
   }
 }

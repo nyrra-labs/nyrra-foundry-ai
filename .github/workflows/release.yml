@@ -1,22 +1,16 @@
 name: Publish Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      bootstrap_sha:
-        description: Full 40-character main SHA to publish and tag as the one-time 0.0.5 bootstrap
-        required: true
-        type: string
   pull_request:
     types:
       - closed
     branches:
       - main
     paths:
-      - 'nx.json'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'packages/foundry-ai/**'
+      - "nx.json"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "packages/foundry-ai/**"
 
 permissions:
   contents: write
@@ -27,217 +21,6 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  bootstrap-package:
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out selected main SHA
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ inputs.bootstrap_sha }}
-          fetch-depth: 0
-
-      - uses: pnpm/action-setup@v6
-        name: Install pnpm
-        with:
-          run_install: false
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: pnpm
-          registry-url: https://registry.npmjs.org
-
-      - name: Install provenance-capable npm
-        run: |
-          set -euo pipefail
-          npm install --global npm@11.16.0
-          npm_version=$(npm --version)
-          node -e "const [major, minor] = process.argv[1].split('.').map(Number); if (major < 11 || (major === 11 && minor < 5)) process.exit(1)" "${npm_version}"
-          echo "npm ${npm_version}"
-
-      - name: Inspect resumable bootstrap state
-        id: bootstrap_state
-        env:
-          BOOTSTRAP_SHA: ${{ inputs.bootstrap_sha }}
-        run: |
-          set -euo pipefail
-          package_state=$(node scripts/reconcile-bootstrap-release.mjs inspect)
-          echo "package_state=${package_state}" >> "$GITHUB_OUTPUT"
-
-      - name: Validate one-time bootstrap source
-        env:
-          BOOTSTRAP_SHA: ${{ inputs.bootstrap_sha }}
-          PACKAGE_STATE: ${{ steps.bootstrap_state.outputs.package_state }}
-          WORKFLOW_SHA: ${{ github.sha }}
-        run: |
-          set -euo pipefail
-          package_name=$(node -p "require('./packages/foundry-ai/package.json').name")
-          package_version=$(node -p "require('./packages/foundry-ai/package.json').version")
-
-          if ! [[ "${BOOTSTRAP_SHA}" =~ ^[0-9a-f]{40}$ ]]; then
-            echo "::error::bootstrap_sha must be a full lowercase 40-character commit SHA."
-            exit 1
-          fi
-
-          git fetch --no-tags origin main
-          checked_out_sha=$(git rev-parse HEAD)
-          main_sha=$(git rev-parse origin/main)
-
-          test "${checked_out_sha}" = "${BOOTSTRAP_SHA}"
-          test "${main_sha}" = "${WORKFLOW_SHA}"
-          test "$(git branch --show-current)" = ""
-
-          if [ "${PACKAGE_STATE}" = "absent" ]; then
-            test "${main_sha}" = "${BOOTSTRAP_SHA}"
-          else
-            git merge-base --is-ancestor "${BOOTSTRAP_SHA}" origin/main
-          fi
-
-          if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
-            echo "::error::Selected bootstrap commit has tracked worktree changes."
-            git status --short
-            exit 1
-          fi
-
-          test "${package_name}" = "@shpit/foundry-ai"
-          test "${package_version}" = "0.0.5"
-
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run verify
-
-      - name: Revalidate pinned main SHA immediately before publish
-        id: revalidate
-        env:
-          BOOTSTRAP_SHA: ${{ inputs.bootstrap_sha }}
-          PACKAGE_STATE: ${{ steps.bootstrap_state.outputs.package_state }}
-        run: |
-          set -euo pipefail
-          git fetch --no-tags origin main
-          test "$(git rev-parse HEAD)" = "${BOOTSTRAP_SHA}"
-          if [ "${PACKAGE_STATE}" = "absent" ]; then
-            test "$(git rev-parse origin/main)" = "${BOOTSTRAP_SHA}"
-          else
-            git merge-base --is-ancestor "${BOOTSTRAP_SHA}" origin/main
-          fi
-          if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
-            echo "::error::Tracked files changed during bootstrap verification."
-            git status --short
-            exit 1
-          fi
-
-      - name: Publish bootstrap package with provenance
-        id: bootstrap_publish
-        if: steps.bootstrap_state.outputs.package_state == 'absent'
-        continue-on-error: true
-        env:
-          BOOTSTRAP_SHA: ${{ inputs.bootstrap_sha }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_BOOTSTRAP_TOKEN }}
-        run: |
-          set -euo pipefail
-          test "$(git rev-parse HEAD)" = "${BOOTSTRAP_SHA}"
-          cd packages/foundry-ai
-          npm publish --provenance --access public --tag latest
-
-      - name: Reconcile accepted publish and finalize exact tag
-        id: bootstrap_finalize
-        if: always() && steps.bootstrap_state.outcome == 'success' && steps.revalidate.outcome == 'success'
-        env:
-          BOOTSTRAP_SHA: ${{ inputs.bootstrap_sha }}
-          PUBLISH_OUTCOME: ${{ steps.bootstrap_publish.outcome }}
-        run: |
-          set -euo pipefail
-          echo "Publish command outcome: ${PUBLISH_OUTCOME}"
-          node scripts/reconcile-bootstrap-release.mjs finalize
-
-      - name: Revoke one-time npm token
-        if: always()
-        env:
-          NPM_BOOTSTRAP_TOKEN: ${{ secrets.NPM_BOOTSTRAP_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_BOOTSTRAP_TOKEN }}
-          PUBLISH_OUTCOME: ${{ steps.bootstrap_publish.outcome }}
-        run: |
-          set -euo pipefail
-          if [ -z "${NPM_BOOTSTRAP_TOKEN}" ]; then
-            if [ "${PUBLISH_OUTCOME}" != "skipped" ]; then
-              echo "::error::A bootstrap publish was attempted without a revocable npm token."
-              exit 1
-            fi
-            echo "No npm token was needed for this package-present reconciliation run."
-            exit 0
-          fi
-
-          probe_token_state() {
-            local phase="$1"
-            local authenticating=0
-            local non_authenticating=0
-            local inconclusive=0
-            local attempt
-            local whoami_output
-            local whoami_status
-
-            for attempt in 1 2 3; do
-              if ! npm ping --registry=https://registry.npmjs.org >/dev/null 2>&1; then
-                echo "::warning::${phase} token probe ${attempt}/3 could not confirm npm registry liveness."
-                inconclusive=$((inconclusive + 1))
-              else
-                set +e
-                whoami_output=$(npm whoami --registry=https://registry.npmjs.org 2>&1)
-                whoami_status=$?
-                set -e
-
-                if [ "${whoami_status}" -eq 0 ]; then
-                  authenticating=$((authenticating + 1))
-                elif grep -Eqi '(E401|ENEEDAUTH|401 Unauthorized|must be logged in)' <<<"${whoami_output}"; then
-                  non_authenticating=$((non_authenticating + 1))
-                else
-                  echo "::warning::${phase} token probe ${attempt}/3 returned an inconclusive npm whoami error."
-                  inconclusive=$((inconclusive + 1))
-                fi
-              fi
-
-              if [ "${attempt}" -lt 3 ]; then
-                sleep $((attempt * 2))
-              fi
-            done
-
-            if [ "${inconclusive}" -ne 0 ] || { [ "${authenticating}" -ne 0 ] && [ "${non_authenticating}" -ne 0 ]; }; then
-              echo "::error::${phase} token probes were mixed or inconclusive (authenticating=${authenticating}, non-authenticating=${non_authenticating}, inconclusive=${inconclusive}). Manually revoke the token on npmjs.com right now."
-              exit 1
-            fi
-
-            if [ "${authenticating}" -eq 3 ]; then
-              TOKEN_STATE="authenticating"
-              return
-            fi
-            if [ "${non_authenticating}" -eq 3 ]; then
-              TOKEN_STATE="non-authenticating"
-              return
-            fi
-
-            echo "::error::${phase} token probes did not reach a conclusive result. Manually revoke the token on npmjs.com right now."
-            exit 1
-          }
-
-          probe_token_state "Pre-revocation"
-          if [ "${TOKEN_STATE}" = "non-authenticating" ]; then
-            echo "The supplied npm token is already non-authenticating; no revocation remains."
-            exit 0
-          fi
-
-          if ! npm token revoke "${NPM_BOOTSTRAP_TOKEN}"; then
-            echo "::error::npm CLI token revocation failed. Manually revoke the token on npmjs.com right now."
-            exit 1
-          fi
-
-          probe_token_state "Post-revocation"
-          if [ "${TOKEN_STATE}" != "non-authenticating" ]; then
-            echo "::error::The one-time npm token still authenticates after revocation. Manually revoke the token on npmjs.com right now."
-            exit 1
-          fi
-
-          echo "One-time npm token revoked. Delete the NPM_BOOTSTRAP_TOKEN GitHub secret."
-
   publish-prerelease:
     if: >-
       vars.NPM_PUBLISH_ENABLED == 'true' &&
@@ -249,21 +32,16 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
-
       - uses: pnpm/action-setup@v6
-        name: Install pnpm
         with:
           run_install: false
-
       - uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: pnpm
           registry-url: https://registry.npmjs.org
-
       - run: npm install --global npm@11.16.0
       - run: pnpm install --frozen-lockfile
-
       - name: Prepare prerelease version
         id: meta
         run: |
@@ -271,14 +49,10 @@ jobs:
           package_root="packages/foundry-ai"
           name=$(node -p "require('./${package_root}/package.json').name")
           version=$(node scripts/resolve-next-prerelease-version.mjs rc)
-
           node scripts/set-package-version.mjs "${package_root}/package.json" "${version}"
-
           echo "name=${name}" >> "$GITHUB_OUTPUT"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
-
       - run: pnpm exec nx run-many -t build package-audit --projects=foundry-ai --outputStyle=static
-
       - name: Check if already published
         id: check
         env:
@@ -287,27 +61,20 @@ jobs:
           DIST_TAG: next
         run: |
           set -euo pipefail
-
           if npm view "${PKG_NAME}@${PKG_VERSION}" version --registry=https://registry.npmjs.org >/dev/null 2>&1; then
             current_tag_version=$(npm view "${PKG_NAME}" "dist-tags.${DIST_TAG}" --json --registry=https://registry.npmjs.org 2>/dev/null | tr -d '"')
-
             if [ "${current_tag_version}" = "${PKG_VERSION}" ]; then
               echo "already_published=true" >> "$GITHUB_OUTPUT"
-              echo "${PKG_NAME}@${PKG_VERSION} is already published with dist-tag ${DIST_TAG}; skipping publish."
               exit 0
             fi
-
-            echo "::error::${PKG_NAME}@${PKG_VERSION} already exists, but dist-tag ${DIST_TAG} points to ${current_tag_version:-<unset>}. Retagging is intentionally not handled by this workflow."
+            echo "::error::${PKG_NAME}@${PKG_VERSION} exists but ${DIST_TAG} points to ${current_tag_version:-<unset>}."
             exit 1
           fi
-
           echo "already_published=false" >> "$GITHUB_OUTPUT"
-
       - name: Publish prerelease to npm
         if: steps.check.outputs.already_published != 'true'
         run: |
           cd packages/foundry-ai
-          # Clear ambient token so npm falls through to GitHub OIDC trusted publishing.
           NODE_AUTH_TOKEN="" npm publish --access public --tag next --provenance
 
   publish-stable:
@@ -321,23 +88,17 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
-
       - uses: pnpm/action-setup@v6
-        name: Install pnpm
         with:
           run_install: false
-
       - uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: pnpm
           registry-url: https://registry.npmjs.org
-
       - run: npm install --global npm@11.16.0
       - run: pnpm install --frozen-lockfile
-
       - run: pnpm exec nx run-many -t build package-audit --projects=foundry-ai --outputStyle=static
-
       - name: Resolve package metadata
         id: meta
         run: |
@@ -345,15 +106,12 @@ jobs:
           package_root="packages/foundry-ai"
           name=$(node -p "require('./${package_root}/package.json').name")
           version=$(node -p "require('./${package_root}/package.json').version")
-
           if echo "${version}" | grep -qE '\-'; then
-            echo "::error::Expected a stable version on main after merging a release PR, but found ${version}."
+            echo "::error::Expected a stable version, found ${version}."
             exit 1
           fi
-
           echo "name=${name}" >> "$GITHUB_OUTPUT"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
-
       - name: Check if already published
         id: check
         env:
@@ -362,29 +120,21 @@ jobs:
           DIST_TAG: latest
         run: |
           set -euo pipefail
-
           if npm view "${PKG_NAME}@${PKG_VERSION}" version --registry=https://registry.npmjs.org >/dev/null 2>&1; then
             current_tag_version=$(npm view "${PKG_NAME}" "dist-tags.${DIST_TAG}" --json --registry=https://registry.npmjs.org 2>/dev/null | tr -d '"')
-
             if [ "${current_tag_version}" = "${PKG_VERSION}" ]; then
               echo "already_published=true" >> "$GITHUB_OUTPUT"
-              echo "${PKG_NAME}@${PKG_VERSION} is already published with dist-tag ${DIST_TAG}; skipping publish."
               exit 0
             fi
-
-            echo "::error::${PKG_NAME}@${PKG_VERSION} already exists, but dist-tag ${DIST_TAG} points to ${current_tag_version:-<unset>}. Retagging is intentionally not handled by this workflow."
+            echo "::error::${PKG_NAME}@${PKG_VERSION} exists but ${DIST_TAG} points to ${current_tag_version:-<unset>}."
             exit 1
           fi
-
           echo "already_published=false" >> "$GITHUB_OUTPUT"
-
       - name: Publish stable to npm
         if: steps.check.outputs.already_published != 'true'
         run: |
           cd packages/foundry-ai
-          # Clear ambient token so npm falls through to GitHub OIDC trusted publishing.
           NODE_AUTH_TOKEN="" npm publish --access public --tag latest --provenance
-
       - name: Tag stable release
         env:
           PKG_NAME: ${{ steps.meta.outputs.name }}
@@ -393,12 +143,10 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
           tag="${PKG_NAME}@${PKG_VERSION}"
           if git ls-remote --tags origin "refs/tags/${tag}" | grep -q .; then
-            echo "${tag} already exists on origin — skipping tag push."
+            echo "${tag} already exists on origin; skipping tag push."
             exit 0
           fi
-
           git tag -a "${tag}" -m "Release ${tag}"
           git push origin "${tag}"

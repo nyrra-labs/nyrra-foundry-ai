@@ -2,7 +2,7 @@
 
 ## Why `ai` and provider SDKs are peer dependencies
 
-`@shpit/foundry-ai` is intentionally thin. It ships:
+`@nyrra/foundry-ai` is intentionally thin. It ships:
 
 - Foundry config loading
 - alias-to-RID catalog helpers
@@ -15,10 +15,10 @@ It does not bundle the AI SDK runtime or every provider SDK. Keeping those packa
 
 | Use case | Packages |
 |---|---|
-| OpenAI through Foundry | `@shpit/foundry-ai`, `ai`, `@ai-sdk/openai` |
-| Anthropic through Foundry | `@shpit/foundry-ai`, `ai`, `@ai-sdk/anthropic` |
-| Google through Foundry | `@shpit/foundry-ai`, `ai`, `@ai-sdk/google` |
-| Multi-provider app | `@shpit/foundry-ai`, `ai`, and every provider peer you actually route to |
+| OpenAI through Foundry | `@nyrra/foundry-ai`, `ai`, `@ai-sdk/openai` |
+| Anthropic through Foundry | `@nyrra/foundry-ai`, `ai`, `@ai-sdk/anthropic` |
+| Google through Foundry | `@nyrra/foundry-ai`, `ai`, `@ai-sdk/google` |
+| Multi-provider app | `@nyrra/foundry-ai`, `ai`, and every provider peer you actually route to |
 
 ## Why this keeps installs lean
 
@@ -35,6 +35,6 @@ It does not bundle the AI SDK runtime or every provider SDK. Keeping those packa
 
 ## Version expectations
 
-- Keep `ai` and the provider peers within the ranges declared by `@shpit/foundry-ai`.
+- Keep `ai` and the provider peers within the ranges declared by `@nyrra/foundry-ai`.
 - When upgrading AI SDK majors, re-run the package tests and the live capability suite before claiming support.
 - If a host app wants stricter version control, pin the peers directly in the application repo rather than expecting this package to carry them transitively.

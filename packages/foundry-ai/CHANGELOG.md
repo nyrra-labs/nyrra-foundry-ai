@@ -1,10 +1,10 @@
 ## 0.0.5 (2026-07-11)
 
-### 📦 Package Identity
+### 📦 Repository Transfer
 
-- publish future releases as `@shpit/foundry-ai` from `shpitdev/foundry-ai`
-- preserve the existing root exports, provider subpaths, configuration, and model behavior for consumer migration
-- bootstrap the first package from a pinned main SHA in GitHub Actions with provenance and automatic token revocation
+- continue publishing the existing `@nyrra/foundry-ai` package from `shpitdev/foundry-ai`
+- preserve the package name, root exports, provider subpaths, configuration, and model behavior
+- publish through GitHub Actions with npm trusted publishing and provenance
 
 ## 0.0.4 (2026-03-30)
 

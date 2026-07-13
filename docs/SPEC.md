@@ -1,8 +1,8 @@
-# @shpit/foundry-ai Specification
+# @nyrra/foundry-ai Specification
 
 ## Summary
 
-`@shpit/foundry-ai` is a small TypeScript package that adapts Palantir Foundry LLM proxy endpoints to the Vercel AI SDK. The package is intentionally thin:
+`@nyrra/foundry-ai` is a small TypeScript package that adapts Palantir Foundry LLM proxy endpoints to the Vercel AI SDK. The package is intentionally thin:
 
 - stable provider factories for OpenAI and Anthropic
 - a shared alias-to-RID catalog with reverse RID lookup
@@ -16,7 +16,7 @@ The package does not try to invent a separate request API. Callers should contin
 
 ### Root entrypoint
 
-`@shpit/foundry-ai` exports:
+`@nyrra/foundry-ai` exports:
 
 - `loadFoundryConfig()`
 - `FoundryModelNotFoundError`
@@ -32,11 +32,11 @@ The package does not try to invent a separate request API. Callers should contin
 
 ### Provider entrypoints
 
-- `@shpit/foundry-ai/openai` exports `createFoundryOpenAI`
-- `@shpit/foundry-ai/anthropic` exports `createFoundryAnthropic`
-- `@shpit/foundry-ai/google` exports `createFoundryGoogle`
+- `@nyrra/foundry-ai/openai` exports `createFoundryOpenAI`
+- `@nyrra/foundry-ai/anthropic` exports `createFoundryAnthropic`
+- `@nyrra/foundry-ai/google` exports `createFoundryGoogle`
 
-There is no `@shpit/foundry-ai/registry` export. Multi-provider routing belongs in application code with AI SDK `createProviderRegistry`.
+There is no `@nyrra/foundry-ai/registry` export. Multi-provider routing belongs in application code with AI SDK `createProviderRegistry`.
 The package is still pre-1.0, and the thin-adapter contract intentionally removes the older registry, middleware, and formatter helper exports instead of preserving them behind compatibility shims.
 
 ## Provider Behavior
@@ -120,9 +120,9 @@ Enrolled models are not added automatically. The public catalog should include o
 Application code should compose multi-provider routing directly:
 
 ```ts
-import { loadFoundryConfig } from '@shpit/foundry-ai';
-import { createFoundryAnthropic } from '@shpit/foundry-ai/anthropic';
-import { createFoundryOpenAI } from '@shpit/foundry-ai/openai';
+import { loadFoundryConfig } from '@nyrra/foundry-ai';
+import { createFoundryAnthropic } from '@nyrra/foundry-ai/anthropic';
+import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
 import { createProviderRegistry } from 'ai';
 
 const config = loadFoundryConfig();

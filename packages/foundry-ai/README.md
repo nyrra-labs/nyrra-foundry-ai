@@ -1,10 +1,10 @@
-# @shpit/foundry-ai
+# @nyrra/foundry-ai
 
 Thin Palantir Foundry provider adapters and model catalog for the Vercel AI SDK.
 
 [![AI%20SDK](https://img.shields.io/badge/AI%20SDK-6.0.140-000000?logo=vercel&logoColor=white)](https://ai-sdk.dev/)
-[![npm](https://img.shields.io/npm/v/%40shpit%2Ffoundry-ai/latest?logo=npm&label=npm)](https://www.npmjs.com/package/@shpit/foundry-ai)
-[![next](https://img.shields.io/npm/v/%40shpit%2Ffoundry-ai/next?logo=npm&label=next)](https://www.npmjs.com/package/@shpit/foundry-ai?activeTab=versions)
+[![npm](https://img.shields.io/npm/v/%40nyrra%2Ffoundry-ai/latest?logo=npm&label=npm)](https://www.npmjs.com/package/@nyrra/foundry-ai)
+[![next](https://img.shields.io/npm/v/%40nyrra%2Ffoundry-ai/next?logo=npm&label=next)](https://www.npmjs.com/package/@nyrra/foundry-ai?activeTab=versions)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/shpitdev/foundry-ai)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.2-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-0f172a)](https://github.com/shpitdev/foundry-ai/blob/main/packages/foundry-ai/LICENSE)
@@ -21,24 +21,22 @@ Thin Palantir Foundry provider adapters and model catalog for the Vercel AI SDK.
 Install `ai`, this package, and only the provider peer dependency you need:
 
 ```bash
-pnpm add @shpit/foundry-ai ai @ai-sdk/openai
+pnpm add @nyrra/foundry-ai ai @ai-sdk/openai
 ```
 
 ```bash
-pnpm add @shpit/foundry-ai ai @ai-sdk/anthropic
+pnpm add @nyrra/foundry-ai ai @ai-sdk/anthropic
 ```
 
 ```bash
-pnpm add @shpit/foundry-ai ai @ai-sdk/google
+pnpm add @nyrra/foundry-ai ai @ai-sdk/google
 ```
 
 If you use more than one provider, install both peers. For the rationale and bundle-size tradeoffs, see the [dependency strategy guide](https://github.com/shpitdev/foundry-ai/blob/main/packages/foundry-ai/docs/dependency-strategy.md).
 
-## Migrating Existing Consumers
+## Package Identity
 
-Use `@shpit/foundry-ai@0.0.5` as the first release under this public package identity. Replace the dependency and import specifiers, but keep the same root exports and provider subpaths. Existing `FOUNDRY_*` configuration, model aliases, raw RIDs, and runtime behavior remain valid. No compatibility package or alternate import name is published.
-
-The first release is published from a pinned clean `main` SHA in GitHub Actions with npm provenance. It is not published from a maintainer workstation.
+The source repository is `shpitdev/foundry-ai`; the existing npm identity remains `@nyrra/foundry-ai`. Consumers do not need to change their dependency or imports because of the repository transfer. Releases are published from GitHub Actions with npm provenance.
 
 ## Agent Skill
 
@@ -48,7 +46,7 @@ Install the published agent skill with:
 npx skills add https://github.com/shpitdev/foundry-ai --skill foundry-ai-provider
 ```
 
-That flow lets the `skills` CLI prompt for scope and agent links interactively. The install event is what `skills.sh` uses for leaderboard/indexing. In TanStack Intent consumer repos, install `@shpit/foundry-ai` directly, run `npx @tanstack/intent@latest list`, and map `node_modules/@shpit/foundry-ai/skills/foundry-ai-provider/SKILL.md` in your agent config.
+That flow lets the `skills` CLI prompt for scope and agent links interactively. The install event is what `skills.sh` uses for leaderboard/indexing. In TanStack Intent consumer repos, install `@nyrra/foundry-ai` directly, run `npx @tanstack/intent@latest list`, and map `node_modules/@nyrra/foundry-ai/skills/foundry-ai-provider/SKILL.md` in your agent config.
 
 ## Verified Use Case
 
@@ -67,8 +65,8 @@ FOUNDRY_TRACE_STATE=
 ```
 
 ```ts
-import { loadFoundryConfig } from '@shpit/foundry-ai';
-import { createFoundryOpenAI } from '@shpit/foundry-ai/openai';
+import { loadFoundryConfig } from '@nyrra/foundry-ai';
+import { createFoundryOpenAI } from '@nyrra/foundry-ai/openai';
 import { generateText } from 'ai';
 
 const openai = createFoundryOpenAI(loadFoundryConfig());
@@ -84,9 +82,9 @@ console.log(result.text);
 ## Provider Surface
 
 - Root exports config loading, catalog helpers, errors, and model ID types.
-- `@shpit/foundry-ai/openai` exports `createFoundryOpenAI`.
-- `@shpit/foundry-ai/anthropic` exports `createFoundryAnthropic`.
-- `@shpit/foundry-ai/google` exports `createFoundryGoogle`.
+- `@nyrra/foundry-ai/openai` exports `createFoundryOpenAI`.
+- `@nyrra/foundry-ai/anthropic` exports `createFoundryAnthropic`.
+- `@nyrra/foundry-ai/google` exports `createFoundryGoogle`.
 - There is no package-level registry helper. Compose multi-provider routing in application code with AI SDK `createProviderRegistry`.
 
 ## Model IDs
